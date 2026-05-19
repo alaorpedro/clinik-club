@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      funnel_responses: {
+        Row: {
+          completed: boolean
+          created_at: string
+          funnel_id: string
+          id: string
+          session_id: string
+          step_index: number
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          funnel_id: string
+          id?: string
+          session_id: string
+          step_index?: number
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          session_id?: string
+          step_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_responses_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnel_steps: {
+        Row: {
+          config: Json
+          created_at: string
+          funnel_id: string
+          id: string
+          order: number
+          type: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          funnel_id: string
+          id?: string
+          order?: number
+          type: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          order?: number
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_steps_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funnels: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          slug: string
+          status: string
+          theme: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          slug: string
+          status?: string
+          theme?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          slug?: string
+          status?: string
+          theme?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      leads: {
+        Row: {
+          answers: Json
+          created_at: string
+          email: string | null
+          funnel_id: string
+          id: string
+          name: string | null
+          phone: string | null
+          utm: Json
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          email?: string | null
+          funnel_id: string
+          id?: string
+          name?: string | null
+          phone?: string | null
+          utm?: Json
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          email?: string | null
+          funnel_id?: string
+          id?: string
+          name?: string | null
+          phone?: string | null
+          utm?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          name: string | null
+          plan: string
+          stripe_customer_id: string | null
+          subscription_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          name?: string | null
+          plan?: string
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          plan?: string
+          stripe_customer_id?: string | null
+          subscription_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
