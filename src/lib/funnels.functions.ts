@@ -34,8 +34,8 @@ export const submitLead = createServerFn({ method: "POST" })
       email: data.email ?? null,
       name: data.name ?? null,
       phone: data.phone ?? null,
-      answers: data.answers ?? {},
-      utm: data.utm ?? {},
+      answers: (data.answers ?? {}) as any,
+      utm: (data.utm ?? {}) as any,
     });
     if (error) throw new Error(error.message);
     return { ok: true };
