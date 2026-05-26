@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Plus, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -61,8 +61,12 @@ function AppHome() {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">/{f.slug}</p>
               <div className="mt-4 flex gap-2">
-                <Button size="sm" variant="outline" className="rounded-full">Editar</Button>
-                <Button size="sm" variant="ghost" className="rounded-full">Leads</Button>
+                <Link to="/app/funis/$id/editar" params={{ id: f.id }}>
+                  <Button size="sm" variant="outline" className="rounded-full">Editar</Button>
+                </Link>
+                <Link to="/app/funis/$id/leads" params={{ id: f.id }}>
+                  <Button size="sm" variant="ghost" className="rounded-full">Leads</Button>
+                </Link>
               </div>
             </div>
           ))}
