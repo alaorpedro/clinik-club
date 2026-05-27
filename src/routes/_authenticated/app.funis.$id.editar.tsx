@@ -627,8 +627,92 @@ function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: {
   );
 }
 
+function SingleOptionsEditor({ options, otherSteps, onChange }: { options: QuizOption[]; otherSteps: Step[]; onChange: (opts: QuizOption[]) => void }) {
+  function update(i: number, patch: Partial<QuizOption>) {
+    onChange(options.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
+  }
+  function remove(i: number) {
+    onChange(options.filter((_, idx) => idx !== i));
+  }
+  function add() {
+    onChange([...options, { label: `Opção ${options.length + 1}`, action: "continue" }]);
+  }
+  return (
+    <div>
+      <Label className="text-xs">Opções e ações</Label>
+      <p className="text-[11px] text-muted-foreground mb-2">Defina o que acontece quando o lead escolhe cada resposta.</p>
+      <div className="space-y-2">
+        {options.map((o, i) => {
+          const badge =
+            o.action === "disqualify"
+              ? "bg-red-100 text-red-700 border-red-200"
+              : o.action === "jump"
+              ? "bg-amber-100 text-amber-700 border-amber-200"
+              : "bg-green-100 text-green-700 border-green-200";
+          const label =
+            o.action === "disqualify" ? "Desqualifica" : o.action === "jump" ? "Pula etapa" : "Continua";
+          return (
+            <div key={i} className="rounded-lg border border-border p-2 space-y-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={o.label}
+                  onChange={(e) => update(i, { label: e.target.value })}
+                  placeholder={`Opção ${i + 1}`}
+                  className="h-8 text-sm"
+                />
+                <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badge}`}>{label}</span>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => remove(i)} title="Remover">
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-[11px] text-muted-foreground shrink-0">Se escolher:</Label>
+                <Select
+                  value={o.action}
+                  onValueChange={(v) => update(i, { action: v as QuizOption["action"], targetStepId: v === "jump" ? o.targetStepId : undefined })}
+                >
+                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="continue">Continuar para próxima etapa</SelectItem>
+                    <SelectItem value="disqualify">Desqualificar → Instagram da clínica</SelectItem>
+                    <SelectItem value="jump">Pular para etapa específica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {o.action === "jump" && (
+                <div className="flex items-center gap-2">
+                  <Label className="text-[11px] text-muted-foreground shrink-0">Ir para:</Label>
+                  <Select
+                    value={o.targetStepId ?? ""}
+                    onValueChange={(v) => update(i, { targetStepId: v })}
+                  >
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Selecione uma etapa" /></SelectTrigger>
+                    <SelectContent>
+                      {otherSteps.length === 0 && <div className="px-2 py-1.5 text-xs text-muted-foreground">Sem outras etapas</div>}
+                      {otherSteps.map((s, idx) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          Etapa: {s.config?.title || `#${idx + 1}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {options.length === 0 && (
+          <p className="text-[11px] text-muted-foreground rounded-lg border border-dashed border-border p-3 text-center">Nenhuma opção. Clique abaixo para adicionar.</p>
+        )}
+      </div>
+      <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={add}>
+        <Plus className="h-3.5 w-3.5 mr-1" />Adicionar opção
+      </Button>
+    </div>
+  );
+}
+
 function ImageUpload({ value, onChange }: { value?: string; onChange: (url: string) => void }) {
-  // (component below)
   const [uploading, setUploading] = useState(false);
   async function handleFile(file: File) {
     setUploading(true);
