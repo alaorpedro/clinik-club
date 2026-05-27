@@ -407,13 +407,18 @@ function EditFunnel() {
             ))}
             {steps.length === 0 && <p className="text-xs text-muted-foreground px-2">Adicione sua primeira etapa abaixo.</p>}
           </div>
-          <div className="mt-4 pt-4 border-t border-border space-y-1">
-            <p className="text-xs text-muted-foreground mb-2 px-1">Adicionar etapa</p>
-            {STEP_TYPES.map((t) => (
-              <button key={t.value} onClick={() => addStep(t.value)} className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs hover:bg-secondary text-left">
-                <Plus className="h-3 w-3" />{t.label}
-              </button>
-            ))}
+          <div className="mt-4 pt-4 border-t border-border">
+            <Select value="" onValueChange={(v) => v && addStep(v)}>
+              <SelectTrigger className="w-full justify-center gap-2 text-xs [&>svg]:hidden">
+                <Plus className="h-3.5 w-3.5" />
+                <SelectValue placeholder="Adicionar etapa" />
+              </SelectTrigger>
+              <SelectContent>
+                {STEP_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value} className="text-xs">{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </aside>
 
