@@ -431,7 +431,11 @@ function EditFunnel() {
 function defaultConfig(type: string): any {
   switch (type) {
     case "text": return { title: "Bem-vindo!", body: "Vamos começar?", cta: "Começar" };
-    case "single": return { title: "Escolha uma opção", options: ["Opção A", "Opção B", "Opção C"] };
+    case "single": return { title: "Escolha uma opção", options: [
+      { label: "Opção A", action: "continue" },
+      { label: "Opção B", action: "continue" },
+      { label: "Opção C", action: "continue" },
+    ] };
     case "multiple": return { title: "Selecione todas que se aplicam", options: ["Item 1", "Item 2"], cta: "Continuar" };
     case "input": return { title: "Qual a sua resposta?", placeholder: "Digite aqui...", cta: "Continuar" };
     case "lead": return { title: "Quase lá! Deixe seu contato", cta: "Receber resultado" };
@@ -440,7 +444,7 @@ function defaultConfig(type: string): any {
   }
 }
 
-function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: Step; onChange: (patch: Partial<Step>) => void; onDelete: () => void; onMoveUp: () => void; onMoveDown: () => void }) {
+function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: { step: Step; steps: Step[]; onChange: (patch: Partial<Step>) => void; onDelete: () => void; onMoveUp: () => void; onMoveDown: () => void }) {
   const cfg = step.config ?? {};
   function setCfg(patch: any) { onChange({ config: { ...cfg, ...patch } }); }
 
@@ -486,7 +490,15 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
             </div>
           )}
 
-          {(step.type === "single" || step.type === "multiple") && (
+          {step.type === "single" && (
+            <SingleOptionsEditor
+              options={normalizeOptions(cfg.options)}
+              otherSteps={steps.filter((s) => s.id !== step.id)}
+              onChange={(opts) => setCfg({ options: opts })}
+            />
+          )}
+
+          {step.type === "multiple" && (
             <div>
               <Label className="text-xs">Opções (uma por linha)</Label>
               <Textarea
