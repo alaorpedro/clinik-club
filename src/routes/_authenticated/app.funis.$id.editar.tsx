@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
@@ -296,10 +296,13 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
           </div>
         </div>
 
-        {(cfg.mediaType === "image" || cfg.mediaType === "video") && (
+        {cfg.mediaType === "image" && (
+          <ImageUpload value={cfg.mediaUrl} onChange={(url) => setCfg({ mediaUrl: url })} />
+        )}
+        {cfg.mediaType === "video" && (
           <div>
-            <Label className="text-xs">URL da mídia</Label>
-            <Input value={cfg.mediaUrl ?? ""} onChange={(e) => setCfg({ mediaUrl: e.target.value })} placeholder="https://..." />
+            <Label className="text-xs">Link do vídeo (YouTube ou MP4)</Label>
+            <Input value={cfg.mediaUrl ?? ""} onChange={(e) => setCfg({ mediaUrl: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
           </div>
         )}
 
