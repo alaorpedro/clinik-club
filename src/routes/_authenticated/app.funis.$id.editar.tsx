@@ -359,6 +359,8 @@ function EditFunnel() {
                   </div>
                 </div>
               </div>
+
+              <ThankYouSettings funnel={funnel} onPatch={updateThankYou} />
             </DialogContent>
           </Dialog>
           <Button onClick={saveAll} disabled={saveStatus === "saving"} variant="secondary" className="rounded-full font-semibold" size="sm">
