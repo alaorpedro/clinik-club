@@ -48,7 +48,9 @@ function LeadsPage() {
     <div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Link to="/app/funis/$id/editar" params={{ id }}><Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />Voltar ao editor</Button></Link>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/app/funis/$id/editar" params={{ id }}><ArrowLeft className="h-4 w-4 mr-1" />Voltar ao editor</Link>
+          </Button>
           <div>
             <h1 className="text-2xl font-black tracking-tight">Leads</h1>
             <p className="text-xs text-muted-foreground">{funnelName}</p>
