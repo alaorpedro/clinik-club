@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { PasswordStrength } from "@/components/PasswordStrength";
+import { ptValidation } from "@/lib/validation-messages";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -62,14 +63,14 @@ function ResetPage() {
           <form onSubmit={updatePassword} className="mt-8 space-y-4">
             <div>
               <Label htmlFor="password">Nova senha</Label>
-              <Input id="password" name="password" type="password" minLength={8} required className="mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input id="password" name="password" type="password" minLength={8} required className="mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} {...ptValidation("senha")} />
               <PasswordStrength password={password} />
             </div>
             <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">Atualizar senha</Button>
           </form>
         ) : (
           <form onSubmit={requestReset} className="mt-8 space-y-4">
-            <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" /></div>
+            <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" {...ptValidation("email")} /></div>
             <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">Enviar link</Button>
           </form>
         )}
