@@ -61,12 +61,12 @@ function AppHome() {
               </div>
               <p className="mt-1 text-xs text-muted-foreground">/{f.slug}</p>
               <div className="mt-4 flex gap-2">
-                <Link to="/app/funis/$id/editar" params={{ id: f.id }}>
-                  <Button size="sm" variant="outline" className="rounded-full">Editar</Button>
-                </Link>
-                <Link to="/app/funis/$id/leads" params={{ id: f.id }}>
-                  <Button size="sm" variant="ghost" className="rounded-full">Leads</Button>
-                </Link>
+                <Button asChild size="sm" variant="outline" className="rounded-full">
+                  <Link to="/app/funis/$id/editar" params={{ id: f.id }}>Editar</Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost" className="rounded-full">
+                  <Link to="/app/funis/$id/leads" params={{ id: f.id }}>Leads</Link>
+                </Button>
               </div>
             </div>
           ))}
