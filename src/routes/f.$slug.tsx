@@ -179,12 +179,12 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
   if (step.type === "single" || step.type === "multiple") {
     const opts: string[] = Array.isArray(cfg.options) ? cfg.options : [];
     const multi = step.type === "multiple";
-    const selected: string[] = Array.isArray(value) ? value : [];
+    const selected: string[] = Array.isArray(value) ? value : (typeof value === "string" && value ? [value] : []);
     function toggle(o: string) {
       if (multi) {
         setValue(selected.includes(o) ? selected.filter((x) => x !== o) : [...selected, o]);
       } else {
-        onNext({ [key]: o });
+        setValue(o);
       }
     }
     return (
@@ -192,15 +192,13 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
         {header}
         <div className="mt-6 space-y-2">
           {opts.map((o) => {
-            const isOn = multi && selected.includes(o);
+            const isOn = selected.includes(o);
             return (
               <button key={o} onClick={() => toggle(o)} className={`w-full text-left px-4 py-3 rounded-xl border transition font-medium ${isOn ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>{o}</button>
             );
           })}
         </div>
-        {multi && (
-          <Button className={btnClass} disabled={!selected.length} onClick={() => onNext({ [key]: selected })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
-        )}
+        <Button className={btnClass} disabled={!selected.length} onClick={() => onNext({ [key]: multi ? selected : selected[0] })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
       </div>
     );
   }
