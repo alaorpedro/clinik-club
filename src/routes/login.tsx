@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { ptValidation } from "@/lib/validation-messages";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -52,8 +53,8 @@ function LoginPage() {
         <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Entrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">
-          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" /></div>
-          <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" required className="mt-1.5" /></div>
+          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" {...ptValidation("email")} /></div>
+          <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" required className="mt-1.5" {...ptValidation("senha")} /></div>
           <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
         </form>
         <p className="mt-6 text-sm text-center text-muted-foreground">
