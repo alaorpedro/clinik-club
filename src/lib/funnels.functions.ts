@@ -9,7 +9,7 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: funnel, error } = await supabaseAdmin
       .from("funnels")
-      .select("id, name, slug, status, theme")
+      .select("id, name, slug, status, theme, clinic_name, clinic_logo_url")
       .eq("slug", data.slug)
       .eq("status", "published")
       .maybeSingle();
