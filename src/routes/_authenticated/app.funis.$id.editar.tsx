@@ -1176,12 +1176,13 @@ function ThankYouSettings({ funnel, onPatch }: { funnel: Funnel; onPatch: (patch
           />
         </div>
         <div className="sm:col-span-2">
-          <Label className="text-xs">Foto do(a) atendente (URL)</Label>
-          <Input
+          <Label className="text-xs">Foto do(a) atendente</Label>
+          <AttendantPhotoUpload
             value={local.attendantPhotoUrl ?? ""}
-            onChange={(e) => set("attendantPhotoUrl", e.target.value)}
-            onBlur={(e) => blur("attendantPhotoUrl", e.target.value)}
-            placeholder="https://..."
+            onChange={(url: string) => {
+              set("attendantPhotoUrl", url);
+              blur("attendantPhotoUrl", url);
+            }}
           />
         </div>
         <div>
@@ -1213,6 +1214,77 @@ function ThankYouSettings({ funnel, onPatch }: { funnel: Funnel; onPatch: (patch
             />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AttendantPhotoUpload({ value, onChange }: { value: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  async function handleFile(file: File) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem deve ter no máximo 5MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) throw new Error("Não autenticado");
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${u.user.id}/attendants/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("funnel-media").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from("funnel-media").getPublicUrl(path);
+      onChange(data.publicUrl);
+      toast.success("Foto enviada!");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao enviar imagem");
+    } finally {
+      setUploading(false);
+    }
+  }
+  return (
+    <div className="flex items-center gap-3">
+      {value ? (
+        <img src={value} alt="Atendente" className="w-16 h-16 rounded-full object-cover border" />
+      ) : (
+        <div className="w-16 h-16 rounded-full bg-muted border flex items-center justify-center text-muted-foreground">
+          <Upload className="w-5 h-5" />
+        </div>
+      )}
+      <div className="flex-1 flex gap-2">
+        <label className="inline-flex">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={uploading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleFile(f);
+              e.target.value = "";
+            }}
+          />
+          <Button type="button" variant="outline" size="sm" disabled={uploading} asChild>
+            <span className="cursor-pointer">
+              <Upload className="w-4 h-4 mr-2" />
+              {uploading ? "Enviando..." : value ? "Trocar foto" : "Enviar foto"}
+            </span>
+          </Button>
+        </label>
+        {value && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => onChange("")}>
+            <X className="w-4 h-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
