@@ -464,9 +464,23 @@ function ClinicLogoUpload({ value, onChange }: { value: string | null; onChange:
   );
 }
 
-function PhonePreview({ step, clinicName, clinicLogo }: { step: Step | null; clinicName?: string | null; clinicLogo?: string | null }) {
-  const cfg = step?.config ?? {};
+type SizeKey = "sm" | "md" | "lg" | "xl";
+const TITLE_SIZES: Record<SizeKey, string> = { sm: "text-xs", md: "text-sm", lg: "text-base", xl: "text-lg" };
+const SUBTITLE_SIZES: Record<SizeKey, string> = { sm: "text-[9px]", md: "text-[10px]", lg: "text-[11px]", xl: "text-xs" };
+const BODY_SIZES: Record<SizeKey, string> = { sm: "text-[10px]", md: "text-xs", lg: "text-sm", xl: "text-base" };
+const MEDIA_SIZES: Record<SizeKey, string> = { sm: "h-14", md: "h-20", lg: "h-28", xl: "h-36" };
+
+type ElKey = "title" | "subtitle" | "body" | "media" | "cta";
+
+function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step | null; clinicName?: string | null; clinicLogo?: string | null; onChange?: (patch: any) => void }) {
+  const [sel, setSel] = useState<ElKey | null>(null);
+  const cfg: any = step?.config ?? {};
   const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
+  const titleSize = (cfg.titleSize as SizeKey) || "md";
+  const subtitleSize = (cfg.subtitleSize as SizeKey) || "md";
+  const bodySize = (cfg.bodySize as SizeKey) || "md";
+  const mediaSize = (cfg.mediaSize as SizeKey) || "md";
+
   const btnCls =
     cfg.buttonStyle === "outline"
       ? "mt-auto px-3 py-2 rounded-full border-2 border-primary text-primary text-[11px] font-semibold text-center"
@@ -474,62 +488,158 @@ function PhonePreview({ step, clinicName, clinicLogo }: { step: Step | null; cli
       ? "mt-auto px-3 py-2 rounded-full text-primary text-[11px] font-semibold text-center"
       : "mt-auto px-3 py-2 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold text-center";
 
+  const editable = !!(step && onChange);
+  const ring = (k: ElKey) => editable ? `cursor-pointer rounded transition ${sel === k ? "outline outline-2 outline-primary outline-offset-2" : "hover:outline hover:outline-1 hover:outline-primary/50 hover:outline-offset-2"}` : "";
+  const click = (k: ElKey) => (e: React.MouseEvent) => { if (!editable) return; e.stopPropagation(); setSel(sel === k ? null : k); };
+
   const media = cfg.mediaUrl ? (
     cfg.mediaType === "image" ? (
-      <img src={cfg.mediaUrl} alt="" className="w-full h-20 object-cover rounded-lg" />
+      <img src={cfg.mediaUrl} alt="" className={`w-full ${MEDIA_SIZES[mediaSize]} object-cover rounded-lg ${ring("media")}`} onClick={click("media")} />
     ) : cfg.mediaType === "video" ? (
-      <div className="w-full h-20 rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground">▶ vídeo</div>
+      <div className={`w-full ${MEDIA_SIZES[mediaSize]} rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground ${ring("media")}`} onClick={click("media")}>▶ vídeo</div>
     ) : null
   ) : null;
-  const subtitle = cfg.subtitle ? <p className="text-[10px] text-muted-foreground mt-1 break-words whitespace-pre-wrap">{cfg.subtitle}</p> : null;
+  const subtitle = cfg.subtitle ? (
+    <p className={`${SUBTITLE_SIZES[subtitleSize]} text-muted-foreground mt-1 break-words whitespace-pre-wrap ${ring("subtitle")}`} onClick={click("subtitle")}>{cfg.subtitle}</p>
+  ) : null;
   const mediaAbove = cfg.mediaPosition !== "below";
   const subtitleAbove = cfg.subtitlePosition === "above";
 
   return (
-    <div className="mx-auto w-[260px] aspect-[9/19] rounded-[2.5rem] border-8 border-foreground shadow-card p-4 overflow-hidden" style={{ backgroundColor: cfg.bgColor || undefined }}>
-      <div className={`h-full flex flex-col ${align}`}>
-        <div className="h-1.5 w-16 bg-foreground/20 rounded-full mx-auto mb-4" />
-        {(clinicName || clinicLogo) && (
-          <div className="flex items-center gap-2 pb-2 mb-3 border-b border-border">
-            {clinicLogo && <img src={clinicLogo} alt="" className="h-6 w-6 rounded-full object-cover" />}
-            {clinicName && <span className="text-[11px] font-semibold truncate">{clinicName}</span>}
-          </div>
-        )}
-        {!step ? (
-          <p className="text-xs text-muted-foreground text-center mt-10">Sem etapa selecionada</p>
-        ) : (
-          <div className="flex-1 flex flex-col">
-            {mediaAbove && media && <div className="mb-2">{media}</div>}
-            {subtitleAbove && subtitle}
-            <h3 className="text-sm font-bold">{cfg.title}</h3>
-            {!subtitleAbove && subtitle}
-            {!mediaAbove && media && <div className="mt-2">{media}</div>}
-            {step.type === "text" && cfg.body && <p className="text-xs text-muted-foreground mt-2">{cfg.body}</p>}
-            {(step.type === "single" || step.type === "multiple") && (
-              <div className="mt-3 space-y-1.5">
-                {(cfg.options ?? []).slice(0, 4).map((o: string) => (
-                  <div key={o} className="px-2 py-1.5 rounded-lg border border-border text-[11px]">{o}</div>
-                ))}
-              </div>
-            )}
-            {step.type === "input" && <div className="mt-3 px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.placeholder}</div>}
-            {step.type === "lead" && (
-              <div className="mt-3 space-y-1.5">
-                <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">Nome</div>
-                <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">E-mail</div>
-                <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">WhatsApp</div>
-              </div>
-            )}
-            {step.type === "contact" && (
-              <div className="mt-3 space-y-1.5">
-                <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.namePlaceholder || "Seu nome"}</div>
-                <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.phonePlaceholder || "Seu WhatsApp"}</div>
-              </div>
-            )}
-            <div className={btnCls}>{cfg.cta || "Continuar"}</div>
-          </div>
-        )}
+    <div className="space-y-3">
+      {editable && sel && (
+        <ElementControls
+          el={sel}
+          cfg={cfg}
+          onChange={onChange!}
+          onClose={() => setSel(null)}
+        />
+      )}
+      <div
+        className="mx-auto w-[260px] aspect-[9/19] rounded-[2.5rem] border-8 border-foreground shadow-card p-4 overflow-hidden"
+        style={{ backgroundColor: cfg.bgColor || undefined }}
+        onClick={() => setSel(null)}
+      >
+        <div className={`h-full flex flex-col ${align}`}>
+          <div className="h-1.5 w-16 bg-foreground/20 rounded-full mx-auto mb-4" />
+          {(clinicName || clinicLogo) && (
+            <div className="flex items-center gap-2 pb-2 mb-3 border-b border-border">
+              {clinicLogo && <img src={clinicLogo} alt="" className="h-6 w-6 rounded-full object-cover" />}
+              {clinicName && <span className="text-[11px] font-semibold truncate">{clinicName}</span>}
+            </div>
+          )}
+          {!step ? (
+            <p className="text-xs text-muted-foreground text-center mt-10">Sem etapa selecionada</p>
+          ) : (
+            <div className="flex-1 flex flex-col">
+              {mediaAbove && media && <div className="mb-2">{media}</div>}
+              {subtitleAbove && subtitle}
+              {cfg.title && (
+                <h3 className={`${TITLE_SIZES[titleSize]} font-bold ${ring("title")}`} onClick={click("title")}>{cfg.title}</h3>
+              )}
+              {!subtitleAbove && subtitle}
+              {!mediaAbove && media && <div className="mt-2">{media}</div>}
+              {step.type === "text" && cfg.body && (
+                <p className={`${BODY_SIZES[bodySize]} text-muted-foreground mt-2 ${ring("body")}`} onClick={click("body")}>{cfg.body}</p>
+              )}
+              {(step.type === "single" || step.type === "multiple") && (
+                <div className="mt-3 space-y-1.5">
+                  {(cfg.options ?? []).slice(0, 4).map((o: string) => (
+                    <div key={o} className="px-2 py-1.5 rounded-lg border border-border text-[11px]">{o}</div>
+                  ))}
+                </div>
+              )}
+              {step.type === "input" && <div className="mt-3 px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.placeholder}</div>}
+              {step.type === "lead" && (
+                <div className="mt-3 space-y-1.5">
+                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">Nome</div>
+                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">E-mail</div>
+                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">WhatsApp</div>
+                </div>
+              )}
+              {step.type === "contact" && (
+                <div className="mt-3 space-y-1.5">
+                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.namePlaceholder || "Seu nome"}</div>
+                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.phonePlaceholder || "Seu WhatsApp"}</div>
+                </div>
+              )}
+              <div className={`${btnCls} ${ring("cta")}`} onClick={click("cta")}>{cfg.cta || "Continuar"}</div>
+            </div>
+          )}
+        </div>
       </div>
+      {editable && !sel && (
+        <p className="text-[11px] text-muted-foreground text-center">Clique em um elemento do preview para editar</p>
+      )}
+    </div>
+  );
+}
+
+function ElementControls({ el, cfg, onChange, onClose }: { el: ElKey; cfg: any; onChange: (patch: any) => void; onClose: () => void }) {
+  const labels: Record<ElKey, string> = { title: "Título", subtitle: "Subtítulo", body: "Texto", media: "Mídia", cta: "Botão" };
+  const sizeKey: Record<ElKey, string> = { title: "titleSize", subtitle: "subtitleSize", body: "bodySize", media: "mediaSize", cta: "" };
+  const currentSize = (sizeKey[el] ? cfg[sizeKey[el]] : null) || "md";
+  const sizes: { v: SizeKey; l: string }[] = [{ v: "sm", l: "P" }, { v: "md", l: "M" }, { v: "lg", l: "G" }, { v: "xl", l: "XG" }];
+  return (
+    <div className="rounded-xl border border-border bg-background p-3 text-xs space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold">{labels[el]}</span>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+      </div>
+      {sizeKey[el] && (
+        <div>
+          <Label className="text-[11px]">Tamanho</Label>
+          <div className="mt-1 flex gap-1">
+            {sizes.map((s) => (
+              <button
+                key={s.v}
+                onClick={() => onChange({ [sizeKey[el]]: s.v })}
+                className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold transition ${currentSize === s.v ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/40"}`}
+              >{s.l}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {el === "media" && (
+        <div>
+          <Label className="text-[11px]">Posição</Label>
+          <div className="mt-1 flex gap-1">
+            {[{ v: "above", l: "Acima" }, { v: "below", l: "Abaixo" }].map((o) => (
+              <button key={o.v} onClick={() => onChange({ mediaPosition: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.mediaPosition ?? "above") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {el === "subtitle" && (
+        <div>
+          <Label className="text-[11px]">Posição</Label>
+          <div className="mt-1 flex gap-1">
+            {[{ v: "above", l: "Acima" }, { v: "below", l: "Abaixo" }].map((o) => (
+              <button key={o.v} onClick={() => onChange({ subtitlePosition: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.subtitlePosition ?? "below") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {(el === "title" || el === "subtitle" || el === "body") && (
+        <div>
+          <Label className="text-[11px]">Alinhamento</Label>
+          <div className="mt-1 flex gap-1">
+            {[{ v: "left", l: "←" }, { v: "center", l: "↔" }, { v: "right", l: "→" }].map((o) => (
+              <button key={o.v} onClick={() => onChange({ align: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.align ?? "left") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {el === "cta" && (
+        <div>
+          <Label className="text-[11px]">Estilo</Label>
+          <div className="mt-1 flex gap-1">
+            {[{ v: "solid", l: "Sólido" }, { v: "outline", l: "Contorno" }, { v: "ghost", l: "Discreto" }].map((o) => (
+              <button key={o.v} onClick={() => onChange({ buttonStyle: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.buttonStyle ?? "solid") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
