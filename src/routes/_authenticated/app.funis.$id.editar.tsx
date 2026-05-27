@@ -358,6 +358,47 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
 }
 
 function PhonePreview({ step }: { step: Step | null }) {
+
+function ImageUpload({ value, onChange }: { value?: string; onChange: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  async function handleFile(file: File) {
+    setUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { toast.error("Faça login novamente"); return; }
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("funnel-media").upload(path, file, { cacheControl: "3600", upsert: false });
+      if (error) { toast.error(error.message); return; }
+      const { data } = supabase.storage.from("funnel-media").getPublicUrl(path);
+      onChange(data.publicUrl);
+      toast.success("Imagem enviada!");
+    } finally {
+      setUploading(false);
+    }
+  }
+  return (
+    <div>
+      <Label className="text-xs">Imagem</Label>
+      {value ? (
+        <div className="mt-1 relative rounded-xl overflow-hidden border border-border">
+          <img src={value} alt="" className="w-full max-h-48 object-cover" />
+          <button type="button" onClick={() => onChange("")} className="absolute top-2 right-2 h-7 w-7 rounded-full bg-background/90 border border-border flex items-center justify-center hover:bg-background">
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <label className="mt-1 flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-xl border-2 border-dashed border-border cursor-pointer hover:border-primary/50 hover:bg-secondary/30 transition">
+          <Upload className="h-5 w-5 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">{uploading ? "Enviando..." : "Clique para enviar"}</span>
+          <input type="file" accept="image/*" className="hidden" disabled={uploading} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+        </label>
+      )}
+    </div>
+  );
+}
+
+function PhonePreviewRedirect({ step }: { step: Step | null }) {
   const cfg = step?.config ?? {};
   const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
   const btnCls =
