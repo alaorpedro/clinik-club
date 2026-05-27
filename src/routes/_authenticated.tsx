@@ -14,8 +14,11 @@ async function getCurrentUserWithFallback() {
   } catch {
     // Fall back to the local session below so private browsing never gets stuck loading.
   }
-  const { data } = await supabase.auth.getSession();
-  return data.session?.user ?? null;
+  const sessionResult = await Promise.race([
+    supabase.auth.getSession(),
+    new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 1000)),
+  ]);
+  return sessionResult?.data.session?.user ?? null;
 }
 
 export const Route = createFileRoute("/_authenticated")({
