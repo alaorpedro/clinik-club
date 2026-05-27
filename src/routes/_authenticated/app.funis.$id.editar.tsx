@@ -121,6 +121,7 @@ function EditFunnel() {
   }
 
   async function saveAll() {
+    if (!funnel) return;
     setSaveStatus("saving");
     const promises = [
       supabase.from("funnels").update({ updated_at: new Date().toISOString() }).eq("id", funnel.id),
