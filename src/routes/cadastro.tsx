@@ -9,7 +9,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/cadastro")({
-  head: () => ({ meta: [{ title: "Cadastre-se — odontolink" }] }),
+  head: () => ({ meta: [{ title: "Cadastre-se — Clinik.Club" }] }),
   component: CadastroPage,
 });
 

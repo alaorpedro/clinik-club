@@ -9,7 +9,7 @@ import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Entrar — odontolink" }] }),
+  head: () => ({ meta: [{ title: "Entrar — Clinik.Club" }] }),
   component: LoginPage,
 });
 
@@ -40,7 +40,7 @@ function LoginPage() {
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-16 max-w-md">
         <h1 className="text-4xl font-black tracking-tight">Entrar</h1>
-        <p className="mt-2 text-muted-foreground">Acesse sua conta odontolink.</p>
+        <p className="mt-2 text-muted-foreground">Acesse sua conta Clinik.Club.</p>
         <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Entrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">

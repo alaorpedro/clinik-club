@@ -10,10 +10,10 @@ import { useState } from "react";
 export const Route = createFileRoute("/contato")({
   head: () => ({
     meta: [
-      { title: "Contato — odontolink" },
-      { name: "description", content: "Fale com a equipe da odontolink. Tire dúvidas, peça uma demo ou negocie planos." },
-      { property: "og:title", content: "Contato — odontolink" },
-      { property: "og:description", content: "Entre em contato com a equipe da odontolink." },
+      { title: "Contato — Clinik.Club" },
+      { name: "description", content: "Fale com a equipe da Clinik.Club. Tire dúvidas, peça uma demo ou negocie planos." },
+      { property: "og:title", content: "Contato — Clinik.Club" },
+      { property: "og:description", content: "Entre em contato com a equipe da Clinik.Club." },
     ],
   }),
   component: ContatoPage,
