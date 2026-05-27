@@ -258,26 +258,27 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
 
   if (step.type === "single") {
     const opts = normalizeOpts(cfg.options);
-    function choose(o: QuizOpt) {
-      const extra = { [key]: o.label };
-      if (o.action === "disqualify") {
-        onDisqualify();
-        return;
-      }
-      if (o.action === "jump" && o.targetStepId) {
-        onJump(o.targetStepId);
-        return;
-      }
+    const selectedLabel: string = typeof value === "string" ? value : "";
+    const selectedOpt = opts.find((o) => o.label === selectedLabel);
+    function confirm() {
+      if (!selectedOpt) return;
+      const extra = { [key]: selectedOpt.label };
+      if (selectedOpt.action === "disqualify") { onDisqualify(); return; }
+      if (selectedOpt.action === "jump" && selectedOpt.targetStepId) { onJump(selectedOpt.targetStepId); return; }
       onNext(extra);
     }
     return (
       <div>
         {header}
         <div className="mt-6 space-y-2">
-          {opts.map((o, i) => (
-            <button key={i} onClick={() => choose(o)} className="w-full text-left px-4 py-3 rounded-xl border border-border hover:border-primary/50 transition font-medium">{o.label}</button>
-          ))}
+          {opts.map((o, i) => {
+            const isOn = selectedLabel === o.label;
+            return (
+              <button key={i} onClick={() => setValue(o.label)} className={`w-full text-left px-4 py-3 rounded-xl border transition font-medium ${isOn ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>{o.label}</button>
+            );
+          })}
         </div>
+        <Button className={btnClass} disabled={!selectedOpt} onClick={confirm}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
       </div>
     );
   }
