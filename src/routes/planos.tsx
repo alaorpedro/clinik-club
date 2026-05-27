@@ -12,9 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 export const Route = createFileRoute("/planos")({
   head: () => ({
     meta: [
-      { title: "Planos — Clinik.Club" },
+      { title: "Planos — Click.Club" },
       { name: "description", content: "Escolha o plano ideal para o seu volume de leads. Starter, Pro e Agency." },
-      { property: "og:title", content: "Planos — Clinik.Club" },
+      { property: "og:title", content: "Planos — Click.Club" },
       { property: "og:description", content: "Escolha o plano ideal para o seu volume de leads." },
     ],
   }),

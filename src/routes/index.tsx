@@ -9,9 +9,9 @@ import { Check, Zap, BarChart3, MousePointer2 } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Clinik.Club — Funis de vendas interativos para clínicas" },
+      { title: "Click.Club — Funis de vendas interativos para clínicas" },
       { name: "description", content: "Transforme tráfego em pacientes com funis interativos. Crie quizzes, capture leads e acompanhe conversões em uma única plataforma." },
-      { property: "og:title", content: "Clinik.Club — Funis de vendas interativos" },
+      { property: "og:title", content: "Click.Club — Funis de vendas interativos" },
       { property: "og:description", content: "Transforme tráfego em pacientes com funis interativos." },
     ],
   }),
@@ -39,7 +39,7 @@ function Index() {
                 </span>
               </h1>
               <p className="mt-6 text-lg text-muted-foreground max-w-xl">
-                A <strong className="text-foreground">Clinik.Club</strong> transforma tráfego em pacientes com <strong className="text-foreground">funis de vendas interativos</strong>, visualmente otimizados e centralizados em uma única plataforma.
+                A <strong className="text-foreground">Click.Club</strong> transforma tráfego em pacientes com <strong className="text-foreground">funis de vendas interativos</strong>, visualmente otimizados e centralizados em uma única plataforma.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-3">
                 <Button asChild size="lg" className="rounded-full font-semibold h-12 px-6">
