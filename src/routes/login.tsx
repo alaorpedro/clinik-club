@@ -11,11 +11,16 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Entrar — Clinik.Club" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const nextPath = next?.startsWith("/") ? next : "/app";
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -35,13 +40,13 @@ function LoginPage() {
       }
       return;
     }
-    navigate({ to: "/app" });
+    navigate({ to: nextPath as never });
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/app" });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + nextPath });
     if (result.error) toast.error("Erro ao entrar com Google");
-    if (!result.redirected && !result.error) navigate({ to: "/app" });
+    if (!result.redirected && !result.error) navigate({ to: nextPath as never });
   }
 
   return (
@@ -49,7 +54,11 @@ function LoginPage() {
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-16 max-w-md">
         <h1 className="text-4xl font-black tracking-tight">Entrar</h1>
-        <p className="mt-2 text-muted-foreground">Acesse sua conta Clinik.Club.</p>
+        <p className="mt-2 text-muted-foreground">
+          {nextPath.startsWith("/app")
+            ? "Entre para acessar o app. Depois disso, você poderá escolher seu plano."
+            : "Acesse sua conta Clinik.Club."}
+        </p>
         <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Entrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -58,7 +67,7 @@ function LoginPage() {
           <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
         </form>
         <p className="mt-6 text-sm text-center text-muted-foreground">
-          Não tem conta? <Link to="/cadastro" className="text-primary font-medium">Cadastre-se</Link>
+          Não tem conta? <Link to="/cadastro" search={next ? ({ next } as never) : undefined} className="text-primary font-medium">Cadastre-se</Link>
         </p>
         <p className="mt-2 text-sm text-center"><Link to="/reset-password" className="text-muted-foreground hover:text-foreground">Esqueci minha senha</Link></p>
       </main>
