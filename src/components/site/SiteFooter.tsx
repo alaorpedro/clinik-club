@@ -7,8 +7,7 @@ export function SiteFooter() {
       <div className="container mx-auto px-4 py-12 grid gap-8 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <img src={logoMark} alt="Clinik.Club" width={32} height={32} className="h-8 w-8" loading="lazy" />
-            <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
+            <span className="text-lg font-bold">Click<span className="text-primary">.Club</span></span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
             Funis de vendas interativos para clínicas e profissionais da saúde.
