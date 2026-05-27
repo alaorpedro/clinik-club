@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Copy, Settings } from "lucide-react";
+import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,15 +15,29 @@ type Funnel = { id: string; name: string; slug: string; status: string; created_
 function AppHome() {
   const [funnels, setFunnels] = useState<Funnel[] | null>(null);
   const [settingsFor, setSettingsFor] = useState<string | null>(null);
+  const [hasPlan, setHasPlan] = useState<boolean | null>(null);
 
   useEffect(() => {
     supabase.from("funnels").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
       if (error) toast.error(error.message);
       setFunnels(data ?? []);
     });
+    (async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u.user) return;
+      const { data: ok } = await supabase.rpc("has_active_subscription", {
+        user_uuid: u.user.id,
+        check_env: (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live",
+      });
+      setHasPlan(!!ok);
+    })();
   }, []);
 
   async function createFunnel() {
+    if (!hasPlan) {
+      toast.error("Você precisa de um plano ativo para criar funis.");
+      return;
+    }
     const name = prompt("Nome do funil:");
     if (!name) return;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
@@ -37,22 +51,58 @@ function AppHome() {
 
   return (
     <div>
+      {hasPlan === false && (
+        <div className="mb-6 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 p-5 flex items-center gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <Lock className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-sm">Ative um plano para começar</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Você precisa de um plano ativo para criar e publicar funis. Conta criada com sucesso — falta só escolher seu plano.</p>
+          </div>
+          <Button asChild size="sm" className="rounded-full font-semibold shrink-0">
+            <Link to="/planos">Ver planos</Link>
+          </Button>
+        </div>
+      )}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-black tracking-tight">Meus funis</h1>
           <p className="text-muted-foreground mt-1">Crie e gerencie seus funis interativos.</p>
         </div>
-        <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
+        {hasPlan === false ? (
+          <Button asChild className="rounded-full font-semibold">
+            <Link to="/planos"><Lock className="h-4 w-4 mr-1" />Ativar plano</Link>
+          </Button>
+        ) : (
+          <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
+        )}
       </div>
       {funnels === null ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : funnels.length === 0 ? (
-        <div className="rounded-3xl border-2 border-dashed border-border bg-background p-16 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Sparkles className="h-7 w-7" /></div>
-          <h2 className="mt-5 text-xl font-bold">Nenhum funil ainda</h2>
-          <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">Crie seu primeiro funil interativo e comece a capturar leads em minutos.</p>
-          <Button onClick={createFunnel} className="mt-6 rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Criar primeiro funil</Button>
-        </div>
+        hasPlan === false ? (
+          <div className="rounded-3xl border-2 border-dashed border-primary/30 bg-background p-12 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Sparkles className="h-7 w-7" /></div>
+            <h2 className="mt-5 text-xl font-bold">Bem-vindo(a) ao Clinik.Club! 🎉</h2>
+            <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">Sua conta está pronta. Para criar seu primeiro funil e começar a capturar leads, escolha um plano abaixo.</p>
+            <div className="mt-6 mx-auto max-w-sm space-y-2 text-left text-sm">
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /><span>Funis ilimitados de captação</span></div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /><span>Link público para compartilhar</span></div>
+              <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /><span>Cancele quando quiser</span></div>
+            </div>
+            <Button asChild className="mt-6 rounded-full font-semibold">
+              <Link to="/planos">Escolher meu plano</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="rounded-3xl border-2 border-dashed border-border bg-background p-16 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Sparkles className="h-7 w-7" /></div>
+            <h2 className="mt-5 text-xl font-bold">Nenhum funil ainda</h2>
+            <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">Crie seu primeiro funil interativo e comece a capturar leads em minutos.</p>
+            <Button onClick={createFunnel} className="mt-6 rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Criar primeiro funil</Button>
+          </div>
+        )
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {funnels.map((f) => (
