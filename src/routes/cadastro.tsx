@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { PasswordStrength } from "@/components/PasswordStrength";
+import { ptValidation } from "@/lib/validation-messages";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
@@ -65,11 +66,11 @@ function CadastroPage() {
         <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Cadastrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">
-          <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" required className="mt-1.5" /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" defaultValue={prefEmail} readOnly={!!prefEmail} /></div>
+          <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" required className="mt-1.5" {...ptValidation("nome")} /></div>
+          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" defaultValue={prefEmail} readOnly={!!prefEmail} {...ptValidation("email")} /></div>
           <div>
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" name="password" type="password" minLength={8} required className="mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input id="password" name="password" type="password" minLength={8} required className="mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} {...ptValidation("senha")} />
             <PasswordStrength password={password} />
           </div>
           <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Criando..." : "Criar conta"}</Button>
