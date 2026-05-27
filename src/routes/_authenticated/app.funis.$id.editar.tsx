@@ -78,6 +78,19 @@ function EditFunnel() {
     await supabase.from("funnel_steps").update({ order: i }).eq("id", b.id);
   }
 
+  async function reorderTo(fromId: string, toIndex: number) {
+    const from = steps.findIndex((s) => s.id === fromId);
+    if (from < 0 || toIndex < 0 || toIndex >= steps.length || from === toIndex) return;
+    const next = [...steps];
+    const [moved] = next.splice(from, 1);
+    next.splice(toIndex, 0, moved);
+    const renum = next.map((s, idx) => ({ ...s, order: idx }));
+    setSteps(renum);
+    await Promise.all(
+      renum.map((s) => supabase.from("funnel_steps").update({ order: s.order }).eq("id", s.id))
+    );
+  }
+
   async function togglePublish() {
     if (!funnel) return;
     const status = funnel.status === "published" ? "draft" : "published";
@@ -161,15 +174,32 @@ function EditFunnel() {
           <div className="text-xs font-semibold uppercase text-muted-foreground mb-3">Etapas</div>
           <div className="space-y-1.5">
             {steps.map((s, i) => (
-              <button
+              <div
                 key={s.id}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", s.id);
+                  e.dataTransfer.effectAllowed = "move";
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  e.currentTarget.classList.add("ring-2", "ring-primary/40");
+                }}
+                onDragLeave={(e) => e.currentTarget.classList.remove("ring-2", "ring-primary/40")}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.currentTarget.classList.remove("ring-2", "ring-primary/40");
+                  const fromId = e.dataTransfer.getData("text/plain");
+                  if (fromId && fromId !== s.id) reorderTo(fromId, i);
+                }}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition cursor-move ${selected === s.id ? "bg-primary/10 text-primary" : "hover:bg-secondary"}`}
                 onClick={() => setSelected(s.id)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition ${selected === s.id ? "bg-primary/10 text-primary" : "hover:bg-secondary"}`}
               >
-                <GripVertical className="h-3.5 w-3.5 opacity-50" />
+                <GripVertical className="h-3.5 w-3.5 opacity-50 shrink-0" />
                 <span className="font-medium">{i + 1}.</span>
                 <span className="truncate flex-1">{s.config?.title || STEP_TYPES.find((t) => t.value === s.type)?.label}</span>
-              </button>
+              </div>
             ))}
             {steps.length === 0 && <p className="text-xs text-muted-foreground px-2">Adicione sua primeira etapa abaixo.</p>}
           </div>
