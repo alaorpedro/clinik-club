@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { PasswordStrength } from "@/components/PasswordStrength";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ function CadastroPage() {
   const navigate = useNavigate();
   const { email: prefEmail, next } = Route.useSearch();
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -65,7 +67,11 @@ function CadastroPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" required className="mt-1.5" /></div>
           <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" defaultValue={prefEmail} readOnly={!!prefEmail} /></div>
-          <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" minLength={6} required className="mt-1.5" /></div>
+          <div>
+            <Label htmlFor="password">Senha</Label>
+            <Input id="password" name="password" type="password" minLength={8} required className="mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <PasswordStrength password={password} />
+          </div>
           <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Criando..." : "Criar conta"}</Button>
         </form>
         <p className="mt-6 text-sm text-center text-muted-foreground">
