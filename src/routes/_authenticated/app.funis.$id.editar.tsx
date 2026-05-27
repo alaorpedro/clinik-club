@@ -628,6 +628,7 @@ function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: {
 }
 
 function ImageUpload({ value, onChange }: { value?: string; onChange: (url: string) => void }) {
+  // placeholder anchor
   const [uploading, setUploading] = useState(false);
   async function handleFile(file: File) {
     setUploading(true);
