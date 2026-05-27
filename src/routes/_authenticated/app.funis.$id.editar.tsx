@@ -22,6 +22,7 @@ const STEP_TYPES = [
   { value: "multiple", label: "Múltipla escolha" },
   { value: "input", label: "Campo de texto" },
   { value: "lead", label: "Captura de lead" },
+  { value: "contact", label: "Nome + Telefone" },
 ];
 
 function EditFunnel() {
