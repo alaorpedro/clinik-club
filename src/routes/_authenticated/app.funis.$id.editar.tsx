@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, GripVertical, Plus, Trash2, Eye, Globe } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
@@ -112,6 +112,22 @@ function EditFunnel() {
             <Globe className="h-4 w-4 mr-1" />{funnel.status === "published" ? "Despublicar" : "Publicar"}
           </Button>
         </div>
+      </div>
+
+      <div className="mb-6 flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2.5">
+        <span className="text-xs text-muted-foreground shrink-0">Link público:</span>
+        <Input readOnly value={publicUrl} className="h-8 border-0 bg-transparent px-1 text-sm focus-visible:ring-0" />
+        <Button
+          size="sm"
+          variant="outline"
+          className="rounded-full shrink-0"
+          onClick={() => {
+            navigator.clipboard.writeText(publicUrl);
+            toast.success("Link copiado!");
+          }}
+        >
+          <Copy className="h-3.5 w-3.5 mr-1" />Copiar
+        </Button>
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr_320px] gap-6">
