@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { ToothMark } from "@/components/site/ToothMark";
 
 
 export function SiteHeader() {
@@ -9,6 +10,9 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <ToothMark className="h-4 w-4" />
+          </span>
           <span className="text-lg font-bold tracking-tight">Clinik<span className="text-primary">.Club</span></span>
         </Link>
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
