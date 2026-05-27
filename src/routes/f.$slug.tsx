@@ -165,6 +165,19 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
     );
   }
 
+  if (step.type === "contact") {
+    return (
+      <div>
+        <h2 className="text-2xl font-black tracking-tight">{cfg.title || "Deixe seu contato"}</h2>
+        <div className="mt-6 space-y-3">
+          <Input placeholder={cfg.namePlaceholder || "Seu nome"} value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
+          <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} />
+        </div>
+        <Button className="mt-6 rounded-full w-full font-semibold" disabled={!lead.name || !lead.phone} onClick={() => onNext(undefined, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+      </div>
+    );
+  }
+
   return (
     <div>
       <p className="text-muted-foreground">Tipo de etapa desconhecido.</p>

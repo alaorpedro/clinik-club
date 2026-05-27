@@ -22,6 +22,7 @@ const STEP_TYPES = [
   { value: "multiple", label: "Múltipla escolha" },
   { value: "input", label: "Campo de texto" },
   { value: "lead", label: "Captura de lead" },
+  { value: "contact", label: "Nome + Telefone" },
 ];
 
 function EditFunnel() {
@@ -192,6 +193,7 @@ function defaultConfig(type: string): any {
     case "multiple": return { title: "Selecione todas que se aplicam", options: ["Item 1", "Item 2"], cta: "Continuar" };
     case "input": return { title: "Qual a sua resposta?", placeholder: "Digite aqui...", cta: "Continuar" };
     case "lead": return { title: "Quase lá! Deixe seu contato", cta: "Receber resultado" };
+    case "contact": return { title: "Deixe seu contato", cta: "Enviar", namePlaceholder: "Seu nome", phonePlaceholder: "Seu WhatsApp" };
     default: return {};
   }
 }
@@ -247,6 +249,19 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
         </div>
       )}
 
+      {step.type === "contact" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Placeholder do nome</Label>
+            <Input value={cfg.namePlaceholder ?? ""} onChange={(e) => setCfg({ namePlaceholder: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs">Placeholder do telefone</Label>
+            <Input value={cfg.phonePlaceholder ?? ""} onChange={(e) => setCfg({ phonePlaceholder: e.target.value })} />
+          </div>
+        </div>
+      )}
+
       {step.type !== "single" && (
         <div>
           <Label className="text-xs">Texto do botão</Label>
@@ -282,6 +297,12 @@ function PhonePreview({ step }: { step: Step | null }) {
                 <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">Nome</div>
                 <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">E-mail</div>
                 <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">WhatsApp</div>
+              </div>
+            )}
+            {step.type === "contact" && (
+              <div className="mt-3 space-y-1.5">
+                <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.namePlaceholder || "Seu nome"}</div>
+                <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.phonePlaceholder || "Seu WhatsApp"}</div>
               </div>
             )}
             <div className="mt-auto px-3 py-2 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold text-center">{cfg.cta || "Continuar"}</div>
