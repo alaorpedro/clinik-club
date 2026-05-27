@@ -9,18 +9,28 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: funnel, error } = await supabaseAdmin
       .from("funnels")
-      .select("id, name, slug, status, theme, clinic_name, clinic_logo_url, gtm_id, meta_pixel_id")
+      .select("id, name, slug, status, theme, owner_id, gtm_id, meta_pixel_id")
       .eq("slug", data.slug)
       .eq("status", "published")
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!funnel) return { funnel: null, steps: [] as Array<{ id: string; type: string; config: any; order: number }> };
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("clinic_name, clinic_logo_url")
+      .eq("id", funnel.owner_id)
+      .maybeSingle();
+    const enriched = {
+      ...funnel,
+      clinic_name: profile?.clinic_name ?? null,
+      clinic_logo_url: profile?.clinic_logo_url ?? null,
+    };
     const { data: steps } = await supabaseAdmin
       .from("funnel_steps")
       .select("id, type, config, order")
       .eq("funnel_id", funnel.id)
       .order("order", { ascending: true });
-    return { funnel, steps: (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }> };
+    return { funnel: enriched, steps: (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }> };
   });
 
 export const submitLead = createServerFn({ method: "POST" })
