@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 });
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
-type Funnel = { id: string; name: string; slug: string; status: string; gtm_id: string | null; meta_pixel_id: string | null };
+type Funnel = { id: string; name: string; slug: string; status: string; gtm_id: string | null; meta_pixel_id: string | null; theme: any };
 type ClinicProfile = { clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null };
 
 export type QuizOption = { label: string; action: "continue" | "disqualify" | "jump"; targetStepId?: string };
@@ -64,7 +64,7 @@ function EditFunnel() {
   }, [settingsParam]);
 
   async function load() {
-    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, gtm_id, meta_pixel_id").eq("id", id).maybeSingle();
+    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, gtm_id, meta_pixel_id, theme").eq("id", id).maybeSingle();
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     const { data: u } = await supabase.auth.getUser();
     if (u?.user) {
