@@ -196,7 +196,12 @@ function EditFunnel() {
         <aside className="hidden lg:block">
           <div className="sticky top-6">
             <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Preview</p>
-            <PhonePreview step={current} clinicName={funnel.clinic_name} clinicLogo={funnel.clinic_logo_url} />
+            <PhonePreview
+              step={current}
+              clinicName={funnel.clinic_name}
+              clinicLogo={funnel.clinic_logo_url}
+              onChange={current ? (patch) => updateStep(current.id, { config: { ...current.config, ...patch } }) : undefined}
+            />
           </div>
         </aside>
       </div>
