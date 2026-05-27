@@ -631,12 +631,18 @@ function ElementControls({ el, cfg, onChange, onClose }: { el: ElKey; cfg: any; 
         </div>
       )}
       {el === "cta" && (
-        <div>
-          <Label className="text-[11px]">Estilo</Label>
-          <div className="mt-1 flex gap-1">
-            {[{ v: "solid", l: "Sólido" }, { v: "outline", l: "Contorno" }, { v: "ghost", l: "Discreto" }].map((o) => (
-              <button key={o.v} onClick={() => onChange({ buttonStyle: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.buttonStyle ?? "solid") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
-            ))}
+        <div className="space-y-2">
+          <div>
+            <Label className="text-[11px]">Texto do botão</Label>
+            <Input className="mt-1 h-8 text-xs" value={cfg.cta ?? ""} onChange={(e) => onChange({ cta: e.target.value })} placeholder="Continuar" />
+          </div>
+          <div>
+            <Label className="text-[11px]">Estilo</Label>
+            <div className="mt-1 flex gap-1">
+              {[{ v: "solid", l: "Sólido" }, { v: "outline", l: "Contorno" }, { v: "ghost", l: "Discreto" }].map((o) => (
+                <button key={o.v} onClick={() => onChange({ buttonStyle: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.buttonStyle ?? "solid") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
+              ))}
+            </div>
           </div>
         </div>
       )}
