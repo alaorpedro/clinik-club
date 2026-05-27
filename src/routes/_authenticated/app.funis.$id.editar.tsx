@@ -13,6 +13,9 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
   component: EditFunnel,
+  validateSearch: (search: Record<string, unknown>) => ({
+    settings: search.settings === "open" ? "open" : undefined,
+  }),
 });
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
@@ -46,6 +49,7 @@ const STEP_TYPES = [
 
 function EditFunnel() {
   const { id } = Route.useParams();
+  const { settings: settingsParam } = Route.useSearch();
   const [funnel, setFunnel] = useState<Funnel | null>(null);
   const [clinic, setClinic] = useState<ClinicProfile>({ clinic_name: null, clinic_logo_url: null, instagram_url: null });
   const [steps, setSteps] = useState<Step[]>([]);
@@ -54,6 +58,10 @@ function EditFunnel() {
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "modified">("saved");
   const [slugDraft, setSlugDraft] = useState("");
   const [slugError, setSlugError] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => {
+    if (settingsParam === "open") setSettingsOpen(true);
+  }, [settingsParam]);
 
   async function load() {
     const { data: f } = await supabase.from("funnels").select("id, name, slug, status, gtm_id, meta_pixel_id").eq("id", id).maybeSingle();
@@ -260,7 +268,7 @@ function EditFunnel() {
           {funnel.status === "published" && (
             <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline" size="sm" className="rounded-full"><Eye className="h-4 w-4 mr-1" />Ver público</Button></a>
           )}
-          <Dialog>
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="rounded-full">
                 <Settings className="h-4 w-4 mr-1" />Configurações do funil
