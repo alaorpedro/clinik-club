@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
+import { PlansDialog } from "@/components/PlansDialog";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
@@ -16,6 +17,7 @@ function AppHome() {
   const [funnels, setFunnels] = useState<Funnel[] | null>(null);
   const [settingsFor, setSettingsFor] = useState<string | null>(null);
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
+  const [plansOpen, setPlansOpen] = useState(false);
 
   useEffect(() => {
     supabase.from("funnels").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
@@ -60,8 +62,8 @@ function AppHome() {
             <h3 className="font-bold text-sm">Ative um plano para começar</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Você precisa de um plano ativo para criar e publicar funis. Conta criada com sucesso — falta só escolher seu plano.</p>
           </div>
-          <Button asChild size="sm" className="rounded-full font-semibold shrink-0">
-            <Link to="/planos">Ver planos</Link>
+          <Button size="sm" onClick={() => setPlansOpen(true)} className="rounded-full font-semibold shrink-0">
+            Ver planos
           </Button>
         </div>
       )}
@@ -71,8 +73,8 @@ function AppHome() {
           <p className="text-muted-foreground mt-1">Crie e gerencie seus funis interativos.</p>
         </div>
         {hasPlan === false ? (
-          <Button asChild className="rounded-full font-semibold">
-            <Link to="/planos"><Lock className="h-4 w-4 mr-1" />Ativar plano</Link>
+          <Button onClick={() => setPlansOpen(true)} className="rounded-full font-semibold">
+            <Lock className="h-4 w-4 mr-1" />Ativar plano
           </Button>
         ) : (
           <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
@@ -91,8 +93,8 @@ function AppHome() {
               <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /><span>Link público para compartilhar</span></div>
               <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary shrink-0" /><span>Cancele quando quiser</span></div>
             </div>
-            <Button asChild className="mt-6 rounded-full font-semibold">
-              <Link to="/planos">Escolher meu plano</Link>
+            <Button onClick={() => setPlansOpen(true)} className="mt-6 rounded-full font-semibold">
+              Escolher meu plano
             </Button>
           </div>
         ) : (
@@ -154,6 +156,7 @@ function AppHome() {
           onSlugChange={(slug) => setFunnels((prev) => prev?.map((x) => x.id === settingsFor ? { ...x, slug } : x) ?? null)}
         />
       )}
+      <PlansDialog open={plansOpen} onOpenChange={setPlansOpen} />
     </div>
   );
 }
