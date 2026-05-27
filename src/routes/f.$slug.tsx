@@ -30,7 +30,7 @@ function genId() {
 }
 
 function PublicFunnel() {
-  const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string }; steps: Step[] };
+  const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null }; steps: Step[] };
   const submit = useServerFn(submitLead);
   const track = useServerFn(trackStep);
   const [index, setIndex] = useState(0);
@@ -84,8 +84,18 @@ function PublicFunnel() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/30 py-10 px-4">
-      <div className="max-w-xl mx-auto">
+    <div className="min-h-screen bg-secondary/30">
+      {(funnel.clinic_name || funnel.clinic_logo_url) && (
+        <header className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b border-border">
+          <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
+            {funnel.clinic_logo_url && (
+              <img src={funnel.clinic_logo_url} alt={funnel.clinic_name ?? "logo"} className="h-10 w-10 rounded-full object-cover border border-border" />
+            )}
+            {funnel.clinic_name && <span className="font-semibold tracking-tight">{funnel.clinic_name}</span>}
+          </div>
+        </header>
+      )}
+      <div className="max-w-xl mx-auto py-10 px-4">
         <Progress value={progress} className="mb-6" />
         <div
           className="rounded-3xl bg-background border border-border shadow-soft p-8"
