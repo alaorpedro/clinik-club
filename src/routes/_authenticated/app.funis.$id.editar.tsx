@@ -249,6 +249,19 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
         </div>
       )}
 
+      {step.type === "contact" && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Placeholder do nome</Label>
+            <Input value={cfg.namePlaceholder ?? ""} onChange={(e) => setCfg({ namePlaceholder: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs">Placeholder do telefone</Label>
+            <Input value={cfg.phonePlaceholder ?? ""} onChange={(e) => setCfg({ phonePlaceholder: e.target.value })} />
+          </div>
+        </div>
+      )}
+
       {step.type !== "single" && (
         <div>
           <Label className="text-xs">Texto do botão</Label>
