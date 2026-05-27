@@ -288,6 +288,16 @@ function EditFunnel() {
                     <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
                   </div>
                 </div>
+                <div className="mt-4">
+                  <Label className="text-xs">Instagram da clínica</Label>
+                  <Input
+                    value={clinic.instagram_url ?? ""}
+                    onChange={(e) => setClinic((prev) => ({ ...prev, instagram_url: e.target.value }))}
+                    onBlur={(e) => updateClinic({ instagram_url: e.target.value.trim() || null })}
+                    placeholder="https://instagram.com/suaclinica"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-2">Para onde leads desqualificados nas perguntas serão redirecionados.</p>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-border bg-background p-4">
