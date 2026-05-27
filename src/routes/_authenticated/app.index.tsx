@@ -4,6 +4,7 @@ import { Plus, Sparkles, Copy, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
@@ -13,6 +14,7 @@ type Funnel = { id: string; name: string; slug: string; status: string; created_
 
 function AppHome() {
   const [funnels, setFunnels] = useState<Funnel[] | null>(null);
+  const [settingsFor, setSettingsFor] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.from("funnels").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
@@ -68,15 +70,13 @@ function AppHome() {
                   <Link to="/app/funis/$id/leads" params={{ id: f.id }}>Leads</Link>
                 </Button>
                 <Button
-                  asChild
                   size="sm"
                   variant="ghost"
                   className="rounded-full ml-auto"
                   title="Configurações do funil"
+                  onClick={() => setSettingsFor(f.id)}
                 >
-                  <Link to="/app/funis/$id/editar" params={{ id: f.id }} search={{ settings: "open" }}>
-                    <Settings className="h-3.5 w-3.5" />
-                  </Link>
+                  <Settings className="h-3.5 w-3.5" />
                 </Button>
                 <Button
                   size="sm"
@@ -95,6 +95,14 @@ function AppHome() {
             </div>
           ))}
         </div>
+      )}
+      {settingsFor && (
+        <FunnelSettingsDialog
+          funnelId={settingsFor}
+          open={!!settingsFor}
+          onOpenChange={(v) => !v && setSettingsFor(null)}
+          onSlugChange={(slug) => setFunnels((prev) => prev?.map((x) => x.id === settingsFor ? { ...x, slug } : x) ?? null)}
+        />
       )}
     </div>
   );
