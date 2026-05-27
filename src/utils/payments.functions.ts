@@ -113,3 +113,27 @@ export const createPortalSession = createServerFn({ method: "POST" })
       return { error: getStripeErrorMessage(error) };
     }
   });
+
+type CheckoutSessionInfo =
+  | { email: string | null; status: string | null }
+  | { error: string };
+
+export const getCheckoutSessionInfo = createServerFn({ method: "POST" })
+  .inputValidator((data: { sessionId: string; environment: StripeEnv }) => {
+    if (!/^cs_(test|live)_[a-zA-Z0-9]+$/.test(data.sessionId)) {
+      throw new Error("Invalid sessionId");
+    }
+    return data;
+  })
+  .handler(async ({ data }): Promise<CheckoutSessionInfo> => {
+    try {
+      const stripe = createStripeClient(data.environment);
+      const session = await stripe.checkout.sessions.retrieve(data.sessionId);
+      const email =
+        session.customer_details?.email ??
+        (typeof session.customer_email === "string" ? session.customer_email : null);
+      return { email, status: session.status ?? null };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
+  });
