@@ -109,9 +109,15 @@ function EditFunnel() {
 
   async function updateFunnel(patch: Partial<Funnel>) {
     if (!funnel) return;
+    setSaveStatus("modified");
     setFunnel({ ...funnel, ...patch });
     const { error } = await supabase.from("funnels").update(patch).eq("id", funnel.id);
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      setSaveStatus("modified");
+    } else {
+      setSaveStatus("saved");
+    }
   }
 
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
