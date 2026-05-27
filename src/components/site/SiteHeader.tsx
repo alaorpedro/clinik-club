@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import logoMark from "@/assets/clinik-club-mark.png";
+
 
 export function SiteHeader() {
   const { user } = useAuth();

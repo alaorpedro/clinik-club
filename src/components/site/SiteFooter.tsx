@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import logoMark from "@/assets/clinik-club-mark.png";
+
 
 export function SiteFooter() {
   return (

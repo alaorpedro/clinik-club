@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, User, LogOut, Loader2 } from "lucide-react";
-import logoMark from "@/assets/clinik-club-mark.png";
+
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
