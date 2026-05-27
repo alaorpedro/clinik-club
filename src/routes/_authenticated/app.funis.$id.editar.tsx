@@ -47,7 +47,7 @@ const STEP_TYPES = [
 function EditFunnel() {
   const { id } = Route.useParams();
   const [funnel, setFunnel] = useState<Funnel | null>(null);
-  const [clinic, setClinic] = useState<ClinicProfile>({ clinic_name: null, clinic_logo_url: null });
+  const [clinic, setClinic] = useState<ClinicProfile>({ clinic_name: null, clinic_logo_url: null, instagram_url: null });
   const [steps, setSteps] = useState<Step[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,8 +60,8 @@ function EditFunnel() {
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     const { data: u } = await supabase.auth.getUser();
     if (u?.user) {
-      const { data: p } = await supabase.from("profiles").select("clinic_name, clinic_logo_url").eq("id", u.user.id).maybeSingle();
-      if (p) setClinic(p as ClinicProfile);
+      const { data: p } = await supabase.from("profiles").select("clinic_name, clinic_logo_url, instagram_url").eq("id", u.user.id).maybeSingle();
+      if (p) setClinic({ clinic_name: (p as any).clinic_name ?? null, clinic_logo_url: (p as any).clinic_logo_url ?? null, instagram_url: (p as any).instagram_url ?? null });
     }
     setFunnel(f as Funnel | null);
     setSlugDraft((f as Funnel | null)?.slug ?? "");
