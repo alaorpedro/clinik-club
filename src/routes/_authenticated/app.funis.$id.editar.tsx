@@ -657,6 +657,13 @@ function ElementControls({ el, cfg, onChange, onClose }: { el: ElKey; cfg: any; 
               <button key={o.v} onClick={() => onChange({ mediaPosition: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.mediaPosition ?? "above") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
             ))}
           </div>
+          {(typeof cfg.mediaWidthPct === "number" || typeof cfg.mediaHeight === "number") && (
+            <button
+              onClick={() => onChange({ mediaWidthPct: null, mediaHeight: null })}
+              className="mt-2 w-full px-2 py-1.5 rounded-lg border border-border text-[11px] hover:bg-secondary"
+            >Restaurar tamanho</button>
+          )}
+          <p className="mt-2 text-[10px] text-muted-foreground">Arraste as alças no preview para redimensionar livremente.</p>
         </div>
       )}
       {el === "subtitle" && (
