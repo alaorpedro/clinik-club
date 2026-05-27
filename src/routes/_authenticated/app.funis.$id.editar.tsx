@@ -156,6 +156,14 @@ function EditFunnel() {
     }
   }
 
+  async function updateThankYou(patch: Record<string, any>) {
+    if (!funnel) return;
+    const currentTheme = (funnel.theme && typeof funnel.theme === "object") ? funnel.theme : {};
+    const currentTy = (currentTheme as any).thankYou && typeof (currentTheme as any).thankYou === "object" ? (currentTheme as any).thankYou : {};
+    const nextTheme = { ...currentTheme, thankYou: { ...currentTy, ...patch } };
+    await updateFunnel({ theme: nextTheme });
+  }
+
   async function updateClinic(patch: Partial<ClinicProfile>) {
     setSaveStatus("modified");
     setClinic((prev) => ({ ...prev, ...patch }));
