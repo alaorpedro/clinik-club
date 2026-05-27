@@ -86,6 +86,8 @@ export type Database = {
       }
       funnels: {
         Row: {
+          clinic_logo_url: string | null
+          clinic_name: string | null
           created_at: string
           id: string
           name: string
@@ -96,6 +98,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
           created_at?: string
           id?: string
           name: string
@@ -106,6 +110,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          clinic_logo_url?: string | null
+          clinic_name?: string | null
           created_at?: string
           id?: string
           name?: string
