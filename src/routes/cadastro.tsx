@@ -46,7 +46,7 @@ function CadastroPage() {
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-16 max-w-md">
         <h1 className="text-4xl font-black tracking-tight">Criar conta</h1>
-        <p className="mt-2 text-muted-foreground">Comece grátis. Sem cartão de crédito.</p>
+        
         <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Cadastrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">

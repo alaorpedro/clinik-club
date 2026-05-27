@@ -49,7 +49,7 @@ function Index() {
                   <Link to="/planos">Ver planos</Link>
                 </Button>
               </div>
-              <p className="mt-4 text-xs text-muted-foreground">Sem cartão de crédito. Cancele quando quiser.</p>
+              
             </div>
             <div className="lg:pl-8">
               <QuizMockup />
