@@ -356,15 +356,38 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
 
 function PhonePreview({ step }: { step: Step | null }) {
   const cfg = step?.config ?? {};
+  const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
+  const btnCls =
+    cfg.buttonStyle === "outline"
+      ? "mt-auto px-3 py-2 rounded-full border-2 border-primary text-primary text-[11px] font-semibold text-center"
+      : cfg.buttonStyle === "ghost"
+      ? "mt-auto px-3 py-2 rounded-full text-primary text-[11px] font-semibold text-center"
+      : "mt-auto px-3 py-2 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold text-center";
+
+  const media = cfg.mediaUrl ? (
+    cfg.mediaType === "image" ? (
+      <img src={cfg.mediaUrl} alt="" className="w-full h-20 object-cover rounded-lg" />
+    ) : cfg.mediaType === "video" ? (
+      <div className="w-full h-20 rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground">▶ vídeo</div>
+    ) : null
+  ) : null;
+  const subtitle = cfg.subtitle ? <p className="text-[10px] text-muted-foreground mt-1">{cfg.subtitle}</p> : null;
+  const mediaAbove = cfg.mediaPosition !== "below";
+  const subtitleAbove = cfg.subtitlePosition === "above";
+
   return (
-    <div className="mx-auto w-[260px] aspect-[9/19] rounded-[2.5rem] border-8 border-foreground bg-background shadow-card p-4 overflow-hidden">
-      <div className="h-full flex flex-col">
+    <div className="mx-auto w-[260px] aspect-[9/19] rounded-[2.5rem] border-8 border-foreground shadow-card p-4 overflow-hidden" style={{ backgroundColor: cfg.bgColor || undefined }}>
+      <div className={`h-full flex flex-col ${align}`}>
         <div className="h-1.5 w-16 bg-foreground/20 rounded-full mx-auto mb-4" />
         {!step ? (
           <p className="text-xs text-muted-foreground text-center mt-10">Sem etapa selecionada</p>
         ) : (
           <div className="flex-1 flex flex-col">
+            {mediaAbove && media && <div className="mb-2">{media}</div>}
+            {subtitleAbove && subtitle}
             <h3 className="text-sm font-bold">{cfg.title}</h3>
+            {!subtitleAbove && subtitle}
+            {!mediaAbove && media && <div className="mt-2">{media}</div>}
             {step.type === "text" && cfg.body && <p className="text-xs text-muted-foreground mt-2">{cfg.body}</p>}
             {(step.type === "single" || step.type === "multiple") && (
               <div className="mt-3 space-y-1.5">
@@ -387,7 +410,7 @@ function PhonePreview({ step }: { step: Step | null }) {
                 <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.phonePlaceholder || "Seu WhatsApp"}</div>
               </div>
             )}
-            <div className="mt-auto px-3 py-2 rounded-full bg-primary text-primary-foreground text-[11px] font-semibold text-center">{cfg.cta || "Continuar"}</div>
+            <div className={btnCls}>{cfg.cta || "Continuar"}</div>
           </div>
         )}
       </div>
