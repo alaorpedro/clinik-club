@@ -41,7 +41,7 @@ function Index() {
           {/* Organic dental blobs */}
           <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute top-40 -left-32 h-80 w-80 rounded-full bg-accent/30 blur-3xl" aria-hidden />
-          <div className="container mx-auto px-4 py-16 lg:py-24 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="container mx-auto px-4 py-8 lg:py-12 grid lg:grid-cols-2 gap-8 items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
