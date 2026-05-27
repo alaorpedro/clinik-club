@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -21,31 +21,38 @@ export const Route = createFileRoute("/planos")({
   component: PlanosPage,
 });
 
+type Interval = "monthly" | "yearly";
 const plans = [
   {
-    name: "Starter", price: "R$ 99", period: "/mês", priceId: "starter_monthly",
+    name: "Starter",
     desc: "Para profissionais começando a vender online.",
+    monthly: { price: "R$ 99", period: "/mês", priceId: "starter_monthly" },
+    yearly: { price: "R$ 79", period: "/mês", priceId: "starter_yearly", note: "Cobrado R$ 950/ano" },
     features: ["1 funil ativo", "Até 400 leads/mês", "Analytics básico", "Suporte por email"],
     cta: "Assinar Starter", highlight: false,
   },
   {
-    name: "Pro", price: "R$ 159", period: "/mês", priceId: "pro_monthly",
+    name: "Pro",
     desc: "Para quem já roda tráfego pago e precisa escalar.",
+    monthly: { price: "R$ 159", period: "/mês", priceId: "pro_monthly" },
+    yearly: { price: "R$ 127", period: "/mês", priceId: "pro_yearly", note: "Cobrado R$ 1.526/ano" },
     features: ["10 funis ativos", "Até 2.000 leads/mês", "Analytics completo", "Integração com checkouts", "Suporte prioritário"],
     cta: "Assinar Pro", highlight: true,
   },
   {
-    name: "Agency", price: "R$ 449", period: "/mês", priceId: "agency_monthly",
+    name: "Agency",
     desc: "Para agências gerenciando múltiplos clientes.",
+    monthly: { price: "R$ 449", period: "/mês", priceId: "agency_monthly" },
+    yearly: { price: "R$ 359", period: "/mês", priceId: "agency_yearly", note: "Cobrado R$ 4.310/ano" },
     features: ["Funis ilimitados", "Até 20.000 leads/mês", "Subcontas para clientes", "API e webhooks", "White-label"],
     cta: "Assinar Agency", highlight: false,
   },
 ];
 
 function PlanosPage() {
-  const navigate = useNavigate();
   const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
+  const [interval, setInterval] = useState<Interval>("monthly");
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -54,10 +61,6 @@ function PlanosPage() {
   }, []);
 
   function handleSubscribe(priceId: string) {
-    if (!user) {
-      navigate({ to: "/cadastro", search: { next: `/planos?plan=${priceId}` } as never });
-      return;
-    }
     setCheckoutPriceId(priceId);
   }
 
@@ -71,19 +74,39 @@ function PlanosPage() {
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Planos</p>
             <h1 className="mt-2 text-5xl font-black tracking-tight">Escolha o plano ideal pra você</h1>
             <p className="mt-4 text-muted-foreground">Cancele a qualquer momento. Sem fidelidade.</p>
+            <div className="mt-8 inline-flex items-center gap-1 rounded-full border border-border bg-card p-1">
+              <button
+                onClick={() => setInterval("monthly")}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition ${interval === "monthly" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Mensal
+              </button>
+              <button
+                onClick={() => setInterval("yearly")}
+                className={`px-5 py-2 rounded-full text-sm font-semibold transition flex items-center gap-2 ${interval === "yearly" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Anual
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${interval === "yearly" ? "bg-highlight text-foreground" : "bg-highlight/20 text-foreground"}`}>-20%</span>
+              </button>
+            </div>
           </div>
           <div className="mt-14 grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {plans.map((p) => (
+            {plans.map((p) => {
+              const current = p[interval];
+              return (
               <div key={p.name} className={`rounded-3xl border p-8 ${p.highlight ? "bg-foreground text-background border-foreground shadow-card" : "bg-card border-border shadow-soft"}`}>
                 {p.highlight && <span className="inline-block mb-3 rounded-full bg-highlight text-foreground px-3 py-1 text-xs font-bold">Mais popular</span>}
                 <h3 className="text-xl font-bold">{p.name}</h3>
                 <p className={`mt-1 text-sm ${p.highlight ? "text-background/70" : "text-muted-foreground"}`}>{p.desc}</p>
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-5xl font-black">{p.price}</span>
-                  <span className={p.highlight ? "text-background/60" : "text-muted-foreground"}>{p.period}</span>
+                  <span className="text-5xl font-black">{current.price}</span>
+                  <span className={p.highlight ? "text-background/60" : "text-muted-foreground"}>{current.period}</span>
                 </div>
+                {interval === "yearly" && "note" in current && (
+                  <p className={`mt-1 text-xs ${p.highlight ? "text-background/60" : "text-muted-foreground"}`}>{current.note}</p>
+                )}
                 <Button
-                  onClick={() => handleSubscribe(p.priceId)}
+                  onClick={() => handleSubscribe(current.priceId)}
                   className={`mt-6 w-full rounded-full font-semibold ${p.highlight ? "bg-highlight text-foreground hover:bg-highlight/90" : ""}`}
                 >
                   {p.cta}
@@ -97,7 +120,8 @@ function PlanosPage() {
                   ))}
                 </ul>
               </div>
-            ))}
+              );
+            })}
           </div>
           <p className="mt-12 text-center text-sm text-muted-foreground">
             Precisa de algo customizado? <Link to="/contato" className="text-primary font-medium">Fale com a gente</Link>.
@@ -110,11 +134,11 @@ function PlanosPage() {
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>Finalizar assinatura</DialogTitle>
           </DialogHeader>
-          {checkoutPriceId && user && (
+          {checkoutPriceId && (
             <StripeEmbeddedCheckout
               priceId={checkoutPriceId}
-              userId={user.id}
-              customerEmail={user.email ?? undefined}
+              userId={user?.id}
+              customerEmail={user?.email ?? undefined}
             />
           )}
         </DialogContent>
