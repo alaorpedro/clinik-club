@@ -89,7 +89,9 @@ export type Database = {
           clinic_logo_url: string | null
           clinic_name: string | null
           created_at: string
+          gtm_id: string | null
           id: string
+          meta_pixel_id: string | null
           name: string
           owner_id: string
           slug: string
@@ -101,7 +103,9 @@ export type Database = {
           clinic_logo_url?: string | null
           clinic_name?: string | null
           created_at?: string
+          gtm_id?: string | null
           id?: string
+          meta_pixel_id?: string | null
           name: string
           owner_id: string
           slug: string
@@ -113,7 +117,9 @@ export type Database = {
           clinic_logo_url?: string | null
           clinic_name?: string | null
           created_at?: string
+          gtm_id?: string | null
           id?: string
+          meta_pixel_id?: string | null
           name?: string
           owner_id?: string
           slug?: string
