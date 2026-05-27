@@ -224,6 +224,31 @@ function EditFunnel() {
         </div>
       </div>
 
+      <div className="mb-6 rounded-2xl border border-border bg-background p-4">
+        <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Rastreamento</p>
+        <p className="text-[11px] text-muted-foreground mb-3">Os scripts são injetados no funil público e disparam eventos automáticos: <code>PageView</code>, <code>ViewContent</code>, <code>Lead</code> e <code>CompleteRegistration</code> (Meta) — e os equivalentes no <code>dataLayer</code> do GTM.</p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Google Tag Manager ID</Label>
+            <Input
+              value={funnel.gtm_id ?? ""}
+              onChange={(e) => setFunnel({ ...funnel, gtm_id: e.target.value })}
+              onBlur={(e) => updateFunnel({ gtm_id: e.target.value.trim() || null })}
+              placeholder="GTM-XXXXXXX"
+            />
+          </div>
+          <div>
+            <Label className="text-xs">Meta Pixel ID</Label>
+            <Input
+              value={funnel.meta_pixel_id ?? ""}
+              onChange={(e) => setFunnel({ ...funnel, meta_pixel_id: e.target.value })}
+              onBlur={(e) => updateFunnel({ meta_pixel_id: e.target.value.trim() || null })}
+              placeholder="1234567890123456"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="grid lg:grid-cols-[280px_1fr_320px] gap-6">
         {/* Steps list */}
         <aside className="rounded-2xl border border-border bg-background p-4">
