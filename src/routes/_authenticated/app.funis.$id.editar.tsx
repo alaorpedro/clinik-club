@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy, Upload, X, Save, CheckCircle, Settings } from "lucide-react";
+import { ChevronLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy, Upload, X, Save, CheckCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
@@ -241,8 +241,8 @@ function EditFunnel() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/app"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
+          <Button asChild variant="ghost" size="icon" className="rounded-full" title="Voltar">
+            <Link to="/app"><ChevronLeft className="h-5 w-5" strokeWidth={1.5} /></Link>
           </Button>
           <div>
             <div className="flex items-center gap-2">
