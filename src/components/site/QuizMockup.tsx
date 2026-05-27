@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { Sparkles, Smile, HeartPulse } from "lucide-react";
+import { ToothMark } from "@/components/site/ToothMark";
 
 const options = [
-  { label: "Clareamento dental", icon: "✨" },
-  { label: "Implante", icon: "🦷" },
-  { label: "Ortodontia / Aparelho", icon: "😁" },
-  { label: "Limpeza e prevenção", icon: "🪥" },
+  { label: "Clareamento dental", Icon: Sparkles },
+  { label: "Implante", Icon: ToothMark },
+  { label: "Ortodontia / Aparelho", Icon: Smile },
+  { label: "Limpeza e prevenção", Icon: HeartPulse },
 ];
 
 export function QuizMockup() {
@@ -54,11 +56,11 @@ export function QuizMockup() {
         {/* Clinic header bar */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
-              C+
+            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <ToothMark className="h-4 w-4" />
             </div>
             <div className="text-[11px] leading-tight">
-              <div className="font-semibold">Clínica Sorriso</div>
+              <div className="font-semibold">Clínica Sorriso · CRO 12345</div>
               <div className="text-muted-foreground">Avaliação gratuita</div>
             </div>
           </div>
@@ -83,7 +85,9 @@ export function QuizMockup() {
           </p>
 
           <div className="mt-4 space-y-2">
-            {options.map((opt, i) => (
+            {options.map((opt, i) => {
+              const Icon = opt.Icon;
+              return (
               <button
                 key={opt.label}
                 onClick={() => setSelected(i)}
@@ -102,10 +106,11 @@ export function QuizMockup() {
                     <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
                   )}
                 </span>
-                <span className="text-base leading-none">{opt.icon}</span>
+                <Icon className={`h-4 w-4 ${i === selected ? "text-primary" : "text-muted-foreground"}`} />
                 <span className="text-left">{opt.label}</span>
               </button>
-            ))}
+              );
+            })}
           </div>
 
           <button className="mt-4 w-full rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition">
