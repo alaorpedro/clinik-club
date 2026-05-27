@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
+import { PasswordStrength } from "@/components/PasswordStrength";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPage() {
   const [recovery, setRecovery] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash.includes("type=recovery")) setRecovery(true);
@@ -45,8 +47,10 @@ function ResetPage() {
       } else {
         toast.error(msg);
       }
+    } else {
+      toast.success("Senha atualizada!");
+      window.location.href = "/app";
     }
-    else { toast.success("Senha atualizada!"); window.location.href = "/app"; }
   }
 
   return (
@@ -56,7 +60,11 @@ function ResetPage() {
         <h1 className="text-4xl font-black tracking-tight">{recovery ? "Nova senha" : "Recuperar senha"}</h1>
         {recovery ? (
           <form onSubmit={updatePassword} className="mt-8 space-y-4">
-            <div><Label htmlFor="password">Nova senha</Label><Input id="password" name="password" type="password" minLength={6} required className="mt-1.5" /></div>
+            <div>
+              <Label htmlFor="password">Nova senha</Label>
+              <Input id="password" name="password" type="password" minLength={8} required className="mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordStrength password={password} />
+            </div>
             <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">Atualizar senha</Button>
           </form>
         ) : (
