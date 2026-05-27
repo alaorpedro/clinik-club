@@ -61,9 +61,15 @@ function EditFunnel() {
   }
 
   async function updateStep(stepId: string, patch: Partial<Step>) {
+    setSaveStatus("modified");
     setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, ...patch } : s)));
     const { error } = await supabase.from("funnel_steps").update(patch).eq("id", stepId);
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      setSaveStatus("modified");
+    } else {
+      setSaveStatus("saved");
+    }
   }
 
   async function move(stepId: string, dir: -1 | 1) {
