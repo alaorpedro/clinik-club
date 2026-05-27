@@ -96,7 +96,9 @@ function EditFunnel() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <Link to="/app"><Button variant="ghost" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Button></Link>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/app"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
+          </Button>
           <div>
             <h1 className="text-2xl font-black tracking-tight">{funnel.name}</h1>
             <p className="text-xs text-muted-foreground">/{funnel.slug} · {funnel.status}</p>
@@ -159,7 +161,9 @@ function EditFunnel() {
       </div>
 
       <div className="mt-8">
-        <Link to="/app/funis/$id/leads" params={{ id }}><Button variant="outline" className="rounded-full">Ver leads capturados</Button></Link>
+        <Button asChild variant="outline" className="rounded-full">
+          <Link to="/app/funis/$id/leads" params={{ id }}>Ver leads capturados</Link>
+        </Button>
       </div>
     </div>
   );
