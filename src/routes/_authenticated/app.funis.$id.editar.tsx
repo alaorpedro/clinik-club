@@ -265,6 +265,9 @@ function EditFunnel() {
           </div>
         </div>
         <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Link to="/app/funis/$id/leads" params={{ id }}>Ver leads capturados</Link>
+          </Button>
           {funnel.status === "published" && (
             <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline" size="sm" className="rounded-full"><Eye className="h-4 w-4 mr-1" />Ver público</Button></a>
           )}
@@ -425,11 +428,6 @@ function EditFunnel() {
         </aside>
       </div>
 
-      <div className="mt-8">
-        <Button asChild variant="outline" className="rounded-full">
-          <Link to="/app/funis/$id/leads" params={{ id }}>Ver leads capturados</Link>
-        </Button>
-      </div>
     </div>
   );
 }
