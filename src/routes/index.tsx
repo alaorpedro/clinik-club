@@ -47,17 +47,17 @@ function Index() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 Feito para clínicas odontológicas <span className="text-foreground/40">—</span> 100% LGPD
               </div>
-              <h1 className="mt-5 text-5xl md:text-6xl font-black tracking-tight leading-[1.05]">
+              <h1 className="mt-3 text-5xl md:text-6xl font-black tracking-tight leading-[1.05]">
                 Mais sorrisos agendados,{" "}
                 <span className="relative inline-block">
                   <span className="relative z-10">menos cadeira vazia</span>
                   <span className="absolute inset-x-0 bottom-1 h-4 bg-highlight -z-0 -skew-x-3" />
                 </span>.
               </h1>
-              <p className="mt-6 text-lg text-muted-foreground max-w-xl">
+              <p className="mt-4 text-lg text-muted-foreground max-w-xl">
                 A <strong className="text-foreground">Clinik.Club</strong> transforma visitantes em <strong className="text-foreground">pacientes agendados</strong> com funis interativos pensados para clareamento, implantes, ortodontia e mais.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <Button asChild size="lg" className="rounded-full font-semibold h-12 px-6">
                   <Link to="/cadastro">Começar grátis</Link>
                 </Button>
@@ -66,7 +66,7 @@ function Index() {
                 </Button>
               </div>
               {/* Trust badges */}
-              <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-primary" /> Conformidade LGPD</span>
                 <span className="inline-flex items-center gap-1.5"><Stethoscope className="h-4 w-4 text-primary" /> Validado por dentistas</span>
                 <span className="inline-flex items-center gap-1.5"><CalendarCheck className="h-4 w-4 text-primary" /> Integra com sua agenda</span>
