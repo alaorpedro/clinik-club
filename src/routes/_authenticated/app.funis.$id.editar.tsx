@@ -296,7 +296,8 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
           <Textarea
             rows={6}
             value={(cfg.options ?? []).join("\n")}
-            onChange={(e) => setCfg({ options: e.target.value.split("\n").map((s: string) => s.trim()).filter(Boolean) })}
+            onChange={(e) => setCfg({ options: e.target.value.split("\n") })}
+            onBlur={(e) => setCfg({ options: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
           />
         </div>
       )}
