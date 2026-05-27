@@ -102,12 +102,52 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
   const [value, setValue] = useState<any>("");
   const [lead, setLead] = useState({ name: "", email: "", phone: "" });
 
+  const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
+  const btnClass = cfg.buttonStyle === "outline"
+    ? "mt-6 rounded-full w-full font-semibold border-2 border-primary bg-transparent text-primary hover:bg-primary/5"
+    : cfg.buttonStyle === "ghost"
+    ? "mt-6 rounded-full w-full font-semibold bg-transparent text-primary hover:bg-primary/10"
+    : "mt-6 rounded-full w-full font-semibold";
+
+  function Media() {
+    if (!cfg.mediaUrl) return null;
+    if (cfg.mediaType === "image") {
+      return <img src={cfg.mediaUrl} alt="" className="w-full rounded-2xl object-cover max-h-72 mb-4" />;
+    }
+    if (cfg.mediaType === "video") {
+      const url: string = cfg.mediaUrl;
+      const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+      if (yt) {
+        return (
+          <div className="aspect-video w-full mb-4 rounded-2xl overflow-hidden">
+            <iframe src={`https://www.youtube.com/embed/${yt[1]}`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
+          </div>
+        );
+      }
+      return <video src={url} controls className="w-full rounded-2xl mb-4 max-h-72" />;
+    }
+    return null;
+  }
+
+  const mediaAbove = cfg.mediaPosition !== "below";
+  const subtitleAbove = cfg.subtitlePosition === "above";
+  const subtitle = cfg.subtitle ? <p className="text-muted-foreground mt-2">{cfg.subtitle}</p> : null;
+  const header = (
+    <div className={align}>
+      {mediaAbove && <Media />}
+      {subtitleAbove && subtitle}
+      {cfg.title && <h2 className="text-2xl font-black tracking-tight">{cfg.title}</h2>}
+      {!subtitleAbove && subtitle}
+      {!mediaAbove && <div className="mt-4"><Media /></div>}
+    </div>
+  );
+
   if (step.type === "text") {
     return (
       <div>
-        {cfg.title && <h2 className="text-2xl font-black tracking-tight">{cfg.title}</h2>}
-        {cfg.body && <p className="mt-3 text-muted-foreground">{cfg.body}</p>}
-        <Button className="mt-6 rounded-full w-full font-semibold" onClick={() => onNext()}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        {header}
+        {cfg.body && <p className={`mt-3 text-muted-foreground ${align}`}>{cfg.body}</p>}
+        <Button className={btnClass} onClick={() => onNext()}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
       </div>
     );
   }
@@ -125,7 +165,7 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
     }
     return (
       <div>
-        {cfg.title && <h2 className="text-2xl font-black tracking-tight">{cfg.title}</h2>}
+        {header}
         <div className="mt-6 space-y-2">
           {opts.map((o) => {
             const isOn = multi && selected.includes(o);
@@ -135,7 +175,7 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
           })}
         </div>
         {multi && (
-          <Button className="mt-6 rounded-full w-full font-semibold" disabled={!selected.length} onClick={() => onNext({ [key]: selected })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+          <Button className={btnClass} disabled={!selected.length} onClick={() => onNext({ [key]: selected })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
         )}
       </div>
     );
@@ -144,9 +184,9 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
   if (step.type === "input") {
     return (
       <div>
-        {cfg.title && <h2 className="text-2xl font-black tracking-tight">{cfg.title}</h2>}
+        {header}
         <Input className="mt-6" placeholder={cfg.placeholder || ""} value={value} onChange={(e) => setValue(e.target.value)} />
-        <Button className="mt-4 rounded-full w-full font-semibold" disabled={!value} onClick={() => onNext({ [key]: value })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        <Button className={btnClass} disabled={!value} onClick={() => onNext({ [key]: value })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
       </div>
     );
   }
@@ -154,13 +194,13 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
   if (step.type === "lead") {
     return (
       <div>
-        <h2 className="text-2xl font-black tracking-tight">{cfg.title || "Quase lá! Deixe seu contato"}</h2>
+        {header}
         <div className="mt-6 space-y-3">
           <Input placeholder="Seu nome" value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
           <Input placeholder="Seu e-mail" type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} />
           <Input placeholder="Seu WhatsApp" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} />
         </div>
-        <Button className="mt-6 rounded-full w-full font-semibold" disabled={!lead.email} onClick={() => onNext(undefined, lead)}>{cfg.cta || "Receber resultado"}</Button>
+        <Button className={btnClass} disabled={!lead.email} onClick={() => onNext(undefined, lead)}>{cfg.cta || "Receber resultado"}</Button>
       </div>
     );
   }
@@ -168,12 +208,12 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
   if (step.type === "contact") {
     return (
       <div>
-        <h2 className="text-2xl font-black tracking-tight">{cfg.title || "Deixe seu contato"}</h2>
+        {header}
         <div className="mt-6 space-y-3">
           <Input placeholder={cfg.namePlaceholder || "Seu nome"} value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
           <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: e.target.value })} />
         </div>
-        <Button className="mt-6 rounded-full w-full font-semibold" disabled={!lead.name || !lead.phone} onClick={() => onNext(undefined, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        <Button className={btnClass} disabled={!lead.name || !lead.phone} onClick={() => onNext(undefined, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
       </div>
     );
   }
