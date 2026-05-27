@@ -268,6 +268,88 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
           <Input value={cfg.cta ?? ""} onChange={(e) => setCfg({ cta: e.target.value })} />
         </div>
       )}
+
+      <div className="pt-5 border-t border-border space-y-4">
+        <p className="text-xs font-semibold uppercase text-muted-foreground">Layout & mídia</p>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Tipo de mídia</Label>
+            <Select value={cfg.mediaType ?? "none"} onValueChange={(v) => setCfg({ mediaType: v })}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhuma</SelectItem>
+                <SelectItem value="image">Imagem</SelectItem>
+                <SelectItem value="video">Vídeo (YouTube/MP4)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Posição da mídia</Label>
+            <Select value={cfg.mediaPosition ?? "above"} onValueChange={(v) => setCfg({ mediaPosition: v })}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="above">Acima do título</SelectItem>
+                <SelectItem value="below">Abaixo do título</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {(cfg.mediaType === "image" || cfg.mediaType === "video") && (
+          <div>
+            <Label className="text-xs">URL da mídia</Label>
+            <Input value={cfg.mediaUrl ?? ""} onChange={(e) => setCfg({ mediaUrl: e.target.value })} placeholder="https://..." />
+          </div>
+        )}
+
+        <div>
+          <Label className="text-xs">Subtítulo / descrição</Label>
+          <Textarea rows={2} value={cfg.subtitle ?? ""} onChange={(e) => setCfg({ subtitle: e.target.value })} placeholder="Texto opcional exibido junto da pergunta" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Posição do subtítulo</Label>
+            <Select value={cfg.subtitlePosition ?? "below"} onValueChange={(v) => setCfg({ subtitlePosition: v })}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="above">Acima do título</SelectItem>
+                <SelectItem value="below">Abaixo do título</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Alinhamento</Label>
+            <Select value={cfg.align ?? "left"} onValueChange={(v) => setCfg({ align: v })}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Esquerda</SelectItem>
+                <SelectItem value="center">Centro</SelectItem>
+                <SelectItem value="right">Direita</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Cor de fundo</Label>
+            <Input type="color" value={cfg.bgColor ?? "#ffffff"} onChange={(e) => setCfg({ bgColor: e.target.value })} className="h-9 p-1" />
+          </div>
+          <div>
+            <Label className="text-xs">Estilo do botão</Label>
+            <Select value={cfg.buttonStyle ?? "solid"} onValueChange={(v) => setCfg({ buttonStyle: v })}>
+              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="solid">Sólido</SelectItem>
+                <SelectItem value="outline">Contorno</SelectItem>
+                <SelectItem value="ghost">Discreto</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
