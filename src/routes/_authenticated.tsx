@@ -32,8 +32,8 @@ function AppLayout() {
   ];
 
   return (
-    <div className="min-h-screen flex bg-secondary/30">
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5">
+    <div className="h-screen flex bg-secondary/30 overflow-hidden">
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0">
         <Link to="/" className="flex items-center gap-2 mb-8">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-background font-bold text-sm">OD</div>
           <span className="text-lg font-bold">odontolink</span>
@@ -50,7 +50,7 @@ function AppLayout() {
           <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2"><LogOut className="h-4 w-4" />Sair</Button>
         </div>
       </aside>
-      <main className="flex-1 p-6 md:p-10"><Outlet /></main>
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto h-screen"><Outlet /></main>
     </div>
   );
 }
