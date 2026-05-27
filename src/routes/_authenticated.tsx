@@ -36,7 +36,7 @@ function AppLayout() {
     <div className="h-screen flex bg-secondary/30 overflow-hidden">
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0">
         <Link to="/" className="flex items-center gap-2 mb-8">
-          <span className="text-lg font-bold">Click<span className="text-primary">.Club</span></span>
+          <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
         </Link>
         <nav className="flex-1 space-y-1">
           {links.map((l) => (
