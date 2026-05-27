@@ -10,13 +10,8 @@ export const Route = createFileRoute("/_authenticated")({
     if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/login" });
-    // Allow account page without active subscription (for billing management).
-    if (location.pathname.startsWith("/app/conta")) return;
-    const { data: hasSub } = await supabase.rpc("has_active_subscription", {
-      user_uuid: data.user.id,
-      check_env: (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live",
-    });
-    if (!hasSub) throw redirect({ to: "/planos" });
+    // Note: plan check happens inside individual app pages (e.g. funnel creation),
+    // so users can explore the dashboard and see a clear CTA to activate a plan.
   },
   component: AppLayout,
 });
