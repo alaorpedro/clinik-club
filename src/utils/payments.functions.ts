@@ -66,10 +66,17 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         ...(customerId && { customer: customerId }),
-        ...(data.userId && {
-          metadata: { userId: data.userId },
-          subscription_data: { metadata: { userId: data.userId } },
-        }),
+        ...(!customerId && { customer_creation: "always" }),
+        metadata: {
+          ...(data.userId && { userId: data.userId }),
+          ...(data.customerEmail && { customerEmail: data.customerEmail }),
+        },
+        subscription_data: {
+          metadata: {
+            ...(data.userId && { userId: data.userId }),
+            ...(data.customerEmail && { customerEmail: data.customerEmail }),
+          },
+        },
       });
 
       return { clientSecret: session.client_secret ?? "" };
