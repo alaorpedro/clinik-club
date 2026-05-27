@@ -14,11 +14,8 @@ function getSupabase(): any {
 }
 
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
-  const userId = subscription.metadata?.userId;
-  if (!userId) {
-    console.error("No userId in subscription metadata");
-    return;
-  }
+  const userId: string | null = subscription.metadata?.userId ?? null;
+  const customerEmail: string | null = subscription.metadata?.customerEmail ?? null;
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.lookup_key
     || item?.price?.metadata?.lovable_external_id
@@ -28,9 +25,26 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
   const supabase = getSupabase();
+
+  // For anonymous checkouts, try to link by email to an existing auth user.
+  let linkedUserId: string | null = userId;
+  if (!linkedUserId && customerEmail) {
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .ilike("id", "%") // no-op filter; we use auth via admin below
+      .limit(0);
+    void existing;
+    // Look up auth user by email via admin API
+    const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const match = list?.users?.find((u: any) => (u.email ?? "").toLowerCase() === customerEmail.toLowerCase());
+    if (match) linkedUserId = match.id;
+  }
+
   await supabase.from("subscriptions").upsert(
     {
-      user_id: userId,
+      user_id: linkedUserId,
+      customer_email: customerEmail,
       stripe_subscription_id: subscription.id,
       stripe_customer_id: subscription.customer,
       product_id: productId,
@@ -44,18 +58,22 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     { onConflict: "stripe_subscription_id" }
   );
 
-  // Map price_id to plan name
   const planMap: Record<string, string> = {
     starter_monthly: "starter",
+    starter_yearly: "starter",
     pro_monthly: "pro",
+    pro_yearly: "pro",
     agency_monthly: "agency",
+    agency_yearly: "agency",
   };
   const plan = planMap[priceId] ?? "free";
-  await supabase.from("profiles").update({
-    plan,
-    subscription_status: subscription.status,
-    stripe_customer_id: subscription.customer,
-  }).eq("id", userId);
+  if (linkedUserId) {
+    await supabase.from("profiles").update({
+      plan,
+      subscription_status: subscription.status,
+      stripe_customer_id: subscription.customer,
+    }).eq("id", linkedUserId);
+  }
 }
 
 async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
