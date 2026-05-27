@@ -19,7 +19,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
-import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticated/app.conta'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
@@ -74,15 +74,15 @@ const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   path: '/checkout/return',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
-  id: '/app',
-  path: '/app',
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/app/',
+  path: '/app/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAppContaRoute = AuthenticatedAppContaRouteImport.update({
-  id: '/conta',
-  path: '/conta',
-  getParentRoute: () => AuthenticatedAppRoute,
+  id: '/app/conta',
+  path: '/app/conta',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
@@ -92,15 +92,15 @@ const ApiPublicPaymentsWebhookRoute =
   } as any)
 const AuthenticatedAppFunisIdLeadsRoute =
   AuthenticatedAppFunisIdLeadsRouteImport.update({
-    id: '/funis/$id/leads',
-    path: '/funis/$id/leads',
-    getParentRoute: () => AuthenticatedAppRoute,
+    id: '/app/funis/$id/leads',
+    path: '/app/funis/$id/leads',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAppFunisIdEditarRoute =
   AuthenticatedAppFunisIdEditarRouteImport.update({
-    id: '/funis/$id/editar',
-    path: '/funis/$id/editar',
-    getParentRoute: () => AuthenticatedAppRoute,
+    id: '/app/funis/$id/editar',
+    path: '/app/funis/$id/editar',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -111,10 +111,10 @@ export interface FileRoutesByFullPath {
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
-  '/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
@@ -127,10 +127,10 @@ export interface FileRoutesByTo {
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
-  '/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
+  '/app': typeof AuthenticatedAppIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
@@ -145,10 +145,10 @@ export interface FileRoutesById {
   '/planos': typeof PlanosRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
-  '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/_authenticated/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/_authenticated/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
@@ -163,10 +163,10 @@ export interface FileRouteTypes {
     | '/planos'
     | '/reset-password'
     | '/sobre'
-    | '/app'
     | '/checkout/return'
     | '/f/$slug'
     | '/app/conta'
+    | '/app/'
     | '/api/public/payments/webhook'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
@@ -179,10 +179,10 @@ export interface FileRouteTypes {
     | '/planos'
     | '/reset-password'
     | '/sobre'
-    | '/app'
     | '/checkout/return'
     | '/f/$slug'
     | '/app/conta'
+    | '/app'
     | '/api/public/payments/webhook'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
@@ -196,10 +196,10 @@ export interface FileRouteTypes {
     | '/planos'
     | '/reset-password'
     | '/sobre'
-    | '/_authenticated/app'
     | '/checkout/return'
     | '/f/$slug'
     | '/_authenticated/app/conta'
+    | '/_authenticated/app/'
     | '/api/public/payments/webhook'
     | '/_authenticated/app/funis/$id/editar'
     | '/_authenticated/app/funis/$id/leads'
@@ -291,19 +291,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/app': {
-      id: '/_authenticated/app'
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
       path: '/app'
-      fullPath: '/app'
-      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/conta': {
       id: '/_authenticated/app/conta'
-      path: '/conta'
+      path: '/app/conta'
       fullPath: '/app/conta'
       preLoaderRoute: typeof AuthenticatedAppContaRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -314,42 +314,33 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/app/funis/$id/leads': {
       id: '/_authenticated/app/funis/$id/leads'
-      path: '/funis/$id/leads'
+      path: '/app/funis/$id/leads'
       fullPath: '/app/funis/$id/leads'
       preLoaderRoute: typeof AuthenticatedAppFunisIdLeadsRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/app/funis/$id/editar': {
       id: '/_authenticated/app/funis/$id/editar'
-      path: '/funis/$id/editar'
+      path: '/app/funis/$id/editar'
       fullPath: '/app/funis/$id/editar'
       preLoaderRoute: typeof AuthenticatedAppFunisIdEditarRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
+      parentRoute: typeof AuthenticatedRoute
     }
   }
 }
 
-interface AuthenticatedAppRouteChildren {
+interface AuthenticatedRouteChildren {
   AuthenticatedAppContaRoute: typeof AuthenticatedAppContaRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppFunisIdEditarRoute: typeof AuthenticatedAppFunisIdEditarRoute
   AuthenticatedAppFunisIdLeadsRoute: typeof AuthenticatedAppFunisIdLeadsRoute
 }
 
-const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAppContaRoute: AuthenticatedAppContaRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppFunisIdEditarRoute: AuthenticatedAppFunisIdEditarRoute,
   AuthenticatedAppFunisIdLeadsRoute: AuthenticatedAppFunisIdLeadsRoute,
-}
-
-const AuthenticatedAppRouteWithChildren =
-  AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
-
-interface AuthenticatedRouteChildren {
-  AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
-}
-
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
