@@ -31,6 +31,7 @@ function EditFunnel() {
   const [steps, setSteps] = useState<Step[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "modified">("saved");
 
   async function load() {
     const { data: f } = await supabase.from("funnels").select("id, name, slug, status, clinic_name, clinic_logo_url").eq("id", id).maybeSingle();
