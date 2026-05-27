@@ -7,6 +7,145 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
 type Step = { id: string; type: string; config: any; order: number };
+type FunnelData = { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null; gtm_id: string | null; meta_pixel_id: string | null; theme?: any };
+type LeadData = { name?: string; email?: string; phone?: string };
+
+function ThankYouScreen({ funnel, lead }: { funnel: FunnelData; lead: LeadData }) {
+  const ty = (funnel.theme as any)?.thankYou ?? {};
+  const firstName = (lead.name || "").trim().split(" ")[0] || "";
+  const clinic = funnel.clinic_name || "nossa equipe";
+  const attendantName: string = ty.attendantName || funnel.clinic_name || "Atendimento";
+  const attendantRole: string = ty.attendantRole || "Consultora Online";
+  const attendantPhoto: string | null = ty.attendantPhotoUrl || funnel.clinic_logo_url || null;
+  const responseTime: string = ty.responseTime || "Tempo médio: 2 min";
+  const rating: string = String(ty.rating || "4.9");
+  const reviewsLabel: string = ty.reviewsLabel || "Google Reviews";
+  const greetingTitle: string = (ty.greetingTitle || "Solicitação Recebida, {nome}!").replace(/\{nome\}/gi, firstName || "tudo certo");
+  const greetingSubtitle: string = (ty.greetingSubtitle || "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade.").replace(/\{clinica\}/gi, clinic);
+  const ctaLabel: string = ty.ctaLabel || "Iniciar Agendamento no WhatsApp";
+
+  const rawNumber: string = (ty.whatsappNumber || "").replace(/\D/g, "");
+  const messageTpl: string = ty.whatsappMessage || "Olá! Sou {nome} e acabei de preencher o formulário, gostaria de agendar minha avaliação.";
+  const message = messageTpl.replace(/\{nome\}/gi, firstName).replace(/\{clinica\}/gi, clinic);
+  const waHref = rawNumber
+    ? `https://wa.me/${rawNumber}?text=${encodeURIComponent(message)}`
+    : null;
+
+  const steps = [
+    { title: "Triagem Concluída", desc: "Analisamos seus dados e priorizamos seu contato.", done: true },
+    { title: "Acesso ao WhatsApp", desc: "Clique no botão abaixo para falar com nossa recepção.", done: false, active: true },
+    { title: "Agendamento Presencial", desc: "Confirmação final de data e horário da avaliação.", done: false },
+  ];
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-secondary/30 p-4">
+      <div className="max-w-[640px] w-full bg-background rounded-3xl shadow-2xl shadow-slate-200/60 overflow-hidden border border-border">
+        {/* Header */}
+        <div className="px-6 sm:px-8 pt-6 pb-5 flex justify-between items-center border-b border-border/60 gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            {funnel.clinic_logo_url ? (
+              <img src={funnel.clinic_logo_url} alt={funnel.clinic_name ?? "logo"} className="h-9 w-9 rounded-lg object-cover border border-border" />
+            ) : (
+              <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.959 11.959 0 01-2.251 7.161 11.952 11.952 0 01-6.367 4.511 11.945 11.945 0 01-6.367-4.511 11.959 11.959 0 01-2.251-7.161" /></svg>
+              </div>
+            )}
+            {funnel.clinic_name && <span className="font-bold text-foreground tracking-tight text-base sm:text-lg truncate">{funnel.clinic_name}</span>}
+          </div>
+          <div className="flex items-center gap-1.5 bg-green-50 px-3 py-1 rounded-full shrink-0">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest">Atendimento ativo</span>
+          </div>
+        </div>
+
+        <div className="p-6 sm:p-8">
+          {/* Greeting */}
+          <div className="mb-8 text-center">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2 tracking-tight">{greetingTitle}</h1>
+            <p className="text-muted-foreground text-sm sm:text-base">{greetingSubtitle}</p>
+          </div>
+
+          {/* Timeline */}
+          <div className="space-y-5 relative mb-8">
+            <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-border" />
+            {steps.map((s, i) => (
+              <div key={i} className={`relative flex gap-4 items-start ${!s.active && !s.done ? "opacity-40" : ""}`}>
+                <div className={`z-10 w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-primary shadow-lg shadow-primary/20" : s.active ? "bg-background border-2 border-primary" : "bg-muted border-2 border-border"}`}>
+                  {s.done ? (
+                    <svg className="w-5 h-5 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                  ) : (
+                    <span className={`font-bold ${s.active ? "text-primary" : "text-muted-foreground"}`}>{i + 1}</span>
+                  )}
+                </div>
+                <div className="pt-1">
+                  <h3 className="font-bold text-foreground leading-tight">{s.title}</h3>
+                  <p className="text-sm text-muted-foreground">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Attendant card */}
+          <div className="bg-secondary/60 rounded-2xl p-4 mb-6 border border-border flex items-center justify-between">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="relative w-14 h-14 shrink-0 overflow-hidden rounded-xl bg-muted">
+                {attendantPhoto ? (
+                  <img src={attendantPhoto} alt={attendantName} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground font-bold text-lg">{attendantName.charAt(0)}</div>
+                )}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{attendantRole}</p>
+                <p className="font-bold text-foreground truncate">{attendantName}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                  <span className="text-xs text-muted-foreground font-medium">{responseTime}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          {waHref ? (
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="group w-full bg-[#25D366] hover:bg-[#1ebe57] transition-all duration-300 py-5 rounded-2xl shadow-xl shadow-green-100 flex items-center justify-center gap-3 cursor-pointer">
+              <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+              <span className="text-white font-bold text-base sm:text-lg">{ctaLabel}</span>
+            </a>
+          ) : (
+            <div className="w-full py-4 rounded-2xl border-2 border-dashed border-border text-center text-sm text-muted-foreground">
+              Configure o WhatsApp da clínica para liberar o agendamento.
+            </div>
+          )}
+
+          {/* Trust footnote */}
+          <div className="mt-6 flex flex-wrap justify-between items-center gap-3 px-1">
+            <div className="flex items-center gap-1.5">
+              <div className="flex text-amber-400 gap-0.5">
+                {[0,1,2,3,4].map((i) => (
+                  <svg key={i} className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                ))}
+              </div>
+              <span className="text-[11px] font-bold text-foreground">{rating}/5 {reviewsLabel}</span>
+            </div>
+            <div className="flex items-center gap-1.5 border-l border-border pl-4">
+              <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.959 11.959 0 01-2.251 7.161 11.952 11.952 0 01-6.367 4.511 11.945 11.945 0 01-6.367-4.511 11.959 11.959 0 01-2.251-7.161" /></svg>
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Dados criptografados</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-900 py-3 px-8">
+          <p className="text-[9px] text-slate-400 text-center uppercase tracking-[0.2em] font-medium">Sessão exclusiva • Resposta prioritária</p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/f/$slug")({
   loader: async ({ params }) => {
@@ -139,15 +278,7 @@ function PublicFunnel() {
   }
 
   if (done) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-secondary/30">
-        <div className="max-w-md text-center">
-          <div className="mx-auto h-16 w-16 rounded-full bg-primary/10 text-primary flex items-center justify-center text-3xl">✓</div>
-          <h1 className="text-2xl font-bold mt-4">Obrigado!</h1>
-          <p className="text-muted-foreground mt-2">Recebemos suas respostas. Em breve entraremos em contato.</p>
-        </div>
-      </div>
-    );
+    return <ThankYouScreen funnel={funnel} lead={lead} />;
   }
 
   return (
