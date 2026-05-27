@@ -177,6 +177,7 @@ export type Database = {
           clinic_name: string | null
           created_at: string
           id: string
+          instagram_url: string | null
           name: string | null
           plan: string
           stripe_customer_id: string | null
@@ -189,6 +190,7 @@ export type Database = {
           clinic_name?: string | null
           created_at?: string
           id: string
+          instagram_url?: string | null
           name?: string | null
           plan?: string
           stripe_customer_id?: string | null
@@ -201,6 +203,7 @@ export type Database = {
           clinic_name?: string | null
           created_at?: string
           id?: string
+          instagram_url?: string | null
           name?: string | null
           plan?: string
           stripe_customer_id?: string | null
