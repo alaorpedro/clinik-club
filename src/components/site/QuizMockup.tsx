@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Smile, HeartPulse, Star } from "lucide-react";
+import { Sparkles, Smile, HeartPulse } from "lucide-react";
 import { ToothMark } from "@/components/site/ToothMark";
 import dentistAvatar from "@/assets/dentist-avatar.jpg";
-import patientAvatar from "@/assets/patient-avatar.jpg";
 
 const options = [
   { label: "Clareamento dental", Icon: Sparkles },
@@ -112,31 +111,6 @@ export function QuizMockup() {
 
           <p className="mt-3 text-center text-[10px] text-muted-foreground">
             🔒 Dados protegidos — LGPD
-          </p>
-        </div>
-      </div>
-
-      {/* Patient testimonial card — below the phone, doesn't overlap */}
-      <div className="mt-5 flex items-start gap-3 rounded-2xl border border-border bg-card p-4 shadow-soft">
-        <img
-          src={patientAvatar}
-          alt="Mariana, paciente"
-          loading="lazy"
-          width={1024}
-          height={1024}
-          className="h-11 w-11 rounded-full object-cover shrink-0"
-        />
-        <div className="min-w-0">
-          <div className="flex items-center gap-1 text-accent">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star key={i} className="h-3 w-3 fill-current" />
-            ))}
-          </div>
-          <p className="mt-1 text-[13px] leading-snug text-foreground/80">
-            "Marquei meu clareamento em menos de 5 minutos. Atendimento super humano."
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Mariana S. · paciente da Clínica Sorriso
           </p>
         </div>
       </div>
