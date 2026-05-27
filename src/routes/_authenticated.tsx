@@ -4,12 +4,25 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, User, LogOut, Loader2 } from "lucide-react";
 
+async function getCurrentUserWithFallback() {
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 2500)),
+    ]);
+    if (result?.data.user) return result.data.user;
+  } catch {
+    // Fall back to the local session below so private browsing never gets stuck loading.
+  }
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user ?? null;
+}
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     if (typeof window === "undefined") return;
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/login", search: { next: location.pathname } as never });
+    const user = await getCurrentUserWithFallback();
+    if (!user) throw redirect({ to: "/login", search: { next: location.pathname } as never });
     // Note: plan check happens inside individual app pages (e.g. funnel creation),
     // so users can explore the dashboard and see a clear CTA to activate a plan.
   },
