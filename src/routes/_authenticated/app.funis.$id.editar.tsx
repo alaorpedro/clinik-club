@@ -17,7 +17,23 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
 type Funnel = { id: string; name: string; slug: string; status: string; gtm_id: string | null; meta_pixel_id: string | null };
-type ClinicProfile = { clinic_name: string | null; clinic_logo_url: string | null };
+type ClinicProfile = { clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null };
+
+export type QuizOption = { label: string; action: "continue" | "disqualify" | "jump"; targetStepId?: string };
+
+export function normalizeOptions(raw: any): QuizOption[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((o) => {
+      if (typeof o === "string") return { label: o, action: "continue" as const };
+      if (o && typeof o === "object" && typeof o.label === "string") {
+        const action = o.action === "disqualify" || o.action === "jump" ? o.action : "continue";
+        return { label: o.label, action, targetStepId: o.targetStepId };
+      }
+      return null;
+    })
+    .filter(Boolean) as QuizOption[];
+}
 
 const STEP_TYPES = [
   { value: "text", label: "Texto / CTA" },
