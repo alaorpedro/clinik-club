@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, User, LogOut, Loader2 } from "lucide-react";
+import logoMark from "@/assets/clinik-club-mark.png";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -35,8 +36,8 @@ function AppLayout() {
     <div className="h-screen flex bg-secondary/30 overflow-hidden">
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0">
         <Link to="/" className="flex items-center gap-2 mb-8">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-background font-bold text-sm">OD</div>
-          <span className="text-lg font-bold">Clinik.Club</span>
+          <img src={logoMark} alt="Clinik.Club" width={32} height={32} className="h-8 w-8" loading="lazy" />
+          <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
         </Link>
         <nav className="flex-1 space-y-1">
           {links.map((l) => (

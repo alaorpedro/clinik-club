@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import logoMark from "@/assets/clinik-club-mark.png";
 
 export function SiteFooter() {
   return (
@@ -6,8 +7,8 @@ export function SiteFooter() {
       <div className="container mx-auto px-4 py-12 grid gap-8 md:grid-cols-4">
         <div>
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-foreground text-background font-bold text-sm">OD</div>
-            <span className="text-lg font-bold">Clinik.Club</span>
+            <img src={logoMark} alt="Clinik.Club" width={32} height={32} className="h-8 w-8" loading="lazy" />
+            <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
           </div>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
             Funis de vendas interativos para clínicas e profissionais da saúde.

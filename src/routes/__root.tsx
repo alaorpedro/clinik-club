@@ -75,15 +75,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
+      { title: "Clinik.Club — Funis interativos para clínicas" },
+      { name: "description", content: "Clinik.Club: a plataforma de funis interativos que transforma tráfego em pacientes para clínicas e profissionais da saúde." },
+      { name: "author", content: "Clinik.Club" },
       { name: "google", content: "notranslate" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "Clinik.Club" },
+      { property: "og:description", content: "Funis interativos para clínicas e profissionais da saúde." },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Clinik.Club" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@ClinikClub" },
     ],
     links: [
       {
