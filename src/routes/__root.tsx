@@ -84,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Click.Club" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@ClinikClub" },
+      { name: "twitter:site", content: "@ClickClub" },
     ],
     links: [
       {

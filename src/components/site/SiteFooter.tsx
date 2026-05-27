@@ -37,7 +37,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Clinik.Club. Todos os direitos reservados.
+        © {new Date().getFullYear()} Click.Club. Todos os direitos reservados.
       </div>
     </footer>
   );
