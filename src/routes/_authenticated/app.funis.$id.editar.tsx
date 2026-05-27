@@ -399,7 +399,7 @@ function EditFunnel() {
         {/* Editor */}
         <section className="rounded-2xl border border-border bg-background p-6">
           {current ? (
-            <StepEditor key={current.id} step={current} onChange={(patch) => updateStep(current.id, patch)} onDelete={() => removeStep(current.id)} onMoveUp={() => move(current.id, -1)} onMoveDown={() => move(current.id, 1)} />
+            <StepEditor key={current.id} step={current} steps={steps} onChange={(patch) => updateStep(current.id, patch)} onDelete={() => removeStep(current.id)} onMoveUp={() => move(current.id, -1)} onMoveDown={() => move(current.id, 1)} />
           ) : (
             <p className="text-muted-foreground text-sm">Selecione uma etapa à esquerda ou crie uma nova.</p>
           )}
