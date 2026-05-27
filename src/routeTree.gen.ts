@@ -18,8 +18,10 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
+import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticated/app.conta'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
 
@@ -67,6 +69,11 @@ const FSlugRoute = FSlugRouteImport.update({
   path: '/f/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
+  id: '/checkout/return',
+  path: '/checkout/return',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -77,6 +84,12 @@ const AuthenticatedAppContaRoute = AuthenticatedAppContaRouteImport.update({
   path: '/conta',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAppFunisIdLeadsRoute =
   AuthenticatedAppFunisIdLeadsRouteImport.update({
     id: '/funis/$id/leads',
@@ -99,8 +112,10 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -113,8 +128,10 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
+  '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -129,8 +146,10 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/sobre': typeof SobreRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
+  '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/_authenticated/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/_authenticated/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -145,8 +164,10 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sobre'
     | '/app'
+    | '/checkout/return'
     | '/f/$slug'
     | '/app/conta'
+    | '/api/public/payments/webhook'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
   fileRoutesByTo: FileRoutesByTo
@@ -159,8 +180,10 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sobre'
     | '/app'
+    | '/checkout/return'
     | '/f/$slug'
     | '/app/conta'
+    | '/api/public/payments/webhook'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
   id:
@@ -174,8 +197,10 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sobre'
     | '/_authenticated/app'
+    | '/checkout/return'
     | '/f/$slug'
     | '/_authenticated/app/conta'
+    | '/api/public/payments/webhook'
     | '/_authenticated/app/funis/$id/editar'
     | '/_authenticated/app/funis/$id/leads'
   fileRoutesById: FileRoutesById
@@ -189,7 +214,9 @@ export interface RootRouteChildren {
   PlanosRoute: typeof PlanosRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SobreRoute: typeof SobreRoute
+  CheckoutReturnRoute: typeof CheckoutReturnRoute
   FSlugRoute: typeof FSlugRoute
+  ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -257,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout/return': {
+      id: '/checkout/return'
+      path: '/checkout/return'
+      fullPath: '/checkout/return'
+      preLoaderRoute: typeof CheckoutReturnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
@@ -270,6 +304,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/conta'
       preLoaderRoute: typeof AuthenticatedAppContaRouteImport
       parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app/funis/$id/leads': {
       id: '/_authenticated/app/funis/$id/leads'
@@ -324,7 +365,9 @@ const rootRouteChildren: RootRouteChildren = {
   PlanosRoute: PlanosRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SobreRoute: SobreRoute,
+  CheckoutReturnRoute: CheckoutReturnRoute,
   FSlugRoute: FSlugRoute,
+  ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

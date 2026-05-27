@@ -1,8 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { StripeEmbeddedCheckout } from "@/components/StripeEmbeddedCheckout";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/planos")({
   head: () => ({
@@ -18,28 +23,47 @@ export const Route = createFileRoute("/planos")({
 
 const plans = [
   {
-    name: "Starter", price: "R$ 47", period: "/mês",
+    name: "Starter", price: "R$ 99", period: "/mês", priceId: "starter_monthly",
     desc: "Para profissionais começando a vender online.",
-    features: ["1 funil ativo", "Até 500 leads/mês", "Analytics básico", "Suporte por email"],
-    cta: "Começar com Starter", highlight: false,
+    features: ["1 funil ativo", "Até 100 leads/mês", "Analytics básico", "Suporte por email"],
+    cta: "Assinar Starter", highlight: false,
   },
   {
-    name: "Pro", price: "R$ 97", period: "/mês",
+    name: "Pro", price: "R$ 159", period: "/mês", priceId: "pro_monthly",
     desc: "Para quem já roda tráfego pago e precisa escalar.",
-    features: ["10 funis ativos", "Até 5.000 leads/mês", "Analytics completo", "Integração com checkouts", "Suporte prioritário"],
+    features: ["10 funis ativos", "Até 2.000 leads/mês", "Analytics completo", "Integração com checkouts", "Suporte prioritário"],
     cta: "Assinar Pro", highlight: true,
   },
   {
-    name: "Agency", price: "R$ 297", period: "/mês",
+    name: "Agency", price: "R$ 449", period: "/mês", priceId: "agency_monthly",
     desc: "Para agências gerenciando múltiplos clientes.",
-    features: ["Funis ilimitados", "Leads ilimitados", "Subcontas para clientes", "API e webhooks", "Suporte dedicado"],
-    cta: "Falar com vendas", highlight: false,
+    features: ["Funis ilimitados", "Até 20.000 leads/mês", "Subcontas para clientes", "API e webhooks", "White-label"],
+    cta: "Assinar Agency", highlight: false,
   },
 ];
 
 function PlanosPage() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
+  const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUser({ id: data.user.id, email: data.user.email ?? null });
+    });
+  }, []);
+
+  function handleSubscribe(priceId: string) {
+    if (!user) {
+      navigate({ to: "/cadastro", search: { next: `/planos?plan=${priceId}` } as never });
+      return;
+    }
+    setCheckoutPriceId(priceId);
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <PaymentTestModeBanner />
       <SiteHeader />
       <main className="flex-1">
         <section className="container mx-auto px-4 py-20">
@@ -58,8 +82,11 @@ function PlanosPage() {
                   <span className="text-5xl font-black">{p.price}</span>
                   <span className={p.highlight ? "text-background/60" : "text-muted-foreground"}>{p.period}</span>
                 </div>
-                <Button asChild className={`mt-6 w-full rounded-full font-semibold ${p.highlight ? "bg-highlight text-foreground hover:bg-highlight/90" : ""}`} variant={p.highlight ? "default" : "default"}>
-                  <Link to="/cadastro">{p.cta}</Link>
+                <Button
+                  onClick={() => handleSubscribe(p.priceId)}
+                  className={`mt-6 w-full rounded-full font-semibold ${p.highlight ? "bg-highlight text-foreground hover:bg-highlight/90" : ""}`}
+                >
+                  {p.cta}
                 </Button>
                 <ul className="mt-8 space-y-3 text-sm">
                   {p.features.map((f) => (
@@ -78,6 +105,20 @@ function PlanosPage() {
         </section>
       </main>
       <SiteFooter />
+      <Dialog open={!!checkoutPriceId} onOpenChange={(open) => !open && setCheckoutPriceId(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+          <DialogHeader className="px-6 pt-6">
+            <DialogTitle>Finalizar assinatura</DialogTitle>
+          </DialogHeader>
+          {checkoutPriceId && user && (
+            <StripeEmbeddedCheckout
+              priceId={checkoutPriceId}
+              userId={user.id}
+              customerEmail={user.email ?? undefined}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
