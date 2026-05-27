@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus, Sparkles, Copy } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -66,6 +66,19 @@ function AppHome() {
                 </Button>
                 <Button asChild size="sm" variant="ghost" className="rounded-full">
                   <Link to="/app/funis/$id/leads" params={{ id: f.id }}>Leads</Link>
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="rounded-full ml-auto"
+                  title="Copiar link público"
+                  onClick={() => {
+                    const url = `${window.location.origin}/f/${f.slug}`;
+                    navigator.clipboard.writeText(url);
+                    toast.success("Link copiado!");
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>
