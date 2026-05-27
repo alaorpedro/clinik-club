@@ -17,13 +17,14 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
     if (!funnel) return { funnel: null, steps: [] as Array<{ id: string; type: string; config: any; order: number }> };
     const { data: profile } = await supabaseAdmin
       .from("profiles")
-      .select("clinic_name, clinic_logo_url")
+      .select("clinic_name, clinic_logo_url, instagram_url")
       .eq("id", funnel.owner_id)
       .maybeSingle();
     const enriched = {
       ...funnel,
       clinic_name: profile?.clinic_name ?? null,
       clinic_logo_url: profile?.clinic_logo_url ?? null,
+      instagram_url: profile?.instagram_url ?? null,
     };
     const { data: steps } = await supabaseAdmin
       .from("funnel_steps")
