@@ -16,7 +16,8 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
 });
 
 type Step = { id: string; type: string; order: number; config: any; funnel_id: string };
-type Funnel = { id: string; name: string; slug: string; status: string; clinic_name: string | null; clinic_logo_url: string | null; gtm_id: string | null; meta_pixel_id: string | null };
+type Funnel = { id: string; name: string; slug: string; status: string; gtm_id: string | null; meta_pixel_id: string | null };
+type ClinicProfile = { clinic_name: string | null; clinic_logo_url: string | null };
 
 const STEP_TYPES = [
   { value: "text", label: "Texto / CTA" },
@@ -30,6 +31,7 @@ const STEP_TYPES = [
 function EditFunnel() {
   const { id } = Route.useParams();
   const [funnel, setFunnel] = useState<Funnel | null>(null);
+  const [clinic, setClinic] = useState<ClinicProfile>({ clinic_name: null, clinic_logo_url: null });
   const [steps, setSteps] = useState<Step[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,8 +40,13 @@ function EditFunnel() {
   const [slugError, setSlugError] = useState<string | null>(null);
 
   async function load() {
-    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, clinic_name, clinic_logo_url, gtm_id, meta_pixel_id").eq("id", id).maybeSingle();
+    const { data: f } = await supabase.from("funnels").select("id, name, slug, status, gtm_id, meta_pixel_id").eq("id", id).maybeSingle();
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
+    const { data: u } = await supabase.auth.getUser();
+    if (u?.user) {
+      const { data: p } = await supabase.from("profiles").select("clinic_name, clinic_logo_url").eq("id", u.user.id).maybeSingle();
+      if (p) setClinic(p as ClinicProfile);
+    }
     setFunnel(f as Funnel | null);
     setSlugDraft((f as Funnel | null)?.slug ?? "");
     setSteps((s as Step[]) ?? []);
@@ -117,6 +124,20 @@ function EditFunnel() {
     setSaveStatus("modified");
     setFunnel({ ...funnel, ...patch });
     const { error } = await supabase.from("funnels").update(patch).eq("id", funnel.id);
+    if (error) {
+      toast.error(error.message);
+      setSaveStatus("modified");
+    } else {
+      setSaveStatus("saved");
+    }
+  }
+
+  async function updateClinic(patch: Partial<ClinicProfile>) {
+    setSaveStatus("modified");
+    setClinic((prev) => ({ ...prev, ...patch }));
+    const { data: u } = await supabase.auth.getUser();
+    if (!u?.user) { setSaveStatus("modified"); return; }
+    const { error } = await supabase.from("profiles").update(patch).eq("id", u.user.id);
     if (error) {
       toast.error(error.message);
       setSaveStatus("modified");
@@ -236,15 +257,16 @@ function EditFunnel() {
               </DialogHeader>
 
               <div className="rounded-2xl border border-border bg-background p-4">
-                <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Cabeçalho da clínica</p>
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Cabeçalho da clínica</p>
+                <p className="text-[11px] text-muted-foreground mb-3">Compartilhado entre todos os seus funis — alterar aqui atualiza em todos.</p>
                 <div className="grid sm:grid-cols-[120px_1fr] gap-4 items-start">
-                  <ClinicLogoUpload value={funnel.clinic_logo_url} onChange={(url) => updateFunnel({ clinic_logo_url: url })} />
+                  <ClinicLogoUpload value={clinic.clinic_logo_url} onChange={(url) => updateClinic({ clinic_logo_url: url })} />
                   <div>
                     <Label className="text-xs">Nome da clínica</Label>
                     <Input
-                      value={funnel.clinic_name ?? ""}
-                      onChange={(e) => setFunnel({ ...funnel, clinic_name: e.target.value })}
-                      onBlur={(e) => updateFunnel({ clinic_name: e.target.value })}
+                      value={clinic.clinic_name ?? ""}
+                      onChange={(e) => setClinic((prev) => ({ ...prev, clinic_name: e.target.value }))}
+                      onBlur={(e) => updateClinic({ clinic_name: e.target.value })}
                       placeholder="Ex: Clínica Sorriso"
                     />
                     <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
@@ -379,8 +401,8 @@ function EditFunnel() {
             <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Preview</p>
             <PhonePreview
               step={current}
-              clinicName={funnel.clinic_name}
-              clinicLogo={funnel.clinic_logo_url}
+              clinicName={clinic.clinic_name}
+              clinicLogo={clinic.clinic_logo_url}
               onChange={current ? (patch) => updateStep(current.id, { config: { ...current.config, ...patch } }) : undefined}
             />
           </div>
