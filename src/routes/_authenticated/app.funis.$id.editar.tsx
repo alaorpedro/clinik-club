@@ -34,11 +34,14 @@ function EditFunnel() {
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "modified">("saved");
+  const [slugDraft, setSlugDraft] = useState("");
+  const [slugError, setSlugError] = useState<string | null>(null);
 
   async function load() {
     const { data: f } = await supabase.from("funnels").select("id, name, slug, status, clinic_name, clinic_logo_url, gtm_id, meta_pixel_id").eq("id", id).maybeSingle();
     const { data: s } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("order", { ascending: true });
     setFunnel(f as Funnel | null);
+    setSlugDraft((f as Funnel | null)?.slug ?? "");
     setSteps((s as Step[]) ?? []);
     setSelected((s?.[0] as Step | undefined)?.id ?? null);
     setLoading(false);
@@ -120,6 +123,43 @@ function EditFunnel() {
     } else {
       setSaveStatus("saved");
     }
+  }
+
+  function normalizeSlug(raw: string) {
+    return raw
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
+  async function saveSlug() {
+    if (!funnel) return;
+    const next = normalizeSlug(slugDraft);
+    if (!next) {
+      setSlugError("Informe ao menos 1 caractere válido.");
+      setSlugDraft(funnel.slug);
+      return;
+    }
+    if (next.length < 3 || next.length > 60) {
+      setSlugError("Use entre 3 e 60 caracteres.");
+      return;
+    }
+    if (next === funnel.slug) {
+      setSlugError(null);
+      setSlugDraft(next);
+      return;
+    }
+    const { data: existing } = await supabase.from("funnels").select("id").eq("slug", next).maybeSingle();
+    if (existing && existing.id !== funnel.id) {
+      setSlugError("Esta URL já está em uso. Escolha outra.");
+      return;
+    }
+    setSlugError(null);
+    setSlugDraft(next);
+    await updateFunnel({ slug: next });
+    toast.success("URL pública atualizada!");
   }
 
   async function saveAll() {
@@ -210,6 +250,22 @@ function EditFunnel() {
                     <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
                   </div>
                 </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">URL pública</p>
+                <p className="text-[11px] text-muted-foreground mb-3">Define o endereço do funil: <code>/f/&lt;slug&gt;</code>. Use apenas letras minúsculas, números e hífens.</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground shrink-0">/f/</span>
+                  <Input
+                    value={slugDraft}
+                    onChange={(e) => { setSlugDraft(e.target.value); setSlugError(null); }}
+                    onBlur={saveSlug}
+                    placeholder="minha-clinica"
+                  />
+                </div>
+                {slugError && <p className="text-[11px] text-destructive mt-2">{slugError}</p>}
+                <p className="text-[11px] text-muted-foreground mt-2">Alterar a URL quebra links antigos já compartilhados.</p>
               </div>
 
               <div className="rounded-2xl border border-border bg-background p-4">
