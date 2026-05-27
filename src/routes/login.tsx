@@ -20,6 +20,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { next } = Route.useSearch();
+  const nextPath = next?.startsWith("/") ? next : "/app";
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -39,13 +40,13 @@ function LoginPage() {
       }
       return;
     }
-    navigate({ to: (next as never) || "/app" });
+    navigate({ to: nextPath as never });
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + (next || "/app") });
+    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + nextPath });
     if (result.error) toast.error("Erro ao entrar com Google");
-    if (!result.redirected && !result.error) navigate({ to: (next as never) || "/app" });
+    if (!result.redirected && !result.error) navigate({ to: nextPath as never });
   }
 
   return (
@@ -53,7 +54,11 @@ function LoginPage() {
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-16 max-w-md">
         <h1 className="text-4xl font-black tracking-tight">Entrar</h1>
-        <p className="mt-2 text-muted-foreground">Acesse sua conta Clinik.Club.</p>
+        <p className="mt-2 text-muted-foreground">
+          {nextPath.startsWith("/app")
+            ? "Entre para acessar o app. Depois disso, você poderá escolher seu plano."
+            : "Acesse sua conta Clinik.Club."}
+        </p>
         <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Entrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">
