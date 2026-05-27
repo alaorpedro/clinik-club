@@ -120,6 +120,29 @@ function EditFunnel() {
     }
   }
 
+  async function saveAll() {
+    setSaveStatus("saving");
+    const promises = [
+      supabase.from("funnels").update({ updated_at: new Date().toISOString() }).eq("id", funnel.id),
+      ...steps.map((s) => supabase.from("funnel_steps").update({ config: s.config, type: s.type, order: s.order }).eq("id", s.id)),
+    ];
+    const results = await Promise.all(promises);
+    const errors = results.filter((r) => r.error);
+    if (errors.length > 0) {
+      toast.error("Erro ao salvar algumas alterações");
+      setSaveStatus("modified");
+    } else {
+      setSaveStatus("saved");
+      toast.success(
+        <div className="space-y-1">
+          <p>Funil salvo com sucesso!</p>
+          <a href={publicUrl} target="_blank" rel="noreferrer" className="text-xs underline text-primary">Ver na slug →</a>
+        </div>,
+        { duration: 4000 }
+      );
+    }
+  }
+
   if (loading) return <p className="text-muted-foreground">Carregando...</p>;
   if (!funnel) return <p>Funil não encontrado.</p>;
 
@@ -134,7 +157,22 @@ function EditFunnel() {
             <Link to="/app"><ArrowLeft className="h-4 w-4 mr-1" />Voltar</Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-black tracking-tight">{funnel.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-black tracking-tight">{funnel.name}</h1>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  saveStatus === "saved"
+                    ? "bg-green-100 text-green-700"
+                    : saveStatus === "saving"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-orange-100 text-orange-700"
+                }`}
+              >
+                {saveStatus === "saved" && <CheckCircle className="h-3 w-3" />}
+                {saveStatus === "saving" && <Save className="h-3 w-3 animate-pulse" />}
+                {saveStatus === "saved" ? "Salvo" : saveStatus === "saving" ? "Salvando..." : "Modificado"}
+              </span>
+            </div>
             <p className="text-xs text-muted-foreground">/{funnel.slug} · {funnel.status}</p>
           </div>
         </div>
@@ -142,6 +180,9 @@ function EditFunnel() {
           {funnel.status === "published" && (
             <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline" size="sm" className="rounded-full"><Eye className="h-4 w-4 mr-1" />Ver público</Button></a>
           )}
+          <Button onClick={saveAll} disabled={saveStatus === "saving"} variant="secondary" className="rounded-full font-semibold" size="sm">
+            <Save className="h-4 w-4 mr-1" />{saveStatus === "saving" ? "Salvando..." : "Salvar funil"}
+          </Button>
           <Button onClick={togglePublish} className="rounded-full font-semibold" size="sm">
             <Globe className="h-4 w-4 mr-1" />{funnel.status === "published" ? "Despublicar" : "Publicar"}
           </Button>
