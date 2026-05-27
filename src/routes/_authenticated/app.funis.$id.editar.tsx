@@ -522,12 +522,31 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
   const ring = (k: ElKey) => editable ? `cursor-pointer rounded transition ${sel === k ? "outline outline-2 outline-primary outline-offset-2" : "hover:outline hover:outline-1 hover:outline-primary/50 hover:outline-offset-2"}` : "";
   const click = (k: ElKey) => (e: React.MouseEvent) => { if (!editable) return; e.stopPropagation(); setSel(sel === k ? null : k); };
 
-  const media = cfg.mediaUrl ? (
+  const hasCustomW = typeof cfg.mediaWidthPct === "number";
+  const hasCustomH = typeof cfg.mediaHeight === "number";
+  const mediaStyle: React.CSSProperties = {
+    width: hasCustomW ? `${cfg.mediaWidthPct}%` : "100%",
+    height: hasCustomH ? `${cfg.mediaHeight}px` : undefined,
+  };
+  const mediaHeightCls = hasCustomH ? "" : MEDIA_SIZES[mediaSize];
+  const mediaInner = cfg.mediaUrl ? (
     cfg.mediaType === "image" ? (
-      <img src={cfg.mediaUrl} alt="" className={`w-full ${MEDIA_SIZES[mediaSize]} object-cover rounded-lg ${ring("media")}`} onClick={click("media")} />
+      <img src={cfg.mediaUrl} alt="" className={`w-full h-full object-cover rounded-lg block`} />
     ) : cfg.mediaType === "video" ? (
-      <div className={`w-full ${MEDIA_SIZES[mediaSize]} rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground ${ring("media")}`} onClick={click("media")}>▶ vídeo</div>
+      <div className="w-full h-full rounded-lg bg-foreground/10 flex items-center justify-center text-[10px] text-muted-foreground">▶ vídeo</div>
     ) : null
+  ) : null;
+  const media = mediaInner ? (
+    <div
+      className={`relative inline-block ${mediaHeightCls} ${ring("media")}`}
+      style={mediaStyle}
+      onClick={click("media")}
+    >
+      {mediaInner}
+      {editable && sel === "media" && onChange && (
+        <ResizeHandles cfg={cfg} onChange={onChange} />
+      )}
+    </div>
   ) : null;
   const subtitle = cfg.subtitle ? (
     <p className={`${SUBTITLE_SIZES[subtitleSize]} text-muted-foreground mt-1 break-words whitespace-pre-wrap ${ring("subtitle")}`} onClick={click("subtitle")}>{cfg.subtitle}</p>
@@ -638,6 +657,13 @@ function ElementControls({ el, cfg, onChange, onClose }: { el: ElKey; cfg: any; 
               <button key={o.v} onClick={() => onChange({ mediaPosition: o.v })} className={`flex-1 px-2 py-1.5 rounded-lg border text-[11px] font-semibold ${((cfg.mediaPosition ?? "above") === o.v) ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>{o.l}</button>
             ))}
           </div>
+          {(typeof cfg.mediaWidthPct === "number" || typeof cfg.mediaHeight === "number") && (
+            <button
+              onClick={() => onChange({ mediaWidthPct: null, mediaHeight: null })}
+              className="mt-2 w-full px-2 py-1.5 rounded-lg border border-border text-[11px] hover:bg-secondary"
+            >Restaurar tamanho</button>
+          )}
+          <p className="mt-2 text-[10px] text-muted-foreground">Arraste as alças no preview para redimensionar livremente.</p>
         </div>
       )}
       {el === "subtitle" && (
@@ -677,5 +703,52 @@ function ElementControls({ el, cfg, onChange, onClose }: { el: ElKey; cfg: any; 
         </div>
       )}
     </div>
+  );
+}
+
+function ResizeHandles({ cfg, onChange }: { cfg: any; onChange: (patch: any) => void }) {
+  function startDrag(axis: "x" | "y" | "xy") {
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const el = (e.currentTarget as HTMLElement).parentElement as HTMLElement;
+      const parent = el.parentElement as HTMLElement;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startW = el.offsetWidth;
+      const startH = el.offsetHeight;
+      const parentW = parent.offsetWidth || 1;
+      let nextPct = typeof cfg.mediaWidthPct === "number" ? cfg.mediaWidthPct : (startW / parentW) * 100;
+      let nextH = typeof cfg.mediaHeight === "number" ? cfg.mediaHeight : startH;
+      function onMove(ev: MouseEvent) {
+        if (axis === "x" || axis === "xy") {
+          const w = Math.max(40, Math.min(parentW, startW + (ev.clientX - startX)));
+          nextPct = Math.round((w / parentW) * 100);
+          el.style.width = `${nextPct}%`;
+        }
+        if (axis === "y" || axis === "xy") {
+          nextH = Math.max(40, Math.min(600, startH + (ev.clientY - startY)));
+          el.style.height = `${nextH}px`;
+        }
+      }
+      function onUp() {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+        const patch: any = {};
+        if (axis === "x" || axis === "xy") patch.mediaWidthPct = nextPct;
+        if (axis === "y" || axis === "xy") patch.mediaHeight = nextH;
+        onChange(patch);
+      }
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    };
+  }
+  const base = "absolute bg-primary border border-background shadow rounded-full z-10";
+  return (
+    <>
+      <div onMouseDown={startDrag("x")} onClick={(e) => e.stopPropagation()} className={`${base} w-2.5 h-2.5 right-[-5px] top-1/2 -translate-y-1/2 cursor-ew-resize`} />
+      <div onMouseDown={startDrag("y")} onClick={(e) => e.stopPropagation()} className={`${base} w-2.5 h-2.5 bottom-[-5px] left-1/2 -translate-x-1/2 cursor-ns-resize`} />
+      <div onMouseDown={startDrag("xy")} onClick={(e) => e.stopPropagation()} className={`${base} w-3 h-3 right-[-6px] bottom-[-6px] cursor-nwse-resize`} />
+    </>
   );
 }

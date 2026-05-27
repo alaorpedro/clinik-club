@@ -128,20 +128,27 @@ function StepView({ step, onNext, isLast }: { step: Step; onNext: (a?: Record<st
 
   function Media() {
     if (!cfg.mediaUrl) return null;
+    const hasW = typeof cfg.mediaWidthPct === "number";
+    const hasH = typeof cfg.mediaHeight === "number";
+    const style: React.CSSProperties = {
+      width: hasW ? `${cfg.mediaWidthPct}%` : undefined,
+      height: hasH ? `${cfg.mediaHeight}px` : undefined,
+    };
+    const hCls = hasH ? "" : mediaMaxH;
     if (cfg.mediaType === "image") {
-      return <img src={cfg.mediaUrl} alt="" className={`w-full rounded-2xl object-cover ${mediaMaxH} mb-4`} />;
+      return <img src={cfg.mediaUrl} alt="" style={style} className={`${hasW ? "" : "w-full"} rounded-2xl object-cover ${hCls} mb-4`} />;
     }
     if (cfg.mediaType === "video") {
       const url: string = cfg.mediaUrl;
       const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
       if (yt) {
         return (
-          <div className="aspect-video w-full mb-4 rounded-2xl overflow-hidden">
+          <div style={style} className={`${hasW ? "" : "w-full"} ${hasH ? "" : "aspect-video"} mb-4 rounded-2xl overflow-hidden`}>
             <iframe src={`https://www.youtube.com/embed/${yt[1]}`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
           </div>
         );
       }
-      return <video src={url} controls className={`w-full rounded-2xl mb-4 ${mediaMaxH}`} />;
+      return <video src={url} controls style={style} className={`${hasW ? "" : "w-full"} rounded-2xl mb-4 ${hCls}`} />;
     }
     return null;
   }
