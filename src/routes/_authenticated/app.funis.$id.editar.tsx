@@ -319,156 +319,171 @@ function StepEditor({ step, onChange, onDelete, onMoveUp, onMoveDown }: { step: 
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs">Tipo</Label>
+      <div className="flex items-center justify-between gap-2 pb-4 border-b border-border">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Label className="text-xs text-muted-foreground shrink-0">Tipo</Label>
           <Select value={step.type} onValueChange={(v) => onChange({ type: v, config: defaultConfig(v) })}>
-            <SelectTrigger className="w-48 h-9"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full max-w-xs h-9"><SelectValue /></SelectTrigger>
             <SelectContent>{STEP_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={onMoveUp}>↑</Button>
-          <Button variant="ghost" size="sm" onClick={onMoveDown}>↓</Button>
-          <Button variant="ghost" size="sm" onClick={onDelete}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+        <div className="flex gap-1 shrink-0">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onMoveUp} title="Mover para cima">↑</Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onMoveDown} title="Mover para baixo">↓</Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onDelete} title="Remover etapa"><Trash2 className="h-4 w-4 text-destructive" /></Button>
         </div>
       </div>
 
-      <div>
-        <Label className="text-xs">Título</Label>
-        <Input value={cfg.title ?? ""} onChange={(e) => setCfg({ title: e.target.value })} />
-      </div>
+      <Tabs defaultValue="content" className="w-full">
+        <TabsList className="grid grid-cols-3 w-full">
+          <TabsTrigger value="content">Conteúdo</TabsTrigger>
+          <TabsTrigger value="media">Mídia</TabsTrigger>
+          <TabsTrigger value="style">Estilo</TabsTrigger>
+        </TabsList>
 
-      {step.type === "text" && (
-        <div>
-          <Label className="text-xs">Texto</Label>
-          <Textarea value={cfg.body ?? ""} onChange={(e) => setCfg({ body: e.target.value })} />
-        </div>
-      )}
-
-      {(step.type === "single" || step.type === "multiple") && (
-        <div>
-          <Label className="text-xs">Opções (uma por linha)</Label>
-          <Textarea
-            rows={6}
-            value={(cfg.options ?? []).join("\n")}
-            onChange={(e) => setCfg({ options: e.target.value.split("\n") })}
-            onBlur={(e) => setCfg({ options: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
-          />
-        </div>
-      )}
-
-      {step.type === "input" && (
-        <div>
-          <Label className="text-xs">Placeholder</Label>
-          <Input value={cfg.placeholder ?? ""} onChange={(e) => setCfg({ placeholder: e.target.value })} />
-        </div>
-      )}
-
-      {step.type === "contact" && (
-        <div className="grid grid-cols-2 gap-3">
+        <TabsContent value="content" className="space-y-4 mt-5">
           <div>
-            <Label className="text-xs">Placeholder do nome</Label>
-            <Input value={cfg.namePlaceholder ?? ""} onChange={(e) => setCfg({ namePlaceholder: e.target.value })} />
+            <Label className="text-xs">Título</Label>
+            <Input value={cfg.title ?? ""} onChange={(e) => setCfg({ title: e.target.value })} />
           </div>
-          <div>
-            <Label className="text-xs">Placeholder do telefone</Label>
-            <Input value={cfg.phonePlaceholder ?? ""} onChange={(e) => setCfg({ phonePlaceholder: e.target.value })} />
-          </div>
-        </div>
-      )}
 
-      {step.type !== "single" && (
-        <div>
-          <Label className="text-xs">Texto do botão</Label>
-          <Input value={cfg.cta ?? ""} onChange={(e) => setCfg({ cta: e.target.value })} />
-        </div>
-      )}
+          <div>
+            <Label className="text-xs">Subtítulo / descrição</Label>
+            <Textarea rows={2} value={cfg.subtitle ?? ""} onChange={(e) => setCfg({ subtitle: e.target.value })} placeholder="Texto opcional exibido junto da pergunta" />
+          </div>
 
-      <div className="pt-5 border-t border-border space-y-4">
-        <p className="text-xs font-semibold uppercase text-muted-foreground">Layout & mídia</p>
+          {step.type === "text" && (
+            <div>
+              <Label className="text-xs">Texto</Label>
+              <Textarea value={cfg.body ?? ""} onChange={(e) => setCfg({ body: e.target.value })} />
+            </div>
+          )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs">Tipo de mídia</Label>
-            <Select value={cfg.mediaType ?? "none"} onValueChange={(v) => setCfg({ mediaType: v })}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Nenhuma</SelectItem>
-                <SelectItem value="image">Imagem</SelectItem>
-                <SelectItem value="video">Vídeo (YouTube/MP4)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Posição da mídia</Label>
-            <Select value={cfg.mediaPosition ?? "above"} onValueChange={(v) => setCfg({ mediaPosition: v })}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="above">Acima do título</SelectItem>
-                <SelectItem value="below">Abaixo do título</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          {(step.type === "single" || step.type === "multiple") && (
+            <div>
+              <Label className="text-xs">Opções (uma por linha)</Label>
+              <Textarea
+                rows={6}
+                value={(cfg.options ?? []).join("\n")}
+                onChange={(e) => setCfg({ options: e.target.value.split("\n") })}
+                onBlur={(e) => setCfg({ options: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
+              />
+            </div>
+          )}
 
-        {cfg.mediaType === "image" && (
-          <ImageUpload value={cfg.mediaUrl} onChange={(url) => setCfg({ mediaUrl: url })} />
-        )}
-        {cfg.mediaType === "video" && (
-          <div>
-            <Label className="text-xs">Link do vídeo (YouTube ou MP4)</Label>
-            <Input value={cfg.mediaUrl ?? ""} onChange={(e) => setCfg({ mediaUrl: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
-          </div>
-        )}
+          {step.type === "input" && (
+            <div>
+              <Label className="text-xs">Placeholder</Label>
+              <Input value={cfg.placeholder ?? ""} onChange={(e) => setCfg({ placeholder: e.target.value })} />
+            </div>
+          )}
 
-        <div>
-          <Label className="text-xs">Subtítulo / descrição</Label>
-          <Textarea rows={2} value={cfg.subtitle ?? ""} onChange={(e) => setCfg({ subtitle: e.target.value })} placeholder="Texto opcional exibido junto da pergunta" />
-        </div>
+          {step.type === "contact" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Placeholder do nome</Label>
+                <Input value={cfg.namePlaceholder ?? ""} onChange={(e) => setCfg({ namePlaceholder: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">Placeholder do telefone</Label>
+                <Input value={cfg.phonePlaceholder ?? ""} onChange={(e) => setCfg({ phonePlaceholder: e.target.value })} />
+              </div>
+            </div>
+          )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs">Posição do subtítulo</Label>
-            <Select value={cfg.subtitlePosition ?? "below"} onValueChange={(v) => setCfg({ subtitlePosition: v })}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="above">Acima do título</SelectItem>
-                <SelectItem value="below">Abaixo do título</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Alinhamento</Label>
-            <Select value={cfg.align ?? "left"} onValueChange={(v) => setCfg({ align: v })}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Esquerda</SelectItem>
-                <SelectItem value="center">Centro</SelectItem>
-                <SelectItem value="right">Direita</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          {step.type !== "single" && (
+            <div>
+              <Label className="text-xs">Texto do botão</Label>
+              <Input value={cfg.cta ?? ""} onChange={(e) => setCfg({ cta: e.target.value })} />
+            </div>
+          )}
+        </TabsContent>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs">Cor de fundo</Label>
-            <Input type="color" value={cfg.bgColor ?? "#ffffff"} onChange={(e) => setCfg({ bgColor: e.target.value })} className="h-9 p-1" />
+        <TabsContent value="media" className="space-y-4 mt-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Tipo de mídia</Label>
+              <Select value={cfg.mediaType ?? "none"} onValueChange={(v) => setCfg({ mediaType: v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  <SelectItem value="image">Imagem</SelectItem>
+                  <SelectItem value="video">Vídeo (YouTube/MP4)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Posição da mídia</Label>
+              <Select value={cfg.mediaPosition ?? "above"} onValueChange={(v) => setCfg({ mediaPosition: v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="above">Acima do título</SelectItem>
+                  <SelectItem value="below">Abaixo do título</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div>
-            <Label className="text-xs">Estilo do botão</Label>
-            <Select value={cfg.buttonStyle ?? "solid"} onValueChange={(v) => setCfg({ buttonStyle: v })}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="solid">Sólido</SelectItem>
-                <SelectItem value="outline">Contorno</SelectItem>
-                <SelectItem value="ghost">Discreto</SelectItem>
-              </SelectContent>
-            </Select>
+
+          {cfg.mediaType === "image" && (
+            <ImageUpload value={cfg.mediaUrl} onChange={(url) => setCfg({ mediaUrl: url })} />
+          )}
+          {cfg.mediaType === "video" && (
+            <div>
+              <Label className="text-xs">Link do vídeo (YouTube ou MP4)</Label>
+              <Input value={cfg.mediaUrl ?? ""} onChange={(e) => setCfg({ mediaUrl: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
+            </div>
+          )}
+          {(cfg.mediaType === "none" || !cfg.mediaType) && (
+            <p className="text-xs text-muted-foreground rounded-lg border border-dashed border-border p-4 text-center">
+              Selecione um tipo de mídia acima para adicionar imagem ou vídeo.
+            </p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="style" className="space-y-4 mt-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Posição do subtítulo</Label>
+              <Select value={cfg.subtitlePosition ?? "below"} onValueChange={(v) => setCfg({ subtitlePosition: v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="above">Acima do título</SelectItem>
+                  <SelectItem value="below">Abaixo do título</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Alinhamento</Label>
+              <Select value={cfg.align ?? "left"} onValueChange={(v) => setCfg({ align: v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Esquerda</SelectItem>
+                  <SelectItem value="center">Centro</SelectItem>
+                  <SelectItem value="right">Direita</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </div>
-      </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Cor de fundo</Label>
+              <Input type="color" value={cfg.bgColor ?? "#ffffff"} onChange={(e) => setCfg({ bgColor: e.target.value })} className="h-9 p-1" />
+            </div>
+            <div>
+              <Label className="text-xs">Estilo do botão</Label>
+              <Select value={cfg.buttonStyle ?? "solid"} onValueChange={(v) => setCfg({ buttonStyle: v })}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="solid">Sólido</SelectItem>
+                  <SelectItem value="outline">Contorno</SelectItem>
+                  <SelectItem value="ghost">Discreto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
