@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy, Upload, X, Save, CheckCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { ArrowLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy, Upload, X, Save, CheckCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
@@ -182,6 +183,61 @@ function EditFunnel() {
           {funnel.status === "published" && (
             <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline" size="sm" className="rounded-full"><Eye className="h-4 w-4 mr-1" />Ver público</Button></a>
           )}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="rounded-full">
+                <Settings className="h-4 w-4 mr-1" />Configurações do funil
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Configurações do funil</DialogTitle>
+                <DialogDescription>Personalize o cabeçalho da clínica e configure o rastreamento.</DialogDescription>
+              </DialogHeader>
+
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Cabeçalho da clínica</p>
+                <div className="grid sm:grid-cols-[120px_1fr] gap-4 items-start">
+                  <ClinicLogoUpload value={funnel.clinic_logo_url} onChange={(url) => updateFunnel({ clinic_logo_url: url })} />
+                  <div>
+                    <Label className="text-xs">Nome da clínica</Label>
+                    <Input
+                      value={funnel.clinic_name ?? ""}
+                      onChange={(e) => setFunnel({ ...funnel, clinic_name: e.target.value })}
+                      onBlur={(e) => updateFunnel({ clinic_name: e.target.value })}
+                      placeholder="Ex: Clínica Sorriso"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-background p-4">
+                <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Rastreamento</p>
+                <p className="text-[11px] text-muted-foreground mb-3">Os scripts são injetados no funil público e disparam eventos automáticos: <code>PageView</code>, <code>ViewContent</code>, <code>Lead</code> e <code>CompleteRegistration</code> (Meta) — e os equivalentes no <code>dataLayer</code> do GTM.</p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Google Tag Manager ID</Label>
+                    <Input
+                      value={funnel.gtm_id ?? ""}
+                      onChange={(e) => setFunnel({ ...funnel, gtm_id: e.target.value })}
+                      onBlur={(e) => updateFunnel({ gtm_id: e.target.value.trim() || null })}
+                      placeholder="GTM-XXXXXXX"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Meta Pixel ID</Label>
+                    <Input
+                      value={funnel.meta_pixel_id ?? ""}
+                      onChange={(e) => setFunnel({ ...funnel, meta_pixel_id: e.target.value })}
+                      onBlur={(e) => updateFunnel({ meta_pixel_id: e.target.value.trim() || null })}
+                      placeholder="1234567890123456"
+                    />
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Button onClick={saveAll} disabled={saveStatus === "saving"} variant="secondary" className="rounded-full font-semibold" size="sm">
             <Save className="h-4 w-4 mr-1" />{saveStatus === "saving" ? "Salvando..." : "Salvar funil"}
           </Button>
@@ -205,48 +261,6 @@ function EditFunnel() {
         >
           <Copy className="h-3.5 w-3.5 mr-1" />Copiar
         </Button>
-      </div>
-
-      <div className="mb-6 rounded-2xl border border-border bg-background p-4">
-        <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Cabeçalho da clínica</p>
-        <div className="grid sm:grid-cols-[120px_1fr] gap-4 items-start">
-          <ClinicLogoUpload value={funnel.clinic_logo_url} onChange={(url) => updateFunnel({ clinic_logo_url: url })} />
-          <div>
-            <Label className="text-xs">Nome da clínica</Label>
-            <Input
-              value={funnel.clinic_name ?? ""}
-              onChange={(e) => setFunnel({ ...funnel, clinic_name: e.target.value })}
-              onBlur={(e) => updateFunnel({ clinic_name: e.target.value })}
-              placeholder="Ex: Clínica Sorriso"
-            />
-            <p className="text-[11px] text-muted-foreground mt-2">Exibido como cabeçalho fixo em todas as etapas do funil.</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-6 rounded-2xl border border-border bg-background p-4">
-        <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Rastreamento</p>
-        <p className="text-[11px] text-muted-foreground mb-3">Os scripts são injetados no funil público e disparam eventos automáticos: <code>PageView</code>, <code>ViewContent</code>, <code>Lead</code> e <code>CompleteRegistration</code> (Meta) — e os equivalentes no <code>dataLayer</code> do GTM.</p>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div>
-            <Label className="text-xs">Google Tag Manager ID</Label>
-            <Input
-              value={funnel.gtm_id ?? ""}
-              onChange={(e) => setFunnel({ ...funnel, gtm_id: e.target.value })}
-              onBlur={(e) => updateFunnel({ gtm_id: e.target.value.trim() || null })}
-              placeholder="GTM-XXXXXXX"
-            />
-          </div>
-          <div>
-            <Label className="text-xs">Meta Pixel ID</Label>
-            <Input
-              value={funnel.meta_pixel_id ?? ""}
-              onChange={(e) => setFunnel({ ...funnel, meta_pixel_id: e.target.value })}
-              onBlur={(e) => updateFunnel({ meta_pixel_id: e.target.value.trim() || null })}
-              placeholder="1234567890123456"
-            />
-          </div>
-        </div>
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr_320px] gap-6">
