@@ -10,7 +10,7 @@ type Step = { id: string; type: string; config: any; order: number };
 type FunnelData = { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null; gtm_id: string | null; meta_pixel_id: string | null; theme?: any };
 type LeadData = { name?: string; email?: string; phone?: string };
 
-function ThankYouScreen({ funnel, lead }: { funnel: FunnelData; lead: LeadData }) {
+function ThankYouScreen({ funnel, lead, overrides }: { funnel: FunnelData; lead: LeadData; overrides?: { greetingTitle?: string; greetingSubtitle?: string } }) {
   const ty = (funnel.theme as any)?.thankYou ?? {};
   const firstName = (lead.name || "").trim().split(" ")[0] || "";
   const clinic = funnel.clinic_name || "nossa equipe";
@@ -20,8 +20,10 @@ function ThankYouScreen({ funnel, lead }: { funnel: FunnelData; lead: LeadData }
   const responseTime: string = ty.responseTime || "Tempo médio: 2 min";
   const rating: string = String(ty.rating || "4.9");
   const reviewsLabel: string = ty.reviewsLabel || "Google Reviews";
-  const greetingTitle: string = (ty.greetingTitle || "Solicitação Recebida, {nome}!").replace(/\{nome\}/gi, firstName || "tudo certo");
-  const greetingSubtitle: string = (ty.greetingSubtitle || "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade.").replace(/\{clinica\}/gi, clinic);
+  const greetingTitleTpl: string = overrides?.greetingTitle || ty.greetingTitle || "Solicitação Recebida, {nome}!";
+  const greetingSubtitleTpl: string = overrides?.greetingSubtitle || ty.greetingSubtitle || "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade.";
+  const greetingTitle: string = greetingTitleTpl.replace(/\{nome\}/gi, firstName || "tudo certo").replace(/\{clinica\}/gi, clinic);
+  const greetingSubtitle: string = greetingSubtitleTpl.replace(/\{nome\}/gi, firstName || "tudo certo").replace(/\{clinica\}/gi, clinic);
   const ctaLabel: string = ty.ctaLabel || "Iniciar Agendamento no WhatsApp";
 
   const rawNumber: string = (ty.whatsappNumber || "").replace(/\D/g, "");
@@ -249,6 +251,13 @@ function PublicFunnel() {
   const isLast = index === steps.length - 1;
   const progress = ((index + 1) / steps.length) * 100;
 
+  // "Página final" (step.type === "lead"): render ThankYouScreen and auto-finish.
+  useEffect(() => {
+    if (!step || step.type !== "lead" || done) return;
+    finish(answers, lead).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step?.id]);
+
   function next(extra?: Record<string, unknown>, leadExtra?: typeof lead) {
     const a = { ...answers, ...(extra ?? {}) };
     const l = { ...lead, ...(leadExtra ?? {}) };
@@ -298,7 +307,12 @@ function PublicFunnel() {
   }
 
   if (done) {
-    return <ThankYouScreen funnel={funnel} lead={lead} />;
+    const finalStep = steps.find((s) => s.type === "lead");
+    return <ThankYouScreen funnel={funnel} lead={lead} overrides={finalStep ? { greetingTitle: finalStep.config?.title, greetingSubtitle: finalStep.config?.subtitle } : undefined} />;
+  }
+
+  if (step?.type === "lead") {
+    return <ThankYouScreen funnel={funnel} lead={lead} overrides={{ greetingTitle: step.config?.title, greetingSubtitle: step.config?.subtitle }} />;
   }
 
   return (
@@ -513,20 +527,6 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
         {header}
         <Input className="mt-6" placeholder={cfg.placeholder || ""} value={value} onChange={(e) => setValue(e.target.value)} />
         <Cta disabled={!value} onClick={() => onNext({ [key]: value })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
-      </div>
-    );
-  }
-
-  if (step.type === "lead") {
-    return (
-      <div>
-        {header}
-        <div className="mt-6 space-y-3">
-          <Input placeholder="Seu nome" value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
-          <Input placeholder="Seu e-mail" type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} />
-          <Input placeholder="Seu WhatsApp" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
-        </div>
-        <Cta disabled={!lead.email} onClick={() => onNext(undefined, lead)}>{cfg.cta || "Receber resultado"}</Cta>
       </div>
     );
   }
