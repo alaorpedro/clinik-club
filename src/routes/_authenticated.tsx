@@ -2,7 +2,8 @@ import { createFileRoute, Outlet, redirect, useNavigate, useRouterState } from "
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, User, LogOut, Loader2, Users } from "lucide-react";
+import { LayoutGrid, User, LogOut, Loader2, Users, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
 
@@ -38,6 +39,24 @@ function AppLayout() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setIsAdmin(!!data);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
   if (!user) return null;
@@ -51,6 +70,7 @@ function AppLayout() {
     { to: "/app", label: "Meus funis", icon: LayoutGrid },
     { to: "/app/crm", label: "CRM", icon: Users },
     { to: "/app/conta", label: "Minha conta", icon: User },
+    ...(isAdmin ? [{ to: "/app/admin", label: "Admin", icon: ShieldCheck }] : []),
   ];
 
   return (
