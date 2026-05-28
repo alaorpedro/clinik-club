@@ -1,76 +1,80 @@
-# Odontolink — SaaS de Funis Interativos
 
-Plataforma onde o usuário cria quizzes/funis de vendas multi-etapa, publica em URL própria, captura leads e acompanha métricas. Inspirado no inlead.digital, com marca **Odontolink** (provisória).
+# CRM Clinik.Club — Módulo pago (MVP)
 
-## Stack
-- **Frontend/Backend**: TanStack Start (já configurado) + Tailwind + shadcn
-- **Banco/Auth/Storage**: Lovable Cloud (Supabase gerenciado)
-- **Pagamento**: **Stripe via Lovable Payments** (recomendado — não exige conta Stripe própria, assinaturas recorrentes prontas, tax handling configurável). Paddle é alternativa se preferir Merchant-of-Record total.
+CRM como add-on cobrado **além** do plano do funil. Quem não tiver o módulo ativo vê um paywall na rota `/app/crm`.
 
-## Escopo da v1
+## Escopo do MVP
 
-### 1. Site institucional (público)
-- `/` — Home (hero com mockup visual do quiz, logos de parceiros, "como funciona", depoimentos, CTA)
-- `/planos` — pricing (3 planos: Starter, Pro, Agency)
-- `/sobre`, `/contato`, `/blog` (placeholder)
-- Header + Footer compartilhados
+1. **Pipelines (Kanban)** — colunas customizáveis (Novos Leads, Em Atendimento, Agendou, Compareceu, Fechou, Perdeu). Arrastar lead entre etapas.
+2. **Lista de Leads** com filtros (período, pipeline, etapa, campanha, atendente, origem) + exportar XLSX.
+3. **Detalhe do Lead** — dados de contato, respostas do funil, timeline de eventos, anotações, botão "abrir WhatsApp".
+4. **Captura automática** — toda submissão de `leads` (já existente, vinda dos funis) entra no pipeline padrão na primeira etapa.
+5. **Atendentes** — convidar membros da clínica e atribuir leads (round-robin manual no MVP).
+6. **Relatórios** — 4 abas: Segmentado, Gerencial, Leads Parados, Leads por Origem.
+7. **Paywall** — bloqueia `/app/crm` se o usuário não tiver assinatura ativa do produto `crm_addon`.
 
-### 2. Autenticação
-- `/login` e `/cadastro` (email/senha + Google)
-- `/reset-password`
-- Tabela `profiles` (nome, avatar, plano atual)
+Fora do MVP (próximas fases): integração WhatsApp Business API nativa, automações/SLA, gravação de ligações, IA de qualificação.
 
-### 3. Dashboard do usuário (`/app/*`, protegido)
-- `/app` — lista de funis do usuário + botão "Novo funil"
-- `/app/funis/:id/editar` — **builder visual** com etapas:
-  - Tipos de bloco: Texto, Escolha Única, Múltipla, Input, Botão, Imagem
-  - Drag handle pra reordenar etapas
-  - Preview ao lado em mockup de celular
-- `/app/funis/:id/analytics` — visualizações, conversão por etapa, leads capturados (gráficos com Recharts)
-- `/app/funis/:id/leads` — tabela de leads + export CSV
-- `/app/conta` — perfil, troca de senha, plano atual, botão "Gerenciar assinatura" (Stripe portal)
+## Modelo de cobrança
 
-### 4. Funil publicado (público)
-- `/f/:slug` — renderiza o funil interativo do usuário, com tracking de cada etapa
+Novo produto no Lovable Payments: **CRM Add-on** — assinatura mensal independente do plano do funil.
+- `crm_addon_monthly` — R$ 97/mês (placeholder, confirmar valor)
+- Validação server-side: serverFn `hasCrmAccess()` consulta `subscriptions` com `product_id = 'crm_addon'`.
 
-### 5. Pagamento (Stripe)
-- 3 produtos no Stripe (Starter R$ 47/mês, Pro R$ 97/mês, Agency R$ 297/mês)
-- Checkout Stripe ao clicar em plano
-- Webhook atualiza `profiles.plan` e `profiles.subscription_status`
-- Limites por plano: nº de funis ativos, nº de leads/mês
-- Customer Portal pra gestão de assinatura
+## Banco de dados (novas tabelas)
 
-## Modelo de dados
 ```text
-profiles         (id→auth.users, name, avatar_url, plan, stripe_customer_id, sub_status)
-funnels          (id, owner_id, name, slug, status, theme, created_at)
-funnel_steps     (id, funnel_id, order, type, config jsonb)
-funnel_responses (id, funnel_id, session_id, answers jsonb, completed, created_at)
-leads            (id, funnel_id, email, name, phone, utm jsonb, created_at)
-plan_limits      (lookup: plan → max_funnels, max_leads_month)
+crm_pipelines (id, owner_id, name, is_default, created_at)
+crm_stages    (id, pipeline_id, name, order, color, created_at)
+crm_lead_cards(id, lead_id, pipeline_id, stage_id, assignee_id, position,
+               status [active/archived], moved_at, created_at)
+crm_notes     (id, lead_card_id, author_id, body, created_at)
+crm_events    (id, lead_card_id, type, payload jsonb, created_at)
+crm_members   (id, owner_id, user_id, role [admin/agent], created_at)
 ```
-RLS: usuário só vê os próprios funis/leads. Funis publicados (`status='published'`) lidos por `anon` via server fn admin com WHERE no slug.
 
-## Entregas em fases
+- `lead_card` referencia `leads.id` (tabela existente, alimentada pelos funis).
+- Trigger: ao inserir em `leads`, cria automaticamente um `crm_lead_card` no pipeline default do owner do funil (se ele tem CRM ativo).
+- RLS: owner vê tudo; agent vê apenas cards atribuídos a ele ou não atribuídos.
 
-**Fase 1 (esta mensagem)** — base navegável:
-1. Design system Odontolink (azul royal + amarelo neon + tipografia bold)
-2. Site institucional completo (home, planos, sobre, contato)
-3. Ativar Lovable Cloud + auth (email/senha + Google) + páginas login/cadastro/reset
-4. Shell do `/app` com sidebar + página de listagem de funis (vazia)
-5. Schema do banco + RLS
+## Arquitetura de telas
 
-**Fase 2** — builder e funil público:
-6. Builder visual de funis (CRUD steps)
-7. Renderizador público `/f/:slug` + captura de respostas/leads
-8. Página de leads + analytics básico
+```text
+/app/crm                       → dashboard (KPIs rápidos) ou redirect p/ pipelines
+/app/crm/pipelines             → Kanban (default pipeline)
+/app/crm/pipelines/$id         → Kanban de um pipeline específico
+/app/crm/leads                 → tabela de leads com filtros + export XLSX
+/app/crm/leads/$id             → detalhe do lead (timeline, notas, respostas do funil)
+/app/crm/reports               → abas Segmentado/Gerencial/Parados/Origem
+/app/crm/settings              → pipelines, etapas, atendentes
+/app/crm/upgrade               → paywall (quando sem assinatura)
+```
 
-**Fase 3** — monetização:
-9. Ativar Stripe Payments (Lovable)
-10. Checkout + webhooks + portal + enforcement de limites por plano
+Layout próprio com sidebar (Pipelines · Leads · Relatórios · Configurações) — usa shadcn Sidebar, colapsável.
 
-## Confirmações antes de começar
+## Detalhes técnicos
 
-1. **Stripe via Lovable Payments** OK? (recomendo — zero setup, você só preenche um form depois)
-2. **Posso começar pela Fase 1 agora** e a gente itera as fases 2 e 3 nas próximas mensagens? (manter mensagens menores = builds mais estáveis e você revisa cada parte)
-3. **Planos/preços** acima (R$ 47 / 97 / 297) servem como placeholder ou já tem valores definidos?
+- **Guard**: layout `_authenticated/app/crm` chama `hasCrmAccess` no loader; redirect p/ `/app/crm/upgrade` se falso.
+- **Server functions**: `crm.functions.ts` para listar pipelines, mover card (otimista no client), criar nota, etc. Tudo com `requireSupabaseAuth`.
+- **Kanban**: `@dnd-kit/core` (já leve e compatível). Mutação otimista com TanStack Query.
+- **Export XLSX**: serverFn que gera CSV/XLSX server-side e retorna como blob.
+- **Realtime**: opcional na v1 — habilitar `supabase_realtime` em `crm_lead_cards` para múltiplos atendentes verem o board atualizar.
+
+## Ordem de implementação (entrega incremental)
+
+1. **Migração DB** + RLS + trigger de criação automática de card a partir de `leads`.
+2. **Produto de pagamento** `crm_addon` + serverFn `hasCrmAccess` + paywall em `/app/crm/upgrade`.
+3. **Layout do CRM** com sidebar + guard de acesso.
+4. **Pipelines/Kanban** (criar pipeline default na primeira visita, drag-and-drop entre etapas).
+5. **Lista de Leads** com filtros e detalhe do lead (timeline + respostas do funil).
+6. **Atendentes** (convite + atribuição).
+7. **Relatórios** (4 abas) + export XLSX.
+8. **Polimento** — vazios, loading skeletons, toasts, mobile.
+
+## Pontos a confirmar antes de codar
+
+- **Preço** do add-on (sugiro R$ 97/mês — ok?).
+- **Trial**: liberar 7 dias grátis do CRM pra quem já tem o funil? (recomendo sim p/ conversão)
+- **Etapas default** do pipeline: posso usar as do CRMAX (Novos Leads → Em Atendimento → Agendou → Compareceu → Fechou → Perdeu)?
+
+Posso começar pela etapa 1 (migração + paywall + layout) já com as defaults acima, e ajustamos preço/trial quando você confirmar.
