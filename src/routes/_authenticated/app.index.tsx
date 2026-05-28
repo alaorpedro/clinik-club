@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2 } from "lucide-react";
+import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ function AppHome() {
   const [settingsFor, setSettingsFor] = useState<string | null>(null);
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
+  const [planName, setPlanName] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.from("funnels").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
@@ -32,6 +33,21 @@ function AppHome() {
         check_env: (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live",
       });
       setHasPlan(!!ok);
+      if (ok) {
+        const env = (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live";
+        const { data: sub } = await supabase
+          .from("subscriptions")
+          .select("price_id")
+          .eq("user_id", u.user.id)
+          .eq("environment", env)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (sub?.price_id) {
+          const tier = sub.price_id.split("_")[0];
+          setPlanName(tier.charAt(0).toUpperCase() + tier.slice(1));
+        }
+      }
     })();
   }, []);
 
@@ -72,13 +88,21 @@ function AppHome() {
           <h1 className="text-3xl font-black tracking-tight">Meus funis</h1>
           <p className="text-muted-foreground mt-1">Crie e gerencie seus funis interativos.</p>
         </div>
-        {hasPlan === false ? (
-          <Button onClick={() => setPlansOpen(true)} className="rounded-full font-semibold">
-            <Lock className="h-4 w-4 mr-1" />Ativar plano
-          </Button>
-        ) : (
-          <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
-        )}
+        <div className="flex items-center gap-3">
+          {hasPlan && planName && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 text-primary px-3 py-1.5 text-xs font-bold border border-primary/20">
+              <Crown className="h-3.5 w-3.5" />
+              Plano {planName}
+            </span>
+          )}
+          {hasPlan === false ? (
+            <Button onClick={() => setPlansOpen(true)} className="rounded-full font-semibold">
+              <Lock className="h-4 w-4 mr-1" />Ativar plano
+            </Button>
+          ) : (
+            <Button onClick={createFunnel} className="rounded-full font-semibold"><Plus className="h-4 w-4 mr-1" />Novo funil</Button>
+          )}
+        </div>
       </div>
       {funnels === null ? (
         <p className="text-muted-foreground">Carregando...</p>
