@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { getPublicFunnel, submitLead, trackStep } from "@/lib/funnels.functions";
+import { getPublicFunnel, submitLead, trackStep, upsertPartialLead } from "@/lib/funnels.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -179,6 +179,7 @@ function PublicFunnel() {
   const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null; gtm_id: string | null; meta_pixel_id: string | null }; steps: Step[] };
   const submit = useServerFn(submitLead);
   const track = useServerFn(trackStep);
+  const savePartial = useServerFn(upsertPartialLead);
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
   const [lead, setLead] = useState<{ name?: string; email?: string; phone?: string }>({});
@@ -238,7 +239,7 @@ function PublicFunnel() {
   }
 
   async function finish(finalAnswers: Record<string, unknown>, finalLead: typeof lead) {
-    await submit({ data: { funnelId: funnel.id, answers: finalAnswers, ...finalLead } });
+    await submit({ data: { funnelId: funnel.id, sessionId, answers: finalAnswers, ...finalLead } });
     await track({ data: { funnelId: funnel.id, sessionId, stepIndex: index, completed: true } }).catch(() => {});
     fireEvent("CompleteRegistration");
     setDone(true);
@@ -256,8 +257,27 @@ function PublicFunnel() {
       setLead(l);
       fireEvent("Lead");
     }
-    if (isLast) finish(a, l);
-    else setIndex(index + 1);
+    if (isLast) {
+      finish(a, l);
+    } else {
+      // Salva lead parcial assim que houver qualquer informação capturável
+      const hasContact = !!(l.name || l.phone || l.email);
+      const hasAnswers = Object.keys(a).length > 0;
+      if (hasContact || hasAnswers) {
+        savePartial({
+          data: {
+            funnelId: funnel.id,
+            sessionId,
+            stepIndex: index + 1,
+            answers: a,
+            name: l.name,
+            email: l.email,
+            phone: l.phone,
+          },
+        }).catch(() => {});
+      }
+      setIndex(index + 1);
+    }
   }
 
   function jumpToStep(stepId: string) {
