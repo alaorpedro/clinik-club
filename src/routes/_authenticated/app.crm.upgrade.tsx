@@ -92,7 +92,7 @@ function UpgradePage() {
               <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>}>
                 <StripeEmbeddedCheckout
                   priceId="crm_addon_monthly"
-                  userId={user.id}
+                  
                   customerEmail={user.email ?? undefined}
                   returnUrl={`${window.location.origin}/app/crm/pipelines`}
                 />

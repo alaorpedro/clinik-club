@@ -141,7 +141,7 @@ function PlanosPage() {
             <Suspense fallback={<div className="p-6 text-center text-sm text-muted-foreground">Carregando checkout...</div>}>
               <StripeEmbeddedCheckout
                 priceId={checkoutPriceId}
-                userId={user?.id}
+                
                 customerEmail={user?.email ?? undefined}
               />
             </Suspense>
