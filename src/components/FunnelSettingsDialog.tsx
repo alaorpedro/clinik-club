@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
-type Funnel = { id: string; slug: string; gtm_id: string | null; meta_pixel_id: string | null };
+type Funnel = { id: string; slug: string; gtm_id: string | null; meta_pixel_id: string | null; sheets_webhook_url: string | null };
 type Clinic = { clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null };
 
 function normalizeSlug(raw: string) {
@@ -37,7 +37,7 @@ export function FunnelSettingsDialog({
   useEffect(() => {
     if (!open) return;
     (async () => {
-      const { data: f } = await supabase.from("funnels").select("id, slug, gtm_id, meta_pixel_id").eq("id", funnelId).maybeSingle();
+      const { data: f } = await supabase.from("funnels").select("id, slug, gtm_id, meta_pixel_id, sheets_webhook_url").eq("id", funnelId).maybeSingle();
       if (f) {
         setFunnel(f as Funnel);
         setSlugDraft((f as Funnel).slug);
@@ -159,6 +159,52 @@ export function FunnelSettingsDialog({
                   />
                 </div>
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-background p-4">
+              <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Google Sheets (tempo real)</p>
+              <p className="text-[11px] text-muted-foreground mb-3">
+                Envie cada novo lead automaticamente para uma planilha. Cole abaixo a URL do <strong>Apps Script</strong> publicado como <em>aplicativo da web</em>.
+              </p>
+              <Label className="text-xs">URL do webhook</Label>
+              <Input
+                value={funnel.sheets_webhook_url ?? ""}
+                onChange={(e) => setFunnel({ ...funnel, sheets_webhook_url: e.target.value })}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v && !/^https:\/\/script\.google\.com\//.test(v)) {
+                    toast.error("A URL precisa começar com https://script.google.com/");
+                    return;
+                  }
+                  updateFunnel({ sheets_webhook_url: v || null });
+                }}
+                placeholder="https://script.google.com/macros/s/AKfy.../exec"
+              />
+              <details className="mt-3 text-[11px] text-muted-foreground">
+                <summary className="cursor-pointer font-semibold text-foreground">Como configurar (2 minutos)</summary>
+                <ol className="list-decimal pl-4 mt-2 space-y-1">
+                  <li>Abra sua planilha no Google Sheets.</li>
+                  <li>Menu <code>Extensões → Apps Script</code>.</li>
+                  <li>Cole o código abaixo, substituindo o conteúdo padrão:
+                    <pre className="mt-1 bg-secondary/60 p-2 rounded text-[10px] overflow-x-auto whitespace-pre">{`function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const data = JSON.parse(e.postData.contents);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["Data","Nome","Email","Telefone","Status","Respostas","UTM"]);
+  }
+  sheet.appendRow([
+    data.created_at, data.name, data.email, data.phone,
+    data.status, JSON.stringify(data.answers), JSON.stringify(data.utm)
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`}</pre>
+                  </li>
+                  <li>Clique em <strong>Implantar → Nova implantação</strong>.</li>
+                  <li>Tipo: <strong>Aplicativo da Web</strong>. Executar como: <em>Eu</em>. Acesso: <strong>Qualquer pessoa</strong>.</li>
+                  <li>Copie a URL gerada (termina em <code>/exec</code>) e cole acima.</li>
+                </ol>
+              </details>
             </div>
           </div>
         )}
