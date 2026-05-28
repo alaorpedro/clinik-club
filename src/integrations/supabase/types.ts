@@ -350,8 +350,12 @@ export type Database = {
           email: string | null
           funnel_id: string
           id: string
+          last_step_index: number
           name: string | null
           phone: string | null
+          session_id: string | null
+          status: string
+          updated_at: string
           utm: Json
         }
         Insert: {
@@ -360,8 +364,12 @@ export type Database = {
           email?: string | null
           funnel_id: string
           id?: string
+          last_step_index?: number
           name?: string | null
           phone?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
           utm?: Json
         }
         Update: {
@@ -370,8 +378,12 @@ export type Database = {
           email?: string | null
           funnel_id?: string
           id?: string
+          last_step_index?: number
           name?: string | null
           phone?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
           utm?: Json
         }
         Relationships: [
