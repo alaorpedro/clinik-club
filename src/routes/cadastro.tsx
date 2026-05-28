@@ -9,6 +9,16 @@ import { ptValidation } from "@/lib/validation-messages";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({ meta: [{ title: "Cadastre-se — Clinik.Club" }] }),
@@ -24,6 +34,7 @@ function CadastroPage() {
   const { email: prefEmail, next } = Route.useSearch();
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
+  const [weakPasswordOpen, setWeakPasswordOpen] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -40,8 +51,15 @@ function CadastroPage() {
     setLoading(false);
     if (error) {
       const msg = error.message;
-      if (msg.toLowerCase().includes("weak and easy to guess") || msg.toLowerCase().includes("password is known")) {
-        toast.error("Essa senha é muito comum e já apareceu em vazamentos de dados. Escolha uma senha mais segura, combinando letras maiúsculas, minúsculas, números e símbolos.");
+      const lower = msg.toLowerCase();
+      const isWeak =
+        lower.includes("weak") ||
+        lower.includes("pwned") ||
+        lower.includes("password is known") ||
+        lower.includes("compromised") ||
+        lower.includes("easy to guess");
+      if (isWeak) {
+        setWeakPasswordOpen(true);
       } else {
         toast.error(msg);
       }
@@ -79,6 +97,32 @@ function CadastroPage() {
           Já tem conta? <Link to="/login" className="text-primary font-medium">Entrar</Link>
         </p>
       </main>
+      <AlertDialog open={weakPasswordOpen} onOpenChange={setWeakPasswordOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+              <ShieldAlert className="h-6 w-6 text-destructive" aria-hidden="true" />
+            </div>
+            <AlertDialogTitle className="text-center">Senha insegura detectada</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Essa senha já apareceu em vazamentos públicos de dados e não pode ser usada para proteger sua conta — mesmo que cumpra os requisitos de tamanho e caracteres.
+              <br /><br />
+              <strong>O que fazer:</strong> escolha uma senha <strong>única</strong>, que você nunca tenha usado em outros sites. Combine letras maiúsculas, minúsculas, números e símbolos, e evite nomes próprios, datas e palavras comuns.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              className="w-full"
+              onClick={() => {
+                setPassword("");
+                setTimeout(() => document.getElementById("password")?.focus(), 50);
+              }}
+            >
+              Escolher outra senha
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
