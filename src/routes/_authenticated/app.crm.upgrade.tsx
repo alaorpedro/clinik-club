@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -28,9 +28,9 @@ function UpgradePage() {
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
-      <Link to="/app" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8">
+      <a href="/app" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8">
         <ArrowLeft className="h-4 w-4" /> Voltar
-      </Link>
+      </a>
 
       <div className="rounded-3xl border border-border bg-card overflow-hidden grid md:grid-cols-2">
         <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 md:p-12 border-b md:border-b-0 md:border-r border-border">
