@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_authenticated/app/funis/$id/leads")({
   component: LeadsPage,
 });
 
-type Lead = { id: string; name: string | null; email: string | null; phone: string | null; answers: any; created_at: string };
+type Lead = { id: string; name: string | null; email: string | null; phone: string | null; answers: any; created_at: string; status?: string | null; last_step_index?: number | null };
 type Step = { id: string; type: string; order: number; config: any };
 
 function LeadsPage() {
@@ -151,6 +151,11 @@ function LeadsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold truncate">{l.name || "Sem nome"}</span>
+                      {l.status === "partial" ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Incompleto</span>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-100 text-green-800">Completo</span>
+                      )}
                       <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{relTime(l.created_at)}</span>
                     </div>
                     <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
