@@ -25,7 +25,13 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppCrmRouteImport } from './routes/_authenticated/app.crm'
 import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticated/app.conta'
+import { Route as AuthenticatedAppCrmIndexRouteImport } from './routes/_authenticated/app.crm.index'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as AuthenticatedAppCrmUpgradeRouteImport } from './routes/_authenticated/app.crm.upgrade'
+import { Route as AuthenticatedAppCrmRelatoriosRouteImport } from './routes/_authenticated/app.crm.relatorios'
+import { Route as AuthenticatedAppCrmPipelinesRouteImport } from './routes/_authenticated/app.crm.pipelines'
+import { Route as AuthenticatedAppCrmLeadsRouteImport } from './routes/_authenticated/app.crm.leads'
+import { Route as AuthenticatedAppCrmConfiguracoesRouteImport } from './routes/_authenticated/app.crm.configuracoes'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
 
@@ -108,11 +114,47 @@ const AuthenticatedAppContaRoute = AuthenticatedAppContaRouteImport.update({
   path: '/conta',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppCrmIndexRoute =
+  AuthenticatedAppCrmIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAppCrmUpgradeRoute =
+  AuthenticatedAppCrmUpgradeRouteImport.update({
+    id: '/upgrade',
+    path: '/upgrade',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
+const AuthenticatedAppCrmRelatoriosRoute =
+  AuthenticatedAppCrmRelatoriosRouteImport.update({
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
+const AuthenticatedAppCrmPipelinesRoute =
+  AuthenticatedAppCrmPipelinesRouteImport.update({
+    id: '/pipelines',
+    path: '/pipelines',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
+const AuthenticatedAppCrmLeadsRoute =
+  AuthenticatedAppCrmLeadsRouteImport.update({
+    id: '/leads',
+    path: '/leads',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
+const AuthenticatedAppCrmConfiguracoesRoute =
+  AuthenticatedAppCrmConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
   } as any)
 const AuthenticatedAppFunisIdLeadsRoute =
   AuthenticatedAppFunisIdLeadsRouteImport.update({
@@ -141,9 +183,15 @@ export interface FileRoutesByFullPath {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
-  '/app/crm': typeof AuthenticatedAppCrmRoute
+  '/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
+  '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
+  '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
+  '/app/crm/relatorios': typeof AuthenticatedAppCrmRelatoriosRoute
+  '/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/app/crm/': typeof AuthenticatedAppCrmIndexRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -160,9 +208,14 @@ export interface FileRoutesByTo {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
-  '/app/crm': typeof AuthenticatedAppCrmRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
+  '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
+  '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
+  '/app/crm/relatorios': typeof AuthenticatedAppCrmRelatoriosRoute
+  '/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/app/crm': typeof AuthenticatedAppCrmIndexRoute
   '/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -182,9 +235,15 @@ export interface FileRoutesById {
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
-  '/_authenticated/app/crm': typeof AuthenticatedAppCrmRoute
+  '/_authenticated/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
+  '/_authenticated/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
+  '/_authenticated/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
+  '/_authenticated/app/crm/relatorios': typeof AuthenticatedAppCrmRelatoriosRoute
+  '/_authenticated/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
+  '/_authenticated/app/crm/': typeof AuthenticatedAppCrmIndexRoute
   '/_authenticated/app/funis/$id/editar': typeof AuthenticatedAppFunisIdEditarRoute
   '/_authenticated/app/funis/$id/leads': typeof AuthenticatedAppFunisIdLeadsRoute
 }
@@ -206,7 +265,13 @@ export interface FileRouteTypes {
     | '/app/conta'
     | '/app/crm'
     | '/app/'
+    | '/app/crm/configuracoes'
+    | '/app/crm/leads'
+    | '/app/crm/pipelines'
+    | '/app/crm/relatorios'
+    | '/app/crm/upgrade'
     | '/api/public/payments/webhook'
+    | '/app/crm/'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
   fileRoutesByTo: FileRoutesByTo
@@ -223,9 +288,14 @@ export interface FileRouteTypes {
     | '/checkout/return'
     | '/f/$slug'
     | '/app/conta'
-    | '/app/crm'
     | '/app'
+    | '/app/crm/configuracoes'
+    | '/app/crm/leads'
+    | '/app/crm/pipelines'
+    | '/app/crm/relatorios'
+    | '/app/crm/upgrade'
     | '/api/public/payments/webhook'
+    | '/app/crm'
     | '/app/funis/$id/editar'
     | '/app/funis/$id/leads'
   id:
@@ -246,7 +316,13 @@ export interface FileRouteTypes {
     | '/_authenticated/app/conta'
     | '/_authenticated/app/crm'
     | '/_authenticated/app/'
+    | '/_authenticated/app/crm/configuracoes'
+    | '/_authenticated/app/crm/leads'
+    | '/_authenticated/app/crm/pipelines'
+    | '/_authenticated/app/crm/relatorios'
+    | '/_authenticated/app/crm/upgrade'
     | '/api/public/payments/webhook'
+    | '/_authenticated/app/crm/'
     | '/_authenticated/app/funis/$id/editar'
     | '/_authenticated/app/funis/$id/leads'
   fileRoutesById: FileRoutesById
@@ -381,12 +457,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContaRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/crm/': {
+      id: '/_authenticated/app/crm/'
+      path: '/'
+      fullPath: '/app/crm/'
+      preLoaderRoute: typeof AuthenticatedAppCrmIndexRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
       fullPath: '/api/public/payments/webhook'
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app/crm/upgrade': {
+      id: '/_authenticated/app/crm/upgrade'
+      path: '/upgrade'
+      fullPath: '/app/crm/upgrade'
+      preLoaderRoute: typeof AuthenticatedAppCrmUpgradeRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
+    '/_authenticated/app/crm/relatorios': {
+      id: '/_authenticated/app/crm/relatorios'
+      path: '/relatorios'
+      fullPath: '/app/crm/relatorios'
+      preLoaderRoute: typeof AuthenticatedAppCrmRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
+    '/_authenticated/app/crm/pipelines': {
+      id: '/_authenticated/app/crm/pipelines'
+      path: '/pipelines'
+      fullPath: '/app/crm/pipelines'
+      preLoaderRoute: typeof AuthenticatedAppCrmPipelinesRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
+    '/_authenticated/app/crm/leads': {
+      id: '/_authenticated/app/crm/leads'
+      path: '/leads'
+      fullPath: '/app/crm/leads'
+      preLoaderRoute: typeof AuthenticatedAppCrmLeadsRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
+    '/_authenticated/app/crm/configuracoes': {
+      id: '/_authenticated/app/crm/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/app/crm/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAppCrmConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
     }
     '/_authenticated/app/funis/$id/leads': {
       id: '/_authenticated/app/funis/$id/leads'
@@ -405,9 +523,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAppCrmRouteChildren {
+  AuthenticatedAppCrmConfiguracoesRoute: typeof AuthenticatedAppCrmConfiguracoesRoute
+  AuthenticatedAppCrmLeadsRoute: typeof AuthenticatedAppCrmLeadsRoute
+  AuthenticatedAppCrmPipelinesRoute: typeof AuthenticatedAppCrmPipelinesRoute
+  AuthenticatedAppCrmRelatoriosRoute: typeof AuthenticatedAppCrmRelatoriosRoute
+  AuthenticatedAppCrmUpgradeRoute: typeof AuthenticatedAppCrmUpgradeRoute
+  AuthenticatedAppCrmIndexRoute: typeof AuthenticatedAppCrmIndexRoute
+}
+
+const AuthenticatedAppCrmRouteChildren: AuthenticatedAppCrmRouteChildren = {
+  AuthenticatedAppCrmConfiguracoesRoute: AuthenticatedAppCrmConfiguracoesRoute,
+  AuthenticatedAppCrmLeadsRoute: AuthenticatedAppCrmLeadsRoute,
+  AuthenticatedAppCrmPipelinesRoute: AuthenticatedAppCrmPipelinesRoute,
+  AuthenticatedAppCrmRelatoriosRoute: AuthenticatedAppCrmRelatoriosRoute,
+  AuthenticatedAppCrmUpgradeRoute: AuthenticatedAppCrmUpgradeRoute,
+  AuthenticatedAppCrmIndexRoute: AuthenticatedAppCrmIndexRoute,
+}
+
+const AuthenticatedAppCrmRouteWithChildren =
+  AuthenticatedAppCrmRoute._addFileChildren(AuthenticatedAppCrmRouteChildren)
+
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppContaRoute: typeof AuthenticatedAppContaRoute
-  AuthenticatedAppCrmRoute: typeof AuthenticatedAppCrmRoute
+  AuthenticatedAppCrmRoute: typeof AuthenticatedAppCrmRouteWithChildren
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
   AuthenticatedAppFunisIdEditarRoute: typeof AuthenticatedAppFunisIdEditarRoute
   AuthenticatedAppFunisIdLeadsRoute: typeof AuthenticatedAppFunisIdLeadsRoute
@@ -415,7 +554,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppContaRoute: AuthenticatedAppContaRoute,
-  AuthenticatedAppCrmRoute: AuthenticatedAppCrmRoute,
+  AuthenticatedAppCrmRoute: AuthenticatedAppCrmRouteWithChildren,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
   AuthenticatedAppFunisIdEditarRoute: AuthenticatedAppFunisIdEditarRoute,
   AuthenticatedAppFunisIdLeadsRoute: AuthenticatedAppFunisIdLeadsRoute,
