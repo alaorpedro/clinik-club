@@ -19,6 +19,10 @@ export const Route = createFileRoute("/planos")({
       { name: "description", content: "Escolha o plano ideal para o seu volume de leads. Starter, Pro e Agency." },
       { property: "og:title", content: "Planos — Clinik.Club" },
       { property: "og:description", content: "Escolha o plano ideal para o seu volume de leads." },
+      { property: "og:url", content: "https://clinik.club/planos" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://clinik.club/planos" },
     ],
   }),
   component: PlanosPage,
