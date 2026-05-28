@@ -1,9 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { listAdminCustomers, checkIsAdmin, type AdminCustomerRow } from "@/lib/admin.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,10 +17,6 @@ import {
 import { Loader2, Search, ShieldCheck, Users, CreditCard, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
-  beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/login" });
-  },
   component: AdminPage,
 });
 
