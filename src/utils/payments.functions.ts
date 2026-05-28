@@ -2,13 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getHeaders } from "@tanstack/react-start/server";
+import { getRequest } from "@tanstack/react-start/server";
 
 async function getVerifiedUserIdFromRequest(): Promise<string | undefined> {
   try {
-    const headers = getHeaders();
-    const raw = headers["authorization"] ?? headers["Authorization"];
-    const auth = Array.isArray(raw) ? raw[0] : raw;
+    const request = getRequest();
+    const auth = request?.headers?.get("authorization") ?? undefined;
     if (!auth?.startsWith("Bearer ")) return undefined;
     const token = auth.slice("Bearer ".length).trim();
     if (!token) return undefined;
