@@ -10,7 +10,7 @@ type Step = { id: string; type: string; config: any; order: number };
 type FunnelData = { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null; gtm_id: string | null; meta_pixel_id: string | null; theme?: any };
 type LeadData = { name?: string; email?: string; phone?: string };
 
-function ThankYouScreen({ funnel, lead }: { funnel: FunnelData; lead: LeadData }) {
+function ThankYouScreen({ funnel, lead, overrides }: { funnel: FunnelData; lead: LeadData; overrides?: { greetingTitle?: string; greetingSubtitle?: string } }) {
   const ty = (funnel.theme as any)?.thankYou ?? {};
   const firstName = (lead.name || "").trim().split(" ")[0] || "";
   const clinic = funnel.clinic_name || "nossa equipe";
@@ -20,8 +20,10 @@ function ThankYouScreen({ funnel, lead }: { funnel: FunnelData; lead: LeadData }
   const responseTime: string = ty.responseTime || "Tempo médio: 2 min";
   const rating: string = String(ty.rating || "4.9");
   const reviewsLabel: string = ty.reviewsLabel || "Google Reviews";
-  const greetingTitle: string = (ty.greetingTitle || "Solicitação Recebida, {nome}!").replace(/\{nome\}/gi, firstName || "tudo certo");
-  const greetingSubtitle: string = (ty.greetingSubtitle || "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade.").replace(/\{clinica\}/gi, clinic);
+  const greetingTitleTpl: string = overrides?.greetingTitle || ty.greetingTitle || "Solicitação Recebida, {nome}!";
+  const greetingSubtitleTpl: string = overrides?.greetingSubtitle || ty.greetingSubtitle || "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade.";
+  const greetingTitle: string = greetingTitleTpl.replace(/\{nome\}/gi, firstName || "tudo certo").replace(/\{clinica\}/gi, clinic);
+  const greetingSubtitle: string = greetingSubtitleTpl.replace(/\{nome\}/gi, firstName || "tudo certo").replace(/\{clinica\}/gi, clinic);
   const ctaLabel: string = ty.ctaLabel || "Iniciar Agendamento no WhatsApp";
 
   const rawNumber: string = (ty.whatsappNumber || "").replace(/\D/g, "");
