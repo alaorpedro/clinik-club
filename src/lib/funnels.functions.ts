@@ -12,18 +12,25 @@ async function postToSheetsWebhook(funnelId: string, payload: Record<string, unk
     const url = (f as any)?.sheets_webhook_url as string | null | undefined;
     if (!url) return;
     if (!/^https:\/\/script\.google\.com\//.test(url)) return;
-    // fire-and-forget; Apps Script web apps may take a few seconds
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-      redirect: "follow",
-    })
-      .catch((e) => console.error("[sheets-webhook] error", e?.message ?? e))
-      .finally(() => clearTimeout(timeout));
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+        redirect: "follow",
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        console.error("[sheets-webhook] non-2xx", res.status, text.slice(0, 300));
+      }
+    } catch (e: any) {
+      console.error("[sheets-webhook] fetch error", e?.message ?? e);
+    } finally {
+      clearTimeout(timeout);
+    }
   } catch (e) {
     console.error("[sheets-webhook] lookup error", e);
   }
