@@ -1,0 +1,1 @@
+ALTER TABLE public.funnels ADD COLUMN IF NOT EXISTS sheets_webhook_url text;

@@ -308,6 +308,7 @@ export type Database = {
           meta_pixel_id: string | null
           name: string
           owner_id: string
+          sheets_webhook_url: string | null
           slug: string
           status: string
           theme: Json
@@ -322,6 +323,7 @@ export type Database = {
           meta_pixel_id?: string | null
           name: string
           owner_id: string
+          sheets_webhook_url?: string | null
           slug: string
           status?: string
           theme?: Json
@@ -336,6 +338,7 @@ export type Database = {
           meta_pixel_id?: string | null
           name?: string
           owner_id?: string
+          sheets_webhook_url?: string | null
           slug?: string
           status?: string
           theme?: Json
