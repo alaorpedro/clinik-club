@@ -61,11 +61,27 @@ function AppHome() {
     }
     const name = await showPrompt({ title: "Novo funil", label: "Nome do funil:", placeholder: "Ex.: Captação Botox" });
     if (!name) return;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
+    const slug = name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+    if (!slug) {
+      toast.error("Nome inválido para gerar o link do funil.");
+      return;
+    }
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     const { data, error } = await supabase.from("funnels").insert({ name, slug, owner_id: u.user.id }).select().single();
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      if (error.code === "23505" || /duplicate|unique/i.test(error.message)) {
+        toast.error("Já existe um funil com esse nome. Escolha outro.");
+      } else {
+        toast.error(error.message);
+      }
+      return;
+    }
     toast.success("Funil criado!");
     setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
   }
