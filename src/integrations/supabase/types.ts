@@ -14,6 +14,220 @@ export type Database = {
   }
   public: {
     Tables: {
+      crm_events: {
+        Row: {
+          created_at: string
+          id: string
+          lead_card_id: string
+          payload: Json
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_card_id: string
+          payload?: Json
+          type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_card_id?: string
+          payload?: Json
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_events_lead_card_id_fkey"
+            columns: ["lead_card_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lead_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_lead_cards: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          moved_at: string
+          owner_id: string
+          pipeline_id: string
+          position: number
+          stage_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          moved_at?: string
+          owner_id: string
+          pipeline_id: string
+          position?: number
+          stage_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          moved_at?: string
+          owner_id?: string
+          pipeline_id?: string
+          position?: number
+          stage_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_lead_cards_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_lead_cards_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "crm_pipelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_lead_cards_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "crm_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_members: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          role: Database["public"]["Enums"]["crm_member_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          role?: Database["public"]["Enums"]["crm_member_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          role?: Database["public"]["Enums"]["crm_member_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crm_notes: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          lead_card_id: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          lead_card_id: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          lead_card_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_notes_lead_card_id_fkey"
+            columns: ["lead_card_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lead_cards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_pipelines: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crm_stages: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          order: number
+          pipeline_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          order?: number
+          pipeline_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          order?: number
+          pipeline_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_stages_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "crm_pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_responses: {
         Row: {
           completed: boolean
@@ -276,9 +490,13 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
       }
+      is_crm_member: {
+        Args: { _owner_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      crm_member_role: "admin" | "agent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -405,6 +623,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      crm_member_role: ["admin", "agent"],
+    },
   },
 } as const
