@@ -459,7 +459,12 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
           {opts.map((o, i) => {
             const isOn = selectedLabel === o.label;
             return (
-              <button key={i} onClick={() => setValue(o.label)} className={`w-full text-left px-4 py-3 rounded-xl border transition font-medium ${isOn ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>{o.label}</button>
+              <button key={i} onClick={() => setValue(o.label)} className={`w-full text-left px-4 py-3 rounded-xl border transition font-medium flex items-center gap-3 ${isOn ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition ${isOn ? "border-primary bg-primary" : "border-muted-foreground/40"}`}>
+                  {isOn && <span className="w-2 h-2 rounded-full bg-primary-foreground" />}
+                </span>
+                <span className="flex-1">{o.label}</span>
+              </button>
             );
           })}
         </div>
@@ -486,7 +491,14 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
           {opts.map((o) => {
             const isOn = selected.includes(o);
             return (
-              <button key={o} onClick={() => toggle(o)} className={`w-full text-left px-4 py-3 rounded-xl border transition font-medium ${isOn ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>{o}</button>
+              <button key={o} onClick={() => toggle(o)} className={`w-full text-left px-4 py-3 rounded-xl border transition font-medium flex items-center gap-3 ${isOn ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}>
+                <span className={`flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition ${isOn ? "border-primary bg-primary" : "border-muted-foreground/40"}`}>
+                  {isOn && (
+                    <svg viewBox="0 0 16 16" className="w-3 h-3 text-primary-foreground" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 8 7 12 13 4" /></svg>
+                  )}
+                </span>
+                <span className="flex-1">{o}</span>
+              </button>
             );
           })}
         </div>
