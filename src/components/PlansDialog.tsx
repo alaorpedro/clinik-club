@@ -60,7 +60,7 @@ export function PlansDialog({ open, onOpenChange }: PlansDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleClose} modal={!checkoutPriceId}>
+    <Dialog open={open} onOpenChange={handleClose} modal={false}>
       <DialogContent allowStripePointerPassThrough={!!checkoutPriceId} className="max-w-5xl max-h-[92vh] overflow-y-auto p-0">
         {checkoutPriceId ? (
           <div>
