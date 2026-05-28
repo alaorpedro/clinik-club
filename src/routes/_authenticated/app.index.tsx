@@ -21,13 +21,19 @@ function AppHome() {
   const [planName, setPlanName] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.from("funnels").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
-      if (error) toast.error(error.message);
-      setFunnels(data ?? []);
-    });
     (async () => {
       const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
+      if (!u.user) {
+        setFunnels([]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("funnels")
+        .select("*")
+        .eq("owner_id", u.user.id)
+        .order("created_at", { ascending: false });
+      if (error) toast.error(error.message);
+      setFunnels(data ?? []);
       const env = (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live";
       const { data: ok } = await supabase.rpc("has_active_subscription", {
         user_uuid: u.user.id,
