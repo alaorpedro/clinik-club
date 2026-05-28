@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 
-
 export const getPublicFunnel = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => {
     if (!d?.slug || typeof d.slug !== "string" || d.slug.length > 200) throw new Error("slug inválido");
