@@ -326,6 +326,40 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
   const [value, setValue] = useState<any>("");
   const [lead, setLead] = useState({ name: "", email: "", phone: "" });
 
+  const delaySec = Math.max(0, Number(cfg.ctaDelaySeconds) || 0);
+  const [ctaReady, setCtaReady] = useState(delaySec === 0);
+  const [remaining, setRemaining] = useState(delaySec);
+  useEffect(() => {
+    setCtaReady(delaySec === 0);
+    setRemaining(delaySec);
+    if (delaySec === 0) return;
+    const startedAt = Date.now();
+    const tick = setInterval(() => {
+      const left = Math.max(0, delaySec - Math.floor((Date.now() - startedAt) / 1000));
+      setRemaining(left);
+      if (left === 0) {
+        setCtaReady(true);
+        clearInterval(tick);
+      }
+    }, 250);
+    return () => clearInterval(tick);
+  }, [step.id, delaySec]);
+
+  function Cta({ disabled, onClick, children }: { disabled?: boolean; onClick: () => void; children: React.ReactNode }) {
+    if (!ctaReady) {
+      return (
+        <p className="mt-6 text-center text-sm text-muted-foreground animate-pulse">
+          Assista ao vídeo para liberar o próximo passo{remaining > 0 ? ` (${remaining}s)` : ""}…
+        </p>
+      );
+    }
+    return (
+      <Button className={`${btnClass} animate-in fade-in duration-500`} disabled={disabled} onClick={onClick}>
+        {children}
+      </Button>
+    );
+  }
+
   const align = cfg.align === "center" ? "text-center" : cfg.align === "right" ? "text-right" : "text-left";
   const titleSize = ({ sm: "text-lg", md: "text-2xl", lg: "text-3xl", xl: "text-4xl" } as Record<string, string>)[cfg.titleSize ?? "md"] ?? "text-2xl";
   const subtitleSizeCls = ({ sm: "text-xs", md: "text-sm", lg: "text-base", xl: "text-lg" } as Record<string, string>)[cfg.subtitleSize ?? "md"] ?? "text-sm";
@@ -382,7 +416,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
       <div>
         {header}
         {cfg.body && <p className={`mt-3 text-muted-foreground ${bodySizeCls} ${align}`}>{cfg.body}</p>}
-        <Button className={btnClass} onClick={() => onNext()}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        <Cta onClick={() => onNext()}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
       </div>
     );
   }
@@ -409,7 +443,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
             );
           })}
         </div>
-        <Button className={btnClass} disabled={!selectedOpt} onClick={confirm}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        <Cta disabled={!selectedOpt} onClick={confirm}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
       </div>
     );
   }
@@ -436,7 +470,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
             );
           })}
         </div>
-        <Button className={btnClass} disabled={!selected.length} onClick={() => onNext({ [key]: multi ? selected : selected[0] })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        <Cta disabled={!selected.length} onClick={() => onNext({ [key]: multi ? selected : selected[0] })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
       </div>
     );
   }
@@ -446,7 +480,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
       <div>
         {header}
         <Input className="mt-6" placeholder={cfg.placeholder || ""} value={value} onChange={(e) => setValue(e.target.value)} />
-        <Button className={btnClass} disabled={!value} onClick={() => onNext({ [key]: value })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        <Cta disabled={!value} onClick={() => onNext({ [key]: value })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
       </div>
     );
   }
@@ -460,7 +494,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
           <Input placeholder="Seu e-mail" type="email" value={lead.email} onChange={(e) => setLead({ ...lead, email: e.target.value })} />
           <Input placeholder="Seu WhatsApp" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
         </div>
-        <Button className={btnClass} disabled={!lead.email} onClick={() => onNext(undefined, lead)}>{cfg.cta || "Receber resultado"}</Button>
+        <Cta disabled={!lead.email} onClick={() => onNext(undefined, lead)}>{cfg.cta || "Receber resultado"}</Cta>
       </div>
     );
   }
@@ -473,7 +507,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
           <Input placeholder={cfg.namePlaceholder || "Seu nome"} value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
           <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
         </div>
-        <Button className={btnClass} disabled={!lead.name || !lead.phone} onClick={() => onNext(undefined, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Button>
+        <Cta disabled={!lead.name || !lead.phone} onClick={() => onNext(undefined, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
       </div>
     );
   }

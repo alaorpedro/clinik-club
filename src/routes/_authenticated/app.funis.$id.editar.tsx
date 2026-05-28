@@ -591,6 +591,20 @@ function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: {
               <Input value={cfg.mediaUrl ?? ""} onChange={(e) => setCfg({ mediaUrl: e.target.value })} placeholder="https://youtube.com/watch?v=..." />
             </div>
           )}
+          {cfg.mediaType === "video" && (
+            <div>
+              <Label className="text-xs">Atraso do botão (segundos)</Label>
+              <Input
+                type="number"
+                min={0}
+                max={3600}
+                value={cfg.ctaDelaySeconds ?? 0}
+                onChange={(e) => setCfg({ ctaDelaySeconds: Math.max(0, Number(e.target.value) || 0) })}
+                placeholder="Ex: 30"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">O botão de continuar só aparece após esse tempo desde que a etapa carrega. Use 0 para mostrar imediatamente.</p>
+            </div>
+          )}
           {(cfg.mediaType === "none" || !cfg.mediaType) && (
             <p className="text-xs text-muted-foreground rounded-lg border border-dashed border-border p-4 text-center">
               Selecione um tipo de mídia acima para adicionar imagem ou vídeo.
