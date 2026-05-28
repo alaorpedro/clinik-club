@@ -1,4 +1,5 @@
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { useEffect } from "react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCheckoutSession } from "@/utils/payments.functions";
 
@@ -9,6 +10,14 @@ interface Props {
 }
 
 export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Props) {
+  useEffect(() => {
+    document.body.setAttribute("data-stripe-checkout-open", "true");
+
+    return () => {
+      document.body.removeAttribute("data-stripe-checkout-open");
+    };
+  }, []);
+
   const fetchClientSecret = async (): Promise<string> => {
     const result = await createCheckoutSession({
       data: {
