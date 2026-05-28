@@ -10,7 +10,18 @@ import { ptValidation } from "@/lib/validation-messages";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Entrar — Clinik.Club" }] }),
+  head: () => ({
+    meta: [
+      { title: "Entrar — Clinik.Club" },
+      { name: "description", content: "Acesse sua conta Clinik.Club e gerencie seus funis interativos." },
+      { property: "og:title", content: "Entrar — Clinik.Club" },
+      { property: "og:description", content: "Acesse sua conta Clinik.Club." },
+      { property: "og:url", content: "https://clinik.club/login" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://clinik.club/login" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" ? s.next : undefined,
   }),

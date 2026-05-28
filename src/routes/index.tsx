@@ -26,6 +26,53 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Transforme tráfego em pacientes com funis interativos. Crie quizzes, capture leads e acompanhe conversões em uma única plataforma." },
       { property: "og:title", content: "Clinik.Club — Funis de vendas interativos" },
       { property: "og:description", content: "Transforme tráfego em pacientes com funis interativos." },
+      { property: "og:url", content: "https://clinik.club/" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://clinik.club/" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "Preciso ter conhecimento técnico para usar?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Não. Os funis são montados visualmente, com templates prontos por especialidade odontológica. Você só personaliza o texto e a marca da clínica.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Está em conformidade com a LGPD e o CFO?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Sim. Coletamos consentimento explícito do paciente, não usamos linguagem promissória e respeitamos as diretrizes de publicidade odontológica do CFO.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Os leads chegam onde?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Direto no WhatsApp da recepção, por e-mail e no painel da Clinik.Club. Também integramos com sua agenda ou CRM.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "Funciona para clínica com vários dentistas?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "Sim — você cria funis por especialidade ou por profissional e distribui os leads automaticamente.",
+              },
+            },
+          ],
+        }),
+      },
     ],
   }),
   component: Index,

@@ -14,6 +14,10 @@ export const Route = createFileRoute("/contato")({
       { name: "description", content: "Fale com a equipe da Clinik.Club. Tire dúvidas, peça uma demo ou negocie planos." },
       { property: "og:title", content: "Contato — Clinik.Club" },
       { property: "og:description", content: "Entre em contato com a equipe da Clinik.Club." },
+      { property: "og:url", content: "https://clinik.club/contato" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://clinik.club/contato" },
     ],
   }),
   component: ContatoPage,
@@ -40,9 +44,18 @@ function ContatoPage() {
         <h1 className="mt-2 text-5xl font-black tracking-tight">Fale com a gente</h1>
         <p className="mt-4 text-muted-foreground">Dúvidas, demonstrações ou suporte — estamos por aqui.</p>
         <form onSubmit={onSubmit} className="mt-10 space-y-4">
-          <Input required name="name" placeholder="Seu nome" />
-          <Input required type="email" name="email" placeholder="Seu email" />
-          <Textarea required name="message" placeholder="Como podemos ajudar?" rows={5} />
+          <div>
+            <label htmlFor="name" className="text-sm font-medium">Nome</label>
+            <Input id="name" required name="name" placeholder="Seu nome" aria-label="Seu nome" />
+          </div>
+          <div>
+            <label htmlFor="email" className="text-sm font-medium">Email</label>
+            <Input id="email" required type="email" name="email" placeholder="Seu email" aria-label="Seu email" />
+          </div>
+          <div>
+            <label htmlFor="message" className="text-sm font-medium">Mensagem</label>
+            <Textarea id="message" required name="message" placeholder="Como podemos ajudar?" aria-label="Como podemos ajudar?" rows={5} />
+          </div>
           <Button type="submit" disabled={loading} size="lg" className="rounded-full font-semibold w-full">
             {loading ? "Enviando..." : "Enviar mensagem"}
           </Button>

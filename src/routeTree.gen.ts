@@ -19,6 +19,7 @@ import { Route as ContatoRouteImport } from './routes/contato'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
@@ -84,6 +85,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapXmlRoute = SitemapXmlRouteImport.update({
+  id: '/sitemap/xml',
+  path: '/sitemap/xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FSlugRoute = FSlugRouteImport.update({
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/cupons': typeof AuthenticatedAppCuponsRoute
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
   '/_authenticated/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
@@ -280,6 +289,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/checkout/return'
     | '/f/$slug'
+    | '/sitemap/xml'
     | '/app/admin'
     | '/app/conta'
     | '/app/crm'
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/checkout/return'
     | '/f/$slug'
+    | '/sitemap/xml'
     | '/app/admin'
     | '/app/conta'
     | '/app/cupons'
@@ -335,6 +346,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/checkout/return'
     | '/f/$slug'
+    | '/sitemap/xml'
     | '/_authenticated/app/admin'
     | '/_authenticated/app/conta'
     | '/_authenticated/app/crm'
@@ -364,6 +376,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
   FSlugRoute: typeof FSlugRoute
+  SitemapXmlRoute: typeof SitemapXmlRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/xml': {
+      id: '/sitemap/xml'
+      path: '/sitemap/xml'
+      fullPath: '/sitemap/xml'
+      preLoaderRoute: typeof SitemapXmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/f/$slug': {
@@ -630,8 +650,19 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
   FSlugRoute: FSlugRoute,
+  SitemapXmlRoute: SitemapXmlRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

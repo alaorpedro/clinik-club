@@ -46,7 +46,7 @@ function ThankYouScreen({ funnel, lead, overrides }: { funnel: FunnelData; lead:
         <div className="px-6 sm:px-8 pt-6 pb-5 flex justify-between items-center border-b border-border/60 gap-3">
           <div className="flex items-center gap-2 min-w-0">
             {funnel.clinic_logo_url ? (
-              <img src={funnel.clinic_logo_url} alt={funnel.clinic_name ?? "logo"} className="h-9 w-9 rounded-lg object-cover border border-border" />
+              <img src={funnel.clinic_logo_url} alt={funnel.clinic_name ?? "Logotipo da clínica"} className="h-9 w-9 rounded-lg object-cover border border-border" />
             ) : (
               <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center text-primary-foreground">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.959 11.959 0 01-2.251 7.161 11.952 11.952 0 01-6.367 4.511 11.945 11.945 0 01-6.367-4.511 11.959 11.959 0 01-2.251-7.161" /></svg>

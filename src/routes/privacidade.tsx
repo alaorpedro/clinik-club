@@ -10,9 +10,10 @@ export const Route = createFileRoute("/privacidade")({
       { name: "description", content: "Como a Clinik.Club coleta, usa e protege seus dados, em conformidade com a LGPD." },
       { property: "og:title", content: "Política de Privacidade — Clinik.Club" },
       { property: "og:description", content: "Transparência total sobre como tratamos seus dados na Clinik.Club." },
+      { property: "og:url", content: "https://clinik.club/privacidade" },
     ],
     links: [
-      { rel: "canonical", href: "https://kindred-ignite-forge.lovable.app/privacidade" },
+      { rel: "canonical", href: "https://clinik.club/privacidade" },
     ],
   }),
   component: PrivacidadePage,
@@ -189,7 +190,7 @@ function PrivacidadePage() {
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <Icon className="h-4 w-4" />
                   </span>
-                  <h3 className="mt-3 text-sm font-semibold">{title}</h3>
+                  <h2 className="mt-3 text-sm font-semibold">{title}</h2>
                   <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{text}</p>
                 </div>
               ))}

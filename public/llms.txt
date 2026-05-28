@@ -1,0 +1,14 @@
+# Clinik.Club
+
+> Plataforma de funis interativos para clínicas e profissionais da saúde. Transforme tráfego em pacientes com quizzes, qualificação automática e agendamento.
+
+## Pages
+
+- [/](/): Home — funis interativos para clínicas odontológicas
+- [/planos](/planos): Planos e preços (Starter, Pro, Agency)
+- [/sobre](/sobre): Sobre a Clinik.Club
+- [/contato](/contato): Fale com o time
+- [/termos](/termos): Termos de uso
+- [/privacidade](/privacidade): Política de privacidade e LGPD
+- [/cadastro](/cadastro): Criar conta
+- [/login](/login): Acessar conta

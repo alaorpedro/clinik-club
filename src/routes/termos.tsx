@@ -10,9 +10,10 @@ export const Route = createFileRoute("/termos")({
       { name: "description", content: "Termos de uso da plataforma Clinik.Club: regras, responsabilidades e condições de utilização." },
       { property: "og:title", content: "Termos de uso — Clinik.Club" },
       { property: "og:description", content: "Leia os termos que regem o uso da plataforma Clinik.Club." },
+      { property: "og:url", content: "https://clinik.club/termos" },
     ],
     links: [
-      { rel: "canonical", href: "https://kindred-ignite-forge.lovable.app/termos" },
+      { rel: "canonical", href: "https://clinik.club/termos" },
     ],
   }),
   component: TermosPage,

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://clinik.club/sitemap.xml

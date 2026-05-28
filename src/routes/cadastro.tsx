@@ -21,7 +21,18 @@ import {
 import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/cadastro")({
-  head: () => ({ meta: [{ title: "Cadastre-se — Clinik.Club" }] }),
+  head: () => ({
+    meta: [
+      { title: "Cadastre-se — Clinik.Club" },
+      { name: "description", content: "Crie sua conta na Clinik.Club e comece a transformar tráfego em pacientes com funis interativos." },
+      { property: "og:title", content: "Cadastre-se — Clinik.Club" },
+      { property: "og:description", content: "Crie sua conta e publique funis interativos para sua clínica em minutos." },
+      { property: "og:url", content: "https://clinik.club/cadastro" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://clinik.club/cadastro" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     email: typeof s.email === "string" ? s.email : undefined,
     next: typeof s.next === "string" ? s.next : undefined,

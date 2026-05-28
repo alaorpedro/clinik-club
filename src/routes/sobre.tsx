@@ -9,6 +9,10 @@ export const Route = createFileRoute("/sobre")({
       { name: "description", content: "Conheça a Clinik.Club: a plataforma de funis interativos para clínicas e profissionais da saúde." },
       { property: "og:title", content: "Sobre — Clinik.Club" },
       { property: "og:description", content: "Conheça a história e missão da Clinik.Club." },
+      { property: "og:url", content: "https://clinik.club/sobre" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://clinik.club/sobre" },
     ],
   }),
   component: SobrePage,
