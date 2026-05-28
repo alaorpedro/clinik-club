@@ -73,7 +73,7 @@ function UpgradePage() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+        <DialogContent allowStripePointerPassThrough className="max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6">
             <DialogTitle>Ativar CRM Clinik.Club</DialogTitle>
           </DialogHeader>
