@@ -70,7 +70,25 @@ function AppLayout() {
           <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2"><LogOut className="h-4 w-4" />Sair</Button>
         </div>
       </aside>
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto h-screen"><Outlet /></main>
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-30">
+          <Link to="/" className="flex items-center" aria-label="Clinik.Club">
+            <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
+          </Link>
+          <nav className="flex items-center gap-1">
+            {links.map((l) => {
+              const active = l.to === "/app" ? path === "/app" : path.startsWith(l.to);
+              return (
+                <Link key={l.to} to={l.to} aria-label={l.label} className={`flex items-center justify-center h-9 w-9 rounded-lg transition ${active ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-secondary"}`}>
+                  <l.icon className="h-4 w-4" />
+                </Link>
+              );
+            })}
+            <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9"><LogOut className="h-4 w-4" /></Button>
+          </nav>
+        </header>
+        <main className="flex-1 p-6 md:p-10 overflow-y-auto"><Outlet /></main>
+      </div>
     </div>
   );
 }
