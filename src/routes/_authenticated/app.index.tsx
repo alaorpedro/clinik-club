@@ -8,7 +8,7 @@ import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
 import { PlansDialog } from "@/components/PlansDialog";
 import { showPrompt, showConfirm } from "@/components/ModalDialogs";
 import { useServerFn } from "@tanstack/react-start";
-import { deleteFunnel } from "@/lib/funnels.functions";
+import { createFunnelChecked, deleteFunnel, getPlanUsage } from "@/lib/funnels.functions";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
@@ -22,7 +22,16 @@ function AppHome() {
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
+  const [usage, setUsage] = useState<{
+    tier: string;
+    maxFunnels: number | null;
+    maxLeadsPerMonth: number;
+    funnelsUsed: number;
+    leadsUsedThisMonth: number;
+  } | null>(null);
   const deleteFunnelFn = useServerFn(deleteFunnel);
+  const createFunnelFn = useServerFn(createFunnelChecked);
+  const getPlanUsageFn = useServerFn(getPlanUsage);
 
   useEffect(() => {
     (async () => {
@@ -53,9 +62,15 @@ function AppHome() {
           const tier = String(priceId).split("_")[0];
           setPlanName(tier.charAt(0).toUpperCase() + tier.slice(1));
         }
+        try {
+          const u2 = await getPlanUsageFn();
+          setUsage(u2);
+        } catch {
+          // silencioso — uso é apenas informativo
+        }
       }
     })();
-  }, []);
+  }, [getPlanUsageFn]);
 
   async function createFunnel() {
     if (!hasPlan) {
@@ -74,19 +89,14 @@ function AppHome() {
       toast.error("Nome inválido para gerar o link do funil.");
       return;
     }
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
-    const { data, error } = await supabase.from("funnels").insert({ name, slug, owner_id: u.user.id }).select().single();
-    if (error) {
-      if (error.code === "23505" || /duplicate|unique/i.test(error.message)) {
-        toast.error("Já existe um funil com esse nome. Escolha outro.");
-      } else {
-        toast.error(error.message);
-      }
-      return;
+    try {
+      const data = await createFunnelFn({ data: { name, slug } });
+      toast.success("Funil criado!");
+      setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
+      setUsage((prev) => prev ? { ...prev, funnelsUsed: prev.funnelsUsed + 1 } : prev);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao criar funil.");
     }
-    toast.success("Funil criado!");
-    setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
   }
 
   async function handleDelete(f: Funnel) {
