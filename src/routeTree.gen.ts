@@ -25,6 +25,7 @@ import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/ap
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAppCrmRouteImport } from './routes/_authenticated/app.crm'
 import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticated/app.conta'
+import { Route as AuthenticatedAppAdminRouteImport } from './routes/_authenticated/app.admin'
 import { Route as AuthenticatedAppCrmIndexRouteImport } from './routes/_authenticated/app.crm.index'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppCrmUpgradeRouteImport } from './routes/_authenticated/app.crm.upgrade'
@@ -114,6 +115,11 @@ const AuthenticatedAppContaRoute = AuthenticatedAppContaRouteImport.update({
   path: '/conta',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppAdminRoute = AuthenticatedAppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppCrmIndexRoute =
   AuthenticatedAppCrmIndexRouteImport.update({
     id: '/',
@@ -182,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -207,6 +214,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
+  '/app/admin': typeof AuthenticatedAppAdminRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/checkout/return': typeof CheckoutReturnRoute
   '/f/$slug': typeof FSlugRoute
+  '/_authenticated/app/admin': typeof AuthenticatedAppAdminRoute
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
   '/_authenticated/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/checkout/return'
     | '/f/$slug'
+    | '/app/admin'
     | '/app/conta'
     | '/app/crm'
     | '/app/'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/checkout/return'
     | '/f/$slug'
+    | '/app/admin'
     | '/app/conta'
     | '/app'
     | '/app/crm/configuracoes'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/checkout/return'
     | '/f/$slug'
+    | '/_authenticated/app/admin'
     | '/_authenticated/app/conta'
     | '/_authenticated/app/crm'
     | '/_authenticated/app/'
@@ -457,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppContaRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/admin': {
+      id: '/_authenticated/app/admin'
+      path: '/admin'
+      fullPath: '/app/admin'
+      preLoaderRoute: typeof AuthenticatedAppAdminRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/crm/': {
       id: '/_authenticated/app/crm/'
       path: '/'
@@ -545,6 +564,7 @@ const AuthenticatedAppCrmRouteWithChildren =
   AuthenticatedAppCrmRoute._addFileChildren(AuthenticatedAppCrmRouteChildren)
 
 interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppAdminRoute: typeof AuthenticatedAppAdminRoute
   AuthenticatedAppContaRoute: typeof AuthenticatedAppContaRoute
   AuthenticatedAppCrmRoute: typeof AuthenticatedAppCrmRouteWithChildren
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
@@ -553,6 +573,7 @@ interface AuthenticatedAppRouteChildren {
 }
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppAdminRoute: AuthenticatedAppAdminRoute,
   AuthenticatedAppContaRoute: AuthenticatedAppContaRoute,
   AuthenticatedAppCrmRoute: AuthenticatedAppCrmRouteWithChildren,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
