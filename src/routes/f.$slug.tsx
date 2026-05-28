@@ -409,7 +409,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
       if (yt) {
         return (
           <div style={style} className={`${hasW ? "" : "w-full"} ${hasH ? "" : "aspect-video"} mb-4 rounded-2xl overflow-hidden`}>
-            <iframe src={`https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&fs=0&cc_load_policy=0`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
+            <iframe src={`https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&modestbranding=1&rel=0&iv_load_policy=3`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
           </div>
         );
       }
