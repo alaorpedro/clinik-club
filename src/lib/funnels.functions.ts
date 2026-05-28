@@ -120,11 +120,36 @@ export const submitLead = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
-      .select("id")
+      .select("id, owner_id")
       .eq("id", data.funnelId)
       .eq("status", "published")
       .maybeSingle();
     if (!funnel) throw new Error("Funil não encontrado");
+    // Enforce monthly lead cap of the funnel owner's plan.
+    // Allow updates to an existing lead row (same session_id), but block new completed leads beyond the limit.
+    const ownerId = (funnel as any).owner_id as string;
+    const env = getPaymentsEnv();
+    const ownerPriceId = await getActivePriceId(ownerId, env);
+    const ownerLimits = getPlanLimits(ownerPriceId);
+    if (ownerLimits.maxLeadsPerMonth === 0) {
+      throw new Error("Este funil está temporariamente indisponível. Tente novamente mais tarde.");
+    }
+    let isExisting = false;
+    if (data.sessionId) {
+      const { data: existingLead } = await supabaseAdmin
+        .from("leads")
+        .select("id, status")
+        .eq("funnel_id", data.funnelId)
+        .eq("session_id", data.sessionId)
+        .maybeSingle();
+      isExisting = !!existingLead && (existingLead as any).status === "completed";
+    }
+    if (!isExisting) {
+      const used = await countLeadsThisMonthForOwner(ownerId);
+      if (used >= ownerLimits.maxLeadsPerMonth) {
+        throw new Error("Limite mensal de leads deste funil atingido. Tente novamente no próximo mês.");
+      }
+    }
     if (data.sessionId) {
       const { error } = await supabaseAdmin.from("leads").upsert({
         funnel_id: data.funnelId,
