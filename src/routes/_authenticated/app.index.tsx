@@ -98,13 +98,13 @@ function AppHome() {
       destructive: true,
     });
     if (!ok) return;
-    const { error } = await deleteFunnelFn({ data: { funnelId: f.id } });
-    if (error) {
-      toast.error(typeof error === "string" ? error : "Erro ao excluir funil.");
-      return;
+    try {
+      await deleteFunnelFn({ data: { funnelId: f.id } });
+      toast.success("Funil excluído!");
+      setFunnels((prev) => prev?.filter((x) => x.id !== f.id) ?? null);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao excluir funil.");
     }
-    toast.success("Funil excluído!");
-    setFunnels((prev) => prev?.filter((x) => x.id !== f.id) ?? null);
   }
 
   return (
