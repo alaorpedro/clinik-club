@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
 import { PlansDialog } from "@/components/PlansDialog";
+import { showPrompt } from "@/components/ModalDialogs";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
@@ -58,7 +59,7 @@ function AppHome() {
       toast.error("Você precisa de um plano ativo para criar funis.");
       return;
     }
-    const name = prompt("Nome do funil:");
+    const name = await showPrompt({ title: "Novo funil", label: "Nome do funil:", placeholder: "Ex.: Captação Botox" });
     if (!name) return;
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Math.random().toString(36).slice(2, 6);
     const { data: u } = await supabase.auth.getUser();
