@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy, Upload, X, Save, CheckCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
+import { showConfirm } from "@/components/ModalDialogs";
 
 export const Route = createFileRoute("/_authenticated/app/funis/$id/editar")({
   component: EditFunnel,
@@ -89,7 +90,7 @@ function EditFunnel() {
   }
 
   async function removeStep(stepId: string) {
-    if (!confirm("Remover esta etapa?")) return;
+    if (!(await showConfirm({ title: "Remover etapa", description: "Tem certeza que deseja remover esta etapa?", okText: "Remover", destructive: true }))) return;
     const { error } = await supabase.from("funnel_steps").delete().eq("id", stepId);
     if (error) return toast.error(error.message);
     setSteps(steps.filter((s) => s.id !== stepId));
