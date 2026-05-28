@@ -158,12 +158,15 @@
 }
 
 /* Stripe Link verification popup (and other Stripe iframes injected on <body>)
- * Radix Dialog sets pointer-events: none on body during open, which would block
- * clicks on top-level Stripe iframes. Force them interactive and on top. */
+ * can be mounted outside our dialog tree. Keep Stripe-owned top-level layers
+ * interactive and above the embedded card iframe. */
 body > iframe[name^="__privateStripe"],
+body > iframe[src*="stripe.com"],
+body > iframe[src*="link.com"],
 body > div[id^="__privateStripe"],
-body > iframe[src*="js.stripe.com"],
-body > iframe[src*="link.com"] {
+body > div:has(> iframe[name^="__privateStripe"]),
+body > div:has(> iframe[src*="stripe.com"]),
+body > div:has(> iframe[src*="link.com"]) {
   pointer-events: auto !important;
   z-index: 2147483647 !important;
 }
