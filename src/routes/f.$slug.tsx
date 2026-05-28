@@ -391,7 +391,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
     ? "mt-6 rounded-full w-full font-semibold bg-transparent text-primary hover:bg-primary/10"
     : "mt-6 rounded-full w-full font-semibold";
 
-  function Media() {
+  const media = useMemo(() => {
     if (!cfg.mediaUrl) return null;
     const hasW = typeof cfg.mediaWidthPct === "number";
     const hasH = typeof cfg.mediaHeight === "number";
@@ -416,18 +416,18 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
       return <video src={url} controls autoPlay muted playsInline style={style} className={`${hasW ? "" : "w-full"} rounded-2xl mb-4 ${hCls}`} />;
     }
     return null;
-  }
+  }, [cfg.mediaUrl, cfg.mediaType, cfg.mediaWidthPct, cfg.mediaHeight, mediaMaxH]);
 
   const mediaAbove = cfg.mediaPosition !== "below";
   const subtitleAbove = cfg.subtitlePosition === "above";
   const subtitle = cfg.subtitle ? <p className={`text-muted-foreground mt-2 ${subtitleSizeCls}`}>{cfg.subtitle}</p> : null;
   const header = (
     <div className={align}>
-      {mediaAbove && <Media />}
+      {mediaAbove && media}
       {subtitleAbove && subtitle}
       {cfg.title && <h2 className={`${titleSize} font-black tracking-tight`}>{cfg.title}</h2>}
       {!subtitleAbove && subtitle}
-      {!mediaAbove && <div className="mt-4"><Media /></div>}
+      {!mediaAbove && <div className="mt-4">{media}</div>}
     </div>
   );
 
