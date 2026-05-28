@@ -22,6 +22,7 @@ function AppHome() {
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
   const [plansOpen, setPlansOpen] = useState(false);
   const [planName, setPlanName] = useState<string | null>(null);
+  const deleteFunnelFn = useServerFn(deleteFunnel);
 
   useEffect(() => {
     (async () => {
