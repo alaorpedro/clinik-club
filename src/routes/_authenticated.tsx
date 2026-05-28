@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { LayoutGrid, User, LogOut, Loader2, Users } from "lucide-react";
+import logo from "@/assets/clinik-club-logo.png";
 
 async function getCurrentUserWithFallback() {
   try {
@@ -54,8 +55,8 @@ function AppLayout() {
   return (
     <div className="h-screen flex bg-secondary/30 overflow-hidden">
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0">
-        <Link to="/" className="flex items-center gap-2 mb-8">
-          <span className="text-lg font-bold">Clinik<span className="text-primary">.Club</span></span>
+        <Link to="/" className="flex items-center mb-8" aria-label="Clinik.Club">
+          <img src={logo} alt="Clinik.Club" className="h-7 w-auto" />
         </Link>
         <nav className="flex-1 space-y-1">
           {links.map((l) => (
