@@ -58,7 +58,17 @@ export const ensureDefaultPipeline = createServerFn({ method: "POST" })
       .insert({ owner_id: userId, name: "Pipeline principal", is_default: true })
       .select("id")
       .single();
-    if (error || !pipeline) throw new Error(error?.message ?? "Falha ao criar pipeline");
+    if (error || !pipeline) {
+      // Race or stale read: pipeline already exists, fetch and return it
+      const { data: again } = await supabase
+        .from("crm_pipelines")
+        .select("id")
+        .eq("owner_id", userId)
+        .eq("is_default", true)
+        .maybeSingle();
+      if (again) return { pipelineId: again.id as string };
+      throw new Error(error?.message ?? "Falha ao criar pipeline");
+    }
 
     const stagesPayload = DEFAULT_STAGES.map((s, i) => ({
       pipeline_id: pipeline.id,
