@@ -251,6 +251,13 @@ function PublicFunnel() {
   const isLast = index === steps.length - 1;
   const progress = ((index + 1) / steps.length) * 100;
 
+  // "Página final" (step.type === "lead"): render ThankYouScreen and auto-finish.
+  useEffect(() => {
+    if (!step || step.type !== "lead" || done) return;
+    finish(answers, lead).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step?.id]);
+
   function next(extra?: Record<string, unknown>, leadExtra?: typeof lead) {
     const a = { ...answers, ...(extra ?? {}) };
     const l = { ...lead, ...(leadExtra ?? {}) };
