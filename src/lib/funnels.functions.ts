@@ -121,14 +121,14 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
     const mergedAnswers = { ...((existing?.answers as any) ?? {}), ...(data.answers ?? {}) };
 
     if (existing) {
-      const patch: Record<string, unknown> = {
-        answers: mergedAnswers,
+      const patch = {
+        answers: mergedAnswers as any,
         last_step_index: data.stepIndex,
+        ...(data.email ? { email: data.email } : {}),
+        ...(data.name ? { name: data.name } : {}),
+        ...(data.phone ? { phone: data.phone } : {}),
+        ...(Object.keys(data.utm).length ? { utm: data.utm as any } : {}),
       };
-      if (data.email) patch.email = data.email;
-      if (data.name) patch.name = data.name;
-      if (data.phone) patch.phone = data.phone;
-      if (Object.keys(data.utm).length) patch.utm = data.utm;
       const { error } = await supabaseAdmin.from("leads").update(patch).eq("id", existing.id);
       if (error) throw new Error(error.message);
     } else {
