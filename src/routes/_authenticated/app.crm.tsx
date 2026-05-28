@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useRouterState, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, Link, useRouterState, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, LayoutGrid, ListChecks, BarChart3, Settings as SettingsIcon } from "lucide-react";
@@ -27,10 +27,10 @@ function CrmLayout() {
 
   const isUpgradePage = path.endsWith("/app/crm/upgrade");
   if (!data?.hasAccess && !isUpgradePage) {
-    throw redirect({ to: "/app/crm/upgrade" });
+    return <Navigate to="/app/crm/upgrade" replace />;
   }
   if (data?.hasAccess && isUpgradePage) {
-    throw redirect({ to: "/app/crm/pipelines" });
+    return <Navigate to="/app/crm/pipelines" replace />;
   }
 
   if (isUpgradePage) return <Outlet />;
