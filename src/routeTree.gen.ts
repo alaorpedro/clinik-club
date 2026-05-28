@@ -28,6 +28,7 @@ import { Route as AuthenticatedAppContaRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppCrmIndexRouteImport } from './routes/_authenticated/app.crm.index'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 import { Route as AuthenticatedAppCrmUpgradeRouteImport } from './routes/_authenticated/app.crm.upgrade'
+import { Route as AuthenticatedAppCrmPipelinesRouteImport } from './routes/_authenticated/app.crm.pipelines'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
 
@@ -128,6 +129,12 @@ const AuthenticatedAppCrmUpgradeRoute =
     path: '/upgrade',
     getParentRoute: () => AuthenticatedAppCrmRoute,
   } as any)
+const AuthenticatedAppCrmPipelinesRoute =
+  AuthenticatedAppCrmPipelinesRouteImport.update({
+    id: '/pipelines',
+    path: '/pipelines',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
 const AuthenticatedAppFunisIdLeadsRoute =
   AuthenticatedAppFunisIdLeadsRouteImport.update({
     id: '/funis/$id/leads',
@@ -157,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
   '/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/crm/': typeof AuthenticatedAppCrmIndexRoute
@@ -177,6 +185,7 @@ export interface FileRoutesByTo {
   '/f/$slug': typeof FSlugRoute
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
   '/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/app/crm': typeof AuthenticatedAppCrmIndexRoute
@@ -201,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/app/conta': typeof AuthenticatedAppContaRoute
   '/_authenticated/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
   '/_authenticated/app/crm/upgrade': typeof AuthenticatedAppCrmUpgradeRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/_authenticated/app/crm/': typeof AuthenticatedAppCrmIndexRoute
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/app/conta'
     | '/app/crm'
     | '/app/'
+    | '/app/crm/pipelines'
     | '/app/crm/upgrade'
     | '/api/public/payments/webhook'
     | '/app/crm/'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/f/$slug'
     | '/app/conta'
     | '/app'
+    | '/app/crm/pipelines'
     | '/app/crm/upgrade'
     | '/api/public/payments/webhook'
     | '/app/crm'
@@ -268,6 +280,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/conta'
     | '/_authenticated/app/crm'
     | '/_authenticated/app/'
+    | '/_authenticated/app/crm/pipelines'
     | '/_authenticated/app/crm/upgrade'
     | '/api/public/payments/webhook'
     | '/_authenticated/app/crm/'
@@ -426,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCrmUpgradeRouteImport
       parentRoute: typeof AuthenticatedAppCrmRoute
     }
+    '/_authenticated/app/crm/pipelines': {
+      id: '/_authenticated/app/crm/pipelines'
+      path: '/pipelines'
+      fullPath: '/app/crm/pipelines'
+      preLoaderRoute: typeof AuthenticatedAppCrmPipelinesRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
     '/_authenticated/app/funis/$id/leads': {
       id: '/_authenticated/app/funis/$id/leads'
       path: '/funis/$id/leads'
@@ -444,11 +464,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppCrmRouteChildren {
+  AuthenticatedAppCrmPipelinesRoute: typeof AuthenticatedAppCrmPipelinesRoute
   AuthenticatedAppCrmUpgradeRoute: typeof AuthenticatedAppCrmUpgradeRoute
   AuthenticatedAppCrmIndexRoute: typeof AuthenticatedAppCrmIndexRoute
 }
 
 const AuthenticatedAppCrmRouteChildren: AuthenticatedAppCrmRouteChildren = {
+  AuthenticatedAppCrmPipelinesRoute: AuthenticatedAppCrmPipelinesRoute,
   AuthenticatedAppCrmUpgradeRoute: AuthenticatedAppCrmUpgradeRoute,
   AuthenticatedAppCrmIndexRoute: AuthenticatedAppCrmIndexRoute,
 }
@@ -505,3 +527,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
