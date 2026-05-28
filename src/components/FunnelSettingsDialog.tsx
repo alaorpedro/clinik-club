@@ -9,13 +9,39 @@ import { toast } from "sonner";
 const APPS_SCRIPT_CODE = `function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = JSON.parse(e.postData.contents);
+  const FIXED = ["Data","Nome","Email","Telefone","Status","UTM"];
+  const questions = Array.isArray(data.questions) ? data.questions : [];
+  const pretty = data.answers_pretty || {};
+
+  // Initialize header on first run
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(["Data","Nome","Email","Telefone","Status","Respostas","UTM"]);
+    sheet.appendRow(FIXED.concat(questions));
   }
-  sheet.appendRow([
-    data.created_at, data.name, data.email, data.phone,
-    data.status, JSON.stringify(data.answers), JSON.stringify(data.utm)
-  ]);
+
+  // Read current header and add any new question columns
+  const lastCol = Math.max(sheet.getLastColumn(), FIXED.length);
+  let header = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+  questions.forEach(function (q) {
+    if (header.indexOf(q) === -1) {
+      sheet.getRange(1, header.length + 1).setValue(q);
+      header.push(q);
+    }
+  });
+
+  // Build row aligned to header
+  const row = header.map(function (col) {
+    switch (col) {
+      case "Data": return data.created_at;
+      case "Nome": return data.name;
+      case "Email": return data.email;
+      case "Telefone": return data.phone;
+      case "Status": return data.status;
+      case "UTM": return JSON.stringify(data.utm || {});
+      default: return pretty[col] != null ? pretty[col] : "";
+    }
+  });
+  sheet.appendRow(row);
+
   return ContentService.createTextOutput(JSON.stringify({ok:true}))
     .setMimeType(ContentService.MimeType.JSON);
 }`;

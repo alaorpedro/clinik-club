@@ -106,6 +106,23 @@ export const submitLead = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
+    // Build friendly answers (question title -> answer label) for sheet columns
+    const { data: steps } = await supabaseAdmin
+      .from("funnel_steps")
+      .select("id, type, config, order")
+      .eq("funnel_id", data.funnelId)
+      .order("order", { ascending: true });
+    const answersIn = (data.answers ?? {}) as Record<string, unknown>;
+    const questions: string[] = [];
+    const answers_pretty: Record<string, unknown> = {};
+    for (const s of (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>) {
+      if (s.type === "contact" || s.type === "lead" || s.type === "text") continue;
+      const title = (s.config?.title as string) || `Etapa ${s.order ?? ""}`.trim();
+      const key = `step_${s.id}`;
+      const raw = answersIn[key];
+      questions.push(title);
+      answers_pretty[title] = Array.isArray(raw) ? raw.join(", ") : (raw ?? "");
+    }
     await postToSheetsWebhook(data.funnelId, {
       type: "lead",
       status: "completed",
@@ -115,6 +132,8 @@ export const submitLead = createServerFn({ method: "POST" })
       email: data.email ?? null,
       phone: data.phone ?? null,
       answers: data.answers ?? {},
+      answers_pretty,
+      questions,
       utm: data.utm ?? {},
       created_at: new Date().toISOString(),
     });
