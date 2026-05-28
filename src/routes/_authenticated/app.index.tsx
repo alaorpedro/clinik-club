@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown } from "lucide-react";
+import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
 import { PlansDialog } from "@/components/PlansDialog";
-import { showPrompt } from "@/components/ModalDialogs";
+import { showPrompt, showConfirm } from "@/components/ModalDialogs";
+import { useServerFn } from "@tanstack/react-start";
+import { deleteFunnel } from "@/lib/funnels.functions";
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
