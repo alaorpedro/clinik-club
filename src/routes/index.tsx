@@ -59,7 +59,7 @@ function Index() {
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
                 <Button asChild size="lg" className="rounded-full font-semibold h-12 px-6">
-                  <Link to="/cadastro">Começar grátis</Link>
+                  <Link to="/cadastro">Inscrever-se</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="rounded-full font-semibold h-12 px-6">
                   <Link to="/planos">Ver planos</Link>

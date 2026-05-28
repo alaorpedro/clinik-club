@@ -27,7 +27,7 @@ export function SiteHeader() {
           ) : (
             <>
               <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex"><Link to="/login">Entrar</Link></Button>
-              <Button asChild size="sm" className="rounded-full font-semibold"><Link to="/cadastro">Começar grátis</Link></Button>
+              <Button asChild size="sm" className="rounded-full font-semibold"><Link to="/cadastro">Inscrever-se</Link></Button>
             </>
           )}
         </div>
