@@ -3,8 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Copy } from "lucide-react";
 import { toast } from "sonner";
+
+const APPS_SCRIPT_CODE = `function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const data = JSON.parse(e.postData.contents);
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["Data","Nome","Email","Telefone","Status","Respostas","UTM"]);
+  }
+  sheet.appendRow([
+    data.created_at, data.name, data.email, data.phone,
+    data.status, JSON.stringify(data.answers), JSON.stringify(data.utm)
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({ok:true}))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
 
 type Funnel = { id: string; slug: string; gtm_id: string | null; meta_pixel_id: string | null; sheets_webhook_url: string | null };
 type Clinic = { clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null };
@@ -185,20 +199,26 @@ export function FunnelSettingsDialog({
                 <ol className="list-decimal pl-4 mt-2 space-y-1">
                   <li>Abra sua planilha no Google Sheets.</li>
                   <li>Menu <code>Extensões → Apps Script</code>.</li>
-                  <li>Cole o código abaixo, substituindo o conteúdo padrão:
-                    <pre className="mt-1 bg-secondary/60 p-2 rounded text-[10px] overflow-x-auto whitespace-pre">{`function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  const data = JSON.parse(e.postData.contents);
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(["Data","Nome","Email","Telefone","Status","Respostas","UTM"]);
-  }
-  sheet.appendRow([
-    data.created_at, data.name, data.email, data.phone,
-    data.status, JSON.stringify(data.answers), JSON.stringify(data.utm)
-  ]);
-  return ContentService.createTextOutput(JSON.stringify({ok:true}))
-    .setMimeType(ContentService.MimeType.JSON);
-}`}</pre>
+                  <li>
+                    <div className="flex items-center justify-between gap-2 mt-1 mb-1">
+                      <span>Apague tudo e cole o código abaixo:</span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(APPS_SCRIPT_CODE);
+                          toast.success("Código copiado!");
+                        }}
+                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
+                      >
+                        <Copy className="h-3 w-3" /> Copiar
+                      </button>
+                    </div>
+                    <textarea
+                      readOnly
+                      value={APPS_SCRIPT_CODE}
+                      onFocus={(e) => e.currentTarget.select()}
+                      className="w-full font-mono bg-secondary/60 p-2 rounded text-[10px] h-44 resize-none"
+                    />
                   </li>
                   <li>Clique em <strong>Implantar → Nova implantação</strong>.</li>
                   <li>Tipo: <strong>Aplicativo da Web</strong>. Executar como: <em>Eu</em>. Acesso: <strong>Qualquer pessoa</strong>.</li>
