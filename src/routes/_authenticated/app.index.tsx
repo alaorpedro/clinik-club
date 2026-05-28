@@ -28,23 +28,19 @@ function AppHome() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
+      const env = (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live";
       const { data: ok } = await supabase.rpc("has_active_subscription", {
         user_uuid: u.user.id,
-        check_env: (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live",
+        check_env: env,
       });
       setHasPlan(!!ok);
       if (ok) {
-        const env = (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live";
-        const { data: sub } = await supabase
-          .from("subscriptions")
-          .select("price_id")
-          .eq("user_id", u.user.id)
-          .eq("environment", env)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        if (sub?.price_id) {
-          const tier = sub.price_id.split("_")[0];
+        const { data: priceId } = await supabase.rpc("get_active_plan", {
+          user_uuid: u.user.id,
+          check_env: env,
+        });
+        if (priceId) {
+          const tier = String(priceId).split("_")[0];
           setPlanName(tier.charAt(0).toUpperCase() + tier.slice(1));
         }
       }
