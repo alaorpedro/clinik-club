@@ -458,7 +458,7 @@ function defaultConfig(type: string): any {
     ] };
     case "multiple": return { title: "Selecione todas que se aplicam", options: ["Item 1", "Item 2"], cta: "Continuar" };
     case "input": return { title: "Qual a sua resposta?", placeholder: "Digite aqui...", cta: "Continuar" };
-    case "lead": return { title: "Quase lá! Deixe seu contato", cta: "Receber resultado" };
+    case "lead": return { title: "Parabéns pela sua decisão, {nome}!", subtitle: "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade." };
     case "contact": return { title: "Deixe seu contato", cta: "Enviar", namePlaceholder: "Seu nome", phonePlaceholder: "Seu WhatsApp" };
     default: return {};
   }
