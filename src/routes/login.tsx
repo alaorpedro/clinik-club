@@ -33,6 +33,8 @@ function LoginPage() {
   const nextPath = next?.startsWith("/") ? next : "/app";
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,15 +46,39 @@ function LoginPage() {
       return;
     }
     setLoading(true);
+    setUnconfirmedEmail(null);
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        toast.error(error.message);
+        const msg = (error.message || "").toLowerCase();
+        if (msg.includes("email not confirmed") || msg.includes("not confirmed")) {
+          setUnconfirmedEmail(email);
+          toast.error("Confirme seu email antes de entrar. Verifique sua caixa de entrada.");
+        } else if (msg.includes("invalid login") || msg.includes("invalid credentials")) {
+          toast.error("Email ou senha incorretos.");
+        } else {
+          toast.error("Não foi possível entrar. Verifique seus dados e tente novamente.");
+        }
         return;
       }
       window.location.assign(nextPath);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function resendConfirmation() {
+    if (!unconfirmedEmail) return;
+    setResending(true);
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: unconfirmedEmail });
+      if (error) {
+        toast.error("Não foi possível reenviar agora. Tente em alguns instantes.");
+        return;
+      }
+      toast.success("Email de confirmação reenviado. Verifique sua caixa de entrada.");
+    } finally {
+      setResending(false);
     }
   }
 
@@ -86,6 +112,16 @@ function LoginPage() {
           <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" className="mt-1.5" {...ptValidation("senha")} /></div>
           <Button type="submit" disabled={loading || googleLoading} className="w-full rounded-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
         </form>
+        {unconfirmedEmail ? (
+          <div className="mt-4 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+            <p className="text-foreground">
+              Seu email <span className="font-semibold">{unconfirmedEmail}</span> ainda não foi confirmado.
+            </p>
+            <Button type="button" variant="outline" className="mt-3 w-full rounded-full" onClick={resendConfirmation} disabled={resending}>
+              {resending ? "Reenviando..." : "Reenviar email de confirmação"}
+            </Button>
+          </div>
+        ) : null}
         <p className="mt-6 text-sm text-center text-muted-foreground">
           Não tem conta? <Link to="/cadastro" search={next ? ({ next } as never) : undefined} className="text-primary font-medium">Cadastre-se</Link>
         </p>

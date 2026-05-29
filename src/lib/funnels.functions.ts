@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -6,6 +7,75 @@ import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
 
 function getPaymentsEnv(): string {
   return (process.env.PAYMENTS_ENV ?? "sandbox") as string;
+}
+
+const MAX_JSON_BYTES = 50_000;
+function assertJsonSize(obj: unknown, field: string) {
+  try {
+    const s = JSON.stringify(obj ?? {});
+    if (s.length > MAX_JSON_BYTES) {
+      throw new Error(`Campo ${field} excede o limite de ${MAX_JSON_BYTES} bytes`);
+    }
+  } catch (e: any) {
+    if (e?.message?.startsWith("Campo ")) throw e;
+    throw new Error(`Campo ${field} inválido`);
+  }
+}
+
+function getClientIp(): string | null {
+  try {
+    const req = getRequest();
+    const h = req?.headers;
+    if (!h) return null;
+    const xff = h.get("x-forwarded-for");
+    if (xff) return xff.split(",")[0]!.trim().slice(0, 64);
+    const cf = h.get("cf-connecting-ip");
+    if (cf) return cf.slice(0, 64);
+    const real = h.get("x-real-ip");
+    if (real) return real.slice(0, 64);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function checkAndLogRate(action: string, opts: {
+  sessionId?: string | null;
+  funnelId?: string | null;
+  windowSec: number;
+  maxPerSession: number;
+  maxPerIp: number;
+}) {
+  const ip = getClientIp();
+  const since = new Date(Date.now() - opts.windowSec * 1000).toISOString();
+  if (opts.sessionId) {
+    const { count } = await supabaseAdmin
+      .from("public_action_log")
+      .select("id", { count: "exact", head: true })
+      .eq("action", action)
+      .eq("session_id", opts.sessionId)
+      .gte("created_at", since);
+    if ((count ?? 0) >= opts.maxPerSession) {
+      throw new Error("Muitas requisições. Tente novamente em instantes.");
+    }
+  }
+  if (ip) {
+    const { count } = await supabaseAdmin
+      .from("public_action_log")
+      .select("id", { count: "exact", head: true })
+      .eq("action", action)
+      .eq("ip", ip)
+      .gte("created_at", since);
+    if ((count ?? 0) >= opts.maxPerIp) {
+      throw new Error("Muitas requisições. Tente novamente em instantes.");
+    }
+  }
+  await supabaseAdmin.from("public_action_log").insert({
+    action,
+    session_id: opts.sessionId ?? null,
+    ip,
+    funnel_id: opts.funnelId ?? null,
+  });
 }
 
 async function getActivePriceId(userId: string, env: string): Promise<string | null> {
@@ -115,9 +185,18 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
 export const submitLead = createServerFn({ method: "POST" })
   .inputValidator((d: { funnelId: string; sessionId?: string; answers: Record<string, unknown>; email?: string; name?: string; phone?: string; utm?: Record<string, unknown> }) => {
     if (!d?.funnelId) throw new Error("funnelId obrigatório");
+    assertJsonSize(d.answers, "answers");
+    assertJsonSize(d.utm, "utm");
     return d;
   })
   .handler(async ({ data }) => {
+    await checkAndLogRate("submitLead", {
+      sessionId: data.sessionId ?? null,
+      funnelId: data.funnelId,
+      windowSec: 60,
+      maxPerSession: 5,
+      maxPerIp: 30,
+    });
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
       .select("id, owner_id")
@@ -222,6 +301,8 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
     if (!d?.funnelId) throw new Error("funnelId obrigatório");
     if (!d?.sessionId || typeof d.sessionId !== "string" || d.sessionId.length > 200) throw new Error("sessionId inválido");
     if (typeof d.stepIndex !== "number") throw new Error("stepIndex inválido");
+    assertJsonSize(d.answers ?? {}, "answers");
+    assertJsonSize(d.utm ?? {}, "utm");
     // sanity caps to prevent abuse
     const cap = (v: string | undefined, n: number) => (v ? String(v).slice(0, n) : null);
     return {
@@ -236,6 +317,13 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
+    await checkAndLogRate("upsertPartialLead", {
+      sessionId: data.sessionId,
+      funnelId: data.funnelId,
+      windowSec: 60,
+      maxPerSession: 60,
+      maxPerIp: 200,
+    });
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
       .select("id")
@@ -285,6 +373,13 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
 export const trackStep = createServerFn({ method: "POST" })
   .inputValidator((d: { funnelId: string; sessionId: string; stepIndex: number; completed?: boolean }) => d)
   .handler(async ({ data }) => {
+    await checkAndLogRate("trackStep", {
+      sessionId: data.sessionId,
+      funnelId: data.funnelId,
+      windowSec: 60,
+      maxPerSession: 120,
+      maxPerIp: 400,
+    });
     const { data: funnel } = await supabaseAdmin
       .from("funnels")
       .select("id")
@@ -302,9 +397,25 @@ export const trackStep = createServerFn({ method: "POST" })
   });
 
 export const deleteFunnel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ funnelId: z.string().uuid() }))
-  .handler(async ({ data }) => {
-    const { error } = await supabaseAdmin.from("funnels").delete().eq("id", data.funnelId);
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { data: funnel, error: fetchErr } = await supabaseAdmin
+      .from("funnels")
+      .select("id, owner_id")
+      .eq("id", data.funnelId)
+      .maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!funnel) throw new Error("Funil não encontrado");
+    if ((funnel as any).owner_id !== userId) {
+      throw new Error("Você não tem permissão para excluir este funil.");
+    }
+    const { error } = await supabaseAdmin
+      .from("funnels")
+      .delete()
+      .eq("id", data.funnelId)
+      .eq("owner_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

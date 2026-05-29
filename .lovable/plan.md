@@ -1,80 +1,100 @@
+# Revisão do sistema — Plano de melhorias
 
-# CRM Clinik.Club — Módulo pago (MVP)
+Auditei 4 áreas em paralelo (performance, confiabilidade, UX/onboarding, segurança). Agrupei por **risco para clientes ativos**, do mais urgente ao polimento.
 
-CRM como add-on cobrado **além** do plano do funil. Quem não tiver o módulo ativo vê um paywall na rota `/app/crm`.
+---
 
-## Escopo do MVP
+## 🔴 BLOCO 1 — Críticos (fazer agora)
 
-1. **Pipelines (Kanban)** — colunas customizáveis (Novos Leads, Em Atendimento, Agendou, Compareceu, Fechou, Perdeu). Arrastar lead entre etapas.
-2. **Lista de Leads** com filtros (período, pipeline, etapa, campanha, atendente, origem) + exportar XLSX.
-3. **Detalhe do Lead** — dados de contato, respostas do funil, timeline de eventos, anotações, botão "abrir WhatsApp".
-4. **Captura automática** — toda submissão de `leads` (já existente, vinda dos funis) entra no pipeline padrão na primeira etapa.
-5. **Atendentes** — convidar membros da clínica e atribuir leads (round-robin manual no MVP).
-6. **Relatórios** — 4 abas: Segmentado, Gerencial, Leads Parados, Leads por Origem.
-7. **Paywall** — bloqueia `/app/crm` se o usuário não tiver assinatura ativa do produto `crm_addon`.
+Risco imediato a clientes pagantes ou dados. Recomendo fazer **tudo** deste bloco numa rodada.
 
-Fora do MVP (próximas fases): integração WhatsApp Business API nativa, automações/SLA, gravação de ligações, IA de qualificação.
+1. **`deleteFunnel` sem autenticação** (`src/lib/funnels.functions.ts:304`)
+   Qualquer um com o UUID de um funil pode deletá-lo via POST. Falta `.middleware([requireSupabaseAuth])` e checagem de `owner_id`.
 
-## Modelo de cobrança
+2. **Webhook Stripe com falhas silenciosas e sem idempotência** (`src/routes/api/public/payments/webhook.ts`)
+   - Nenhum `.error` é checado nos `upsert/update` → plano pode não ativar e ninguém saber.
+   - Sem tabela `processed_webhook_events` → re-entrega da Stripe duplica efeito.
+   - `listUsers({ perPage: 1000 })` hardcoded → após 1000 contas, vínculo por email quebra silenciosamente.
 
-Novo produto no Lovable Payments: **CRM Add-on** — assinatura mensal independente do plano do funil.
-- `crm_addon_monthly` — R$ 97/mês (placeholder, confirmar valor)
-- Validação server-side: serverFn `hasCrmAccess()` consulta `subscriptions` com `product_id = 'crm_addon'`.
+3. **Trigger `handle_new_user` sem `EXCEPTION WHEN OTHERS`**
+   Qualquer falha no INSERT em `profiles` aborta o signup inteiro. Encapsular em bloco com exceção.
 
-## Banco de dados (novas tabelas)
+4. **Email não confirmado trava login sem feedback** (`src/routes/login.tsx:48`)
+   Mostra `"Email not confirmed"` em inglês, sem botão para reenviar. Tratar erro específico + ação "Reenviar confirmação".
 
-```text
-crm_pipelines (id, owner_id, name, is_default, created_at)
-crm_stages    (id, pipeline_id, name, order, color, created_at)
-crm_lead_cards(id, lead_id, pipeline_id, stage_id, assignee_id, position,
-               status [active/archived], moved_at, created_at)
-crm_notes     (id, lead_card_id, author_id, body, created_at)
-crm_events    (id, lead_card_id, type, payload jsonb, created_at)
-crm_members   (id, owner_id, user_id, role [admin/agent], created_at)
-```
+5. **`checkout/return` sem `session_id` exibe "Pagamento confirmado!"** (`src/routes/checkout.return.tsx:47`)
+   Tela de sucesso falso. Renderizar título condicionalmente.
 
-- `lead_card` referencia `leads.id` (tabela existente, alimentada pelos funis).
-- Trigger: ao inserir em `leads`, cria automaticamente um `crm_lead_card` no pipeline default do owner do funil (se ele tem CRM ativo).
-- RLS: owner vê tudo; agent vê apenas cards atribuídos a ele ou não atribuídos.
+6. **Rate limiting básico em `submitLead`, `upsertPartialLead`, `trackStep`** (`src/lib/funnels.functions.ts`)
+   Endpoints públicos sem auth e sem throttle — bot pode inflar banco e estourar cota do cliente. Tabela `public_action_log` com janela por `sessionId+IP`.
 
-## Arquitetura de telas
+7. **Limites de tamanho em `answers/utm`** (`src/lib/funnels.functions.ts:115,229`)
+   Validar JSON ≤ 50KB para evitar payload abusivo.
 
-```text
-/app/crm                       → dashboard (KPIs rápidos) ou redirect p/ pipelines
-/app/crm/pipelines             → Kanban (default pipeline)
-/app/crm/pipelines/$id         → Kanban de um pipeline específico
-/app/crm/leads                 → tabela de leads com filtros + export XLSX
-/app/crm/leads/$id             → detalhe do lead (timeline, notas, respostas do funil)
-/app/crm/reports               → abas Segmentado/Gerencial/Parados/Origem
-/app/crm/settings              → pipelines, etapas, atendentes
-/app/crm/upgrade               → paywall (quando sem assinatura)
-```
+---
 
-Layout próprio com sidebar (Pipelines · Leads · Relatórios · Configurações) — usa shadcn Sidebar, colapsável.
+## 🟠 BLOCO 2 — Confiabilidade & performance alta (fazer em seguida)
 
-## Detalhes técnicos
+Não trava ninguém hoje, mas degrada à medida que cresce.
 
-- **Guard**: layout `_authenticated/app/crm` chama `hasCrmAccess` no loader; redirect p/ `/app/crm/upgrade` se falso.
-- **Server functions**: `crm.functions.ts` para listar pipelines, mover card (otimista no client), criar nota, etc. Tudo com `requireSupabaseAuth`.
-- **Kanban**: `@dnd-kit/core` (já leve e compatível). Mutação otimista com TanStack Query.
-- **Export XLSX**: serverFn que gera CSV/XLSX server-side e retorna como blob.
-- **Realtime**: opcional na v1 — habilitar `supabase_realtime` em `crm_lead_cards` para múltiplos atendentes verem o board atualizar.
+8. **Loader na dashboard + paralelizar 4 round-trips serial** (`src/routes/_authenticated/app.index.tsx:36-66`)
+   Mover queries para `loader` + `Promise.all`. Hoje são 4 esperas sequenciais antes de renderizar.
 
-## Ordem de implementação (entrega incremental)
+9. **`select("*")` virar select específico** em `funnels`, `funnel_steps`, `leads`, `subscriptions` (5 locais)
+   Reduz payload e CPU.
 
-1. **Migração DB** + RLS + trigger de criação automática de card a partir de `leads`.
-2. **Produto de pagamento** `crm_addon` + serverFn `hasCrmAccess` + paywall em `/app/crm/upgrade`.
-3. **Layout do CRM** com sidebar + guard de acesso.
-4. **Pipelines/Kanban** (criar pipeline default na primeira visita, drag-and-drop entre etapas).
-5. **Lista de Leads** com filtros e detalhe do lead (timeline + respostas do funil).
-6. **Atendentes** (convite + atribuição).
-7. **Relatórios** (4 abas) + export XLSX.
-8. **Polimento** — vazios, loading skeletons, toasts, mobile.
+10. **Paginação real na view de leads do funil** (`src/routes/_authenticated/app.funis.$id.leads.tsx:25`)
+    Hoje carrega todos os leads sem `.limit()`. Adicionar paginação + filtro por status.
 
-## Pontos a confirmar antes de codar
+11. **Batch save no editor** (`src/routes/_authenticated/app.funis.$id.editar.tsx:134,224`)
+    Trocar N requests por upsert único / RPC. Hoje 11+ requests simultâneos com 10 steps.
 
-- **Preço** do add-on (sugiro R$ 97/mês — ok?).
-- **Trial**: liberar 7 dias grátis do CRM pra quem já tem o funil? (recomendo sim p/ conversão)
-- **Etapas default** do pipeline: posso usar as do CRMAX (Novos Leads → Em Atendimento → Agendou → Compareceu → Fechou → Perdeu)?
+12. **Indexes faltando** em `leads(funnel_id, created_at)`, `crm_lead_cards(pipeline_id, status, position)`, `subscriptions(user_id, environment)` — migração SQL.
 
-Posso começar pela etapa 1 (migração + paywall + layout) já com as defaults acima, e ajustamos preço/trial quando você confirmar.
+13. **Captura de erros global no frontend** (`src/routes/__root.tsx`)
+    Adicionar `ErrorBoundary` + log estruturado para `email_send_log`-style table `client_errors`. Permite saber quando cliente vê tela branca.
+
+14. **Mensagens de erro amigáveis** — função `humanizeSupabaseError()` central, substituir todos os `toast.error(error.message)` (10+ locais) por mensagens PT-BR.
+
+---
+
+## 🟡 BLOCO 3 — UX & retenção
+
+15. **Kanban CRM não funciona em mobile** (`src/routes/_authenticated/app.crm.pipelines.tsx:69`)
+    Adicionar `TouchSensor` do `@dnd-kit/core`. Solução de 3 linhas.
+
+16. **Tabela de leads CRM sem scroll horizontal mobile** (`src/routes/_authenticated/app.crm.leads.tsx:56`) — wrap em `overflow-x-auto`.
+
+17. **Status do funil em PT-BR** (`src/routes/_authenticated/app.index.tsx:216`) — "draft" → "Rascunho", etc.
+
+18. **Skeletons em vez de "Carregando..."** no dashboard, editor e CRM (3 locais).
+
+19. **Botão "Publicar" desabilitado durante save** (`app.funis.$id.editar.tsx:367`) — evita duplo-clique publicando dados velhos.
+
+20. **Remover ou marcar como "Em breve"**: features Agency não implementadas (`src/routes/planos.tsx:54`) — subcontas, white-label, API. Risco de chargeback.
+
+21. **Acessibilidade básica**: `aria-label` em botões-ícone do editor, `htmlFor` no campo email da conta, foco em "Cancelar" nos modais destrutivos.
+
+22. **Lazy-load `@dnd-kit`** na rota CRM pipelines (~40KB gz a menos no bundle autenticado).
+
+23. **`loading="lazy"` + `width/height`** em imagens de funil público (`src/routes/f.$slug.tsx`) — melhora LCP e elimina CLS.
+
+---
+
+## 🟢 BLOCO 4 — Onboarding (projeto separado, maior)
+
+24. **Tela "Verifique seu email" pós-signup** com CTA para reenviar + link para /planos.
+
+25. **Empty state acionável** em `/app` quando sem funil: tour de 3 passos (criar funil → publicar → primeiro lead).
+
+26. **Checklist de ativação** persistente no dashboard até o usuário criar funil + ativar plano + receber 1º lead.
+
+> Bloco 4 é um sub-projeto maior. Sugiro fazer depois dos blocos 1-3 e em uma rodada dedicada.
+
+---
+
+## Como sugiro proceder
+
+Posso executar **bloco a bloco** (você aprova cada um antes do próximo), ou tudo de uma vez se preferir.
+
+**Recomendação:** começar pelo **Bloco 1 (críticos)** agora — é o que protege os clientes pagantes que já estão usando. Depois conversamos sobre 2 e 3.

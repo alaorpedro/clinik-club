@@ -44,8 +44,25 @@ function CheckoutReturn() {
             {checking ? <Loader2 className="h-8 w-8 text-foreground animate-spin" /> : <CheckCircle2 className="h-8 w-8 text-foreground" />}
           </div>
         </div>
-        <h1 className="mt-6 text-3xl font-black tracking-tight">Pagamento confirmado!</h1>
-        {needsAccount ? (
+        <h1 className="mt-6 text-3xl font-black tracking-tight">
+          {checking
+            ? "Confirmando pagamento..."
+            : session_id
+              ? "Pagamento confirmado!"
+              : "Nenhum pagamento encontrado"}
+        </h1>
+        {checking ? (
+          <p className="mt-3 text-muted-foreground">Aguarde um instante.</p>
+        ) : !session_id ? (
+          <>
+            <p className="mt-3 text-muted-foreground">
+              Não encontramos uma sessão de checkout. Escolha um plano para continuar.
+            </p>
+            <Button asChild className="mt-8 w-full rounded-full font-semibold">
+              <Link to="/planos">Ver planos</Link>
+            </Button>
+          </>
+        ) : needsAccount ? (
           <>
             <p className="mt-3 text-muted-foreground">
               Crie sua senha para acessar o painel. Use o email <span className="font-semibold text-foreground">{needsAccount}</span> usado no pagamento.
