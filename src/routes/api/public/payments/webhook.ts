@@ -13,6 +13,30 @@ function getSupabase(): any {
   return _supabase;
 }
 
+async function findUserIdByEmail(supabase: any, email: string): Promise<string | null> {
+  // Paginate to avoid silent miss after 1000 users.
+  const lower = email.toLowerCase();
+  for (let page = 1; page <= 50; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) {
+      console.error("[webhook] listUsers error", error);
+      return null;
+    }
+    const users = data?.users ?? [];
+    const match = users.find((u: any) => (u.email ?? "").toLowerCase() === lower);
+    if (match) return match.id;
+    if (users.length < 200) return null;
+  }
+  return null;
+}
+
+function requireOk(error: any, label: string) {
+  if (error) {
+    console.error(`[webhook] ${label} failed:`, error);
+    throw new Error(`${label}: ${error.message ?? "db error"}`);
+  }
+}
+
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const userId: string | null = subscription.metadata?.userId ?? null;
   const customerEmail: string | null = subscription.metadata?.customerEmail ?? null;
@@ -29,12 +53,10 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   // For anonymous checkouts, try to link by email to an existing auth user.
   let linkedUserId: string | null = userId;
   if (!linkedUserId && customerEmail) {
-    const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    const match = list?.users?.find((u: any) => (u.email ?? "").toLowerCase() === customerEmail.toLowerCase());
-    if (match) linkedUserId = match.id;
+    linkedUserId = await findUserIdByEmail(supabase, customerEmail);
   }
 
-  await supabase.from("subscriptions").upsert(
+  const { error: upsertErr } = await supabase.from("subscriptions").upsert(
     {
       user_id: linkedUserId,
       customer_email: customerEmail,
@@ -50,6 +72,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     },
     { onConflict: "stripe_subscription_id" }
   );
+  requireOk(upsertErr, "subscriptions.upsert");
 
   const planMap: Record<string, string> = {
     starter_monthly: "starter",
@@ -61,11 +84,14 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   };
   const plan = planMap[priceId] ?? "free";
   if (linkedUserId) {
-    await supabase.from("profiles").update({
+    const { error } = await supabase.from("profiles").update({
       plan,
       subscription_status: subscription.status,
       stripe_customer_id: subscription.customer,
     }).eq("id", linkedUserId);
+    requireOk(error, "profiles.update(created)");
+  } else if (customerEmail) {
+    console.warn("[webhook] subscription created but no linked user yet for email", customerEmail);
   }
 }
 
@@ -79,7 +105,7 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
   const supabase = getSupabase();
-  await supabase.from("subscriptions").update({
+  const { error: updErr } = await supabase.from("subscriptions").update({
     status: subscription.status,
     product_id: productId,
     price_id: priceId,
@@ -88,33 +114,52 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
     cancel_at_period_end: subscription.cancel_at_period_end || false,
     updated_at: new Date().toISOString(),
   }).eq("stripe_subscription_id", subscription.id).eq("environment", env);
+  requireOk(updErr, "subscriptions.update");
 
   const userId = subscription.metadata?.userId;
   if (userId) {
-    await supabase.from("profiles").update({
+    const { error } = await supabase.from("profiles").update({
       subscription_status: subscription.status,
     }).eq("id", userId);
+    requireOk(error, "profiles.update(updated)");
   }
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
   const supabase = getSupabase();
-  await supabase.from("subscriptions").update({
+  const { error: delErr } = await supabase.from("subscriptions").update({
     status: "canceled",
     updated_at: new Date().toISOString(),
   }).eq("stripe_subscription_id", subscription.id).eq("environment", env);
+  requireOk(delErr, "subscriptions.update(canceled)");
 
   const userId = subscription.metadata?.userId;
   if (userId) {
-    await supabase.from("profiles").update({
+    const { error } = await supabase.from("profiles").update({
       plan: "free",
       subscription_status: "canceled",
     }).eq("id", userId);
+    requireOk(error, "profiles.update(deleted)");
   }
 }
 
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
+  const supabase = getSupabase();
+  const eventId = (event as any).id as string | undefined;
+  if (eventId) {
+    const { error: idemErr } = await supabase
+      .from("processed_webhook_events")
+      .insert({ event_id: eventId, source: "stripe" });
+    if (idemErr) {
+      // Unique violation → already processed, exit early.
+      if ((idemErr as any).code === "23505") {
+        console.log("[webhook] duplicate event, skipping", eventId);
+        return;
+      }
+      console.error("[webhook] idempotency insert error", idemErr);
+    }
+  }
   switch (event.type) {
     case "customer.subscription.created":
       await handleSubscriptionCreated(event.data.object, env);
