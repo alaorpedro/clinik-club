@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, useNavigate, useRouterState, Link } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useNavigate, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -81,17 +81,17 @@ function AppLayout() {
   return (
     <div className="h-screen flex bg-secondary/30 overflow-hidden">
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0">
-        <Link to="/" className="flex items-center gap-2 mb-8" aria-label="Clinik.Club">
+        <a href="/" className="flex items-center gap-2 mb-8" aria-label="Clinik.Club">
           <img src={icon} alt="" className="h-8 w-8" />
           <img src={logo} alt="Clinik.Club" className="h-7 w-auto" />
-        </Link>
+        </a>
         <nav className="flex-1 space-y-1">
           {links.map((l) => {
             const active = l.to === "/app" ? path === "/app" : path.startsWith(l.to);
             return (
-              <Link key={l.to} to={l.to} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-secondary"}`}>
+              <a key={l.to} href={l.to} className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-secondary"}`}>
                 <l.icon className="h-4 w-4" />{l.label}
-              </Link>
+              </a>
             );
           })}
         </nav>
@@ -102,17 +102,17 @@ function AppLayout() {
       </aside>
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-30">
-          <Link to="/" className="flex items-center gap-2" aria-label="Clinik.Club">
+          <a href="/" className="flex items-center gap-2" aria-label="Clinik.Club">
             <img src={icon} alt="" className="h-7 w-7" />
             <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
-          </Link>
+          </a>
           <nav className="flex items-center gap-1">
             {links.map((l) => {
               const active = l.to === "/app" ? path === "/app" : path.startsWith(l.to);
               return (
-                <Link key={l.to} to={l.to} aria-label={l.label} className={`flex items-center justify-center h-9 w-9 rounded-lg transition ${active ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-secondary"}`}>
+                <a key={l.to} href={l.to} aria-label={l.label} className={`flex items-center justify-center h-9 w-9 rounded-lg transition ${active ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-secondary"}`}>
                   <l.icon className="h-4 w-4" />
-                </Link>
+                </a>
               );
             })}
             <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9"><LogOut className="h-4 w-4" /></Button>
