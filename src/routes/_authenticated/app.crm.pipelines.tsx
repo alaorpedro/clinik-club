@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { Loader2, Mail, Phone, User as UserIcon, Plus } from "lucide-react";
 import { ensureDefaultPipeline, getBoard, moveCard } from "@/lib/crm.functions";
@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/app/crm/pipelines")({
   component: PipelinesPage,
+  errorComponent: ({ error, reset }) => (
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">
+      <h2 className="font-bold text-destructive">Não foi possível carregar o pipeline</h2>
+      <p className="mt-1 text-muted-foreground">{error?.message ?? "Erro inesperado."}</p>
+      <Button size="sm" variant="outline" className="mt-4 rounded-full" onClick={() => reset()}>
+        Tentar novamente
+      </Button>
+    </div>
+  ),
 });
 
 type Card = {
@@ -37,14 +46,13 @@ function PipelinesPage() {
   const fetchBoard = useServerFn(getBoard);
   const move = useServerFn(moveCard);
 
-  // Ensure default pipeline exists for new users
-  useEffect(() => {
-    ensure().then(() => qc.invalidateQueries({ queryKey: ["crm", "board"] })).catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const { data, isLoading } = useQuery({
     queryKey: ["crm", "board"],
-    queryFn: () => fetchBoard({ data: {} }),
+    queryFn: async () => {
+      // Ensure default pipeline exists, then fetch board in single render cycle.
+      try { await ensure(); } catch { /* non-fatal */ }
+      return fetchBoard({ data: {} });
+    },
   });
 
   const moveMut = useMutation({

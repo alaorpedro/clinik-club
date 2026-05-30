@@ -3,6 +3,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 
+const ALLOWED_RETURN_HOSTS = new Set([
+  "clinik.club",
+  "www.clinik.club",
+  "kindred-ignite-forge.lovable.app",
+  "id-preview--f6c0c93d-41eb-463c-89ff-ab117eaa47a7.lovable.app",
+  "localhost",
+]);
+function sanitizeReturnUrl(input: string | undefined): string | undefined {
+  if (!input) return undefined;
+  try {
+    const u = new URL(input);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return undefined;
+    if (!ALLOWED_RETURN_HOSTS.has(u.hostname)) return undefined;
+    return u.toString();
+  } catch {
+    return undefined;
+  }
+}
+
 async function ensureAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
     .from("user_roles")
@@ -226,9 +245,10 @@ export const openCustomerPortalAsAdmin = createServerFn({ method: "POST" })
     await ensureAdmin(context.userId);
     try {
       const stripe = createStripeClient(data.environment);
+      const safeReturn = sanitizeReturnUrl(data.returnUrl);
       const portal = await stripe.billingPortal.sessions.create({
         customer: data.customerId,
-        ...(data.returnUrl && { return_url: data.returnUrl }),
+        ...(safeReturn && { return_url: safeReturn }),
       });
       return { url: portal.url };
     } catch (error) {

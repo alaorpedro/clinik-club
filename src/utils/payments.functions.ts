@@ -4,6 +4,26 @@ import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getRequest } from "@tanstack/react-start/server";
 
+const ALLOWED_RETURN_HOSTS = new Set([
+  "clinik.club",
+  "www.clinik.club",
+  "kindred-ignite-forge.lovable.app",
+  "id-preview--f6c0c93d-41eb-463c-89ff-ab117eaa47a7.lovable.app",
+  "localhost",
+]);
+
+function sanitizeReturnUrl(input: string | undefined): string | undefined {
+  if (!input) return undefined;
+  try {
+    const u = new URL(input);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return undefined;
+    if (!ALLOWED_RETURN_HOSTS.has(u.hostname)) return undefined;
+    return u.toString();
+  } catch {
+    return undefined;
+  }
+}
+
 async function getVerifiedUserIdFromRequest(): Promise<string | undefined> {
   try {
     const request = getRequest();
@@ -82,7 +102,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         line_items: [{ price: stripePrice.id, quantity: 1 }],
         mode: "subscription",
         ui_mode: "embedded_page",
-        return_url: data.returnUrl,
+        return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
         allow_promotion_codes: true,
         ...(customerId && { customer: customerId }),
         metadata: {
@@ -123,9 +143,10 @@ export const createPortalSession = createServerFn({ method: "POST" })
 
     try {
       const stripe = createStripeClient(data.environment);
+      const safeReturn = sanitizeReturnUrl(data.returnUrl);
       const portal = await stripe.billingPortal.sessions.create({
         customer: sub.stripe_customer_id as string,
-        ...(data.returnUrl && { return_url: data.returnUrl }),
+        ...(safeReturn && { return_url: safeReturn }),
       });
       return { url: portal.url };
     } catch (error) {

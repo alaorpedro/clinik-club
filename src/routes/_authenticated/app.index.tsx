@@ -12,6 +12,15 @@ import { createFunnelChecked, deleteFunnel, getPlanUsage } from "@/lib/funnels.f
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
+  errorComponent: ({ error, reset }) => (
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">
+      <h2 className="font-bold text-destructive">Erro ao carregar seus funis</h2>
+      <p className="mt-1 text-muted-foreground">{error?.message ?? "Tente novamente."}</p>
+      <Button size="sm" variant="outline" className="mt-4 rounded-full" onClick={() => reset()}>
+        Tentar novamente
+      </Button>
+    </div>
+  ),
 });
 
 type Funnel = { id: string; name: string; slug: string; status: string; created_at: string };
@@ -228,6 +237,7 @@ function AppHome() {
                   variant="ghost"
                   className="rounded-full ml-auto"
                   title="Configurações do funil"
+                  aria-label={`Configurações do funil ${f.name}`}
                   onClick={() => setSettingsFor(f.id)}
                 >
                   <Settings className="h-3.5 w-3.5" />
@@ -237,6 +247,7 @@ function AppHome() {
                   variant="ghost"
                   className="rounded-full"
                   title="Copiar link público"
+                  aria-label={`Copiar link público do funil ${f.name}`}
                   onClick={() => {
                     const url = `${window.location.origin}/f/${f.slug}`;
                     navigator.clipboard.writeText(url);
@@ -250,6 +261,7 @@ function AppHome() {
                   variant="ghost"
                   className="rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
                   title="Excluir funil"
+                  aria-label={`Excluir funil ${f.name}`}
                   onClick={() => handleDelete(f)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />

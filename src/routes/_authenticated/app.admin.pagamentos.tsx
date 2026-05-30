@@ -24,6 +24,15 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/admin/pagamentos")({
   component: AdminPaymentsPage,
+  errorComponent: ({ error, reset }) => (
+    <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">
+      <h2 className="font-bold text-destructive">Erro ao carregar pagamentos</h2>
+      <p className="mt-1 text-muted-foreground">{error?.message ?? "Tente novamente."}</p>
+      <Button size="sm" variant="outline" className="mt-4 rounded-full" onClick={() => reset()}>
+        Tentar novamente
+      </Button>
+    </div>
+  ),
 });
 
 function fmtDate(iso: string | null) {
