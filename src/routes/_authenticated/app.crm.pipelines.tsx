@@ -151,8 +151,12 @@ function StageColumn({ stage, cards }: { stage: Stage; cards: Card[] }) {
           <CardItem key={card.id} card={card} />
         ))}
         {cards.length === 0 && (
-          <div className="text-center text-xs text-muted-foreground py-6 border border-dashed border-border rounded-xl">
-            Vazio
+          <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border rounded-xl px-3">
+            <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+              <UserIcon className="h-4 w-4 opacity-50" />
+            </div>
+            <p className="font-medium text-foreground/70">Nenhum lead aqui</p>
+            <p className="mt-0.5 text-[11px]">Arraste cards de outras etapas</p>
           </div>
         )}
       </div>
