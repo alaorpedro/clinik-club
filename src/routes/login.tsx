@@ -28,9 +28,20 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+function safeNextPath(next: string | undefined): string {
+  if (!next || typeof next !== "string") return "/app";
+  // Must be an internal absolute path. Reject protocol-relative URLs (//evil.com),
+  // backslash variants (/\evil.com), and anything that isn't a single-slash path.
+  if (!next.startsWith("/")) return "/app";
+  if (next.startsWith("//") || next.startsWith("/\\")) return "/app";
+  // Reject schemes and control chars just in case.
+  if (/[\x00-\x1f]/.test(next)) return "/app";
+  return next;
+}
+
 function LoginPage() {
   const { next } = Route.useSearch();
-  const nextPath = next?.startsWith("/") ? next : "/app";
+  const nextPath = safeNextPath(next);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);

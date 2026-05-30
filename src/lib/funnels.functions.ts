@@ -371,7 +371,24 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
   });
 
 export const trackStep = createServerFn({ method: "POST" })
-  .inputValidator((d: { funnelId: string; sessionId: string; stepIndex: number; completed?: boolean }) => d)
+  .inputValidator((d: { funnelId: string; sessionId: string; stepIndex: number; completed?: boolean }) => {
+    if (!d || typeof d !== "object") throw new Error("payload inválido");
+    if (typeof d.funnelId !== "string" || !/^[0-9a-f-]{36}$/i.test(d.funnelId)) {
+      throw new Error("funnelId inválido");
+    }
+    if (typeof d.sessionId !== "string" || d.sessionId.length < 1 || d.sessionId.length > 200) {
+      throw new Error("sessionId inválido");
+    }
+    if (typeof d.stepIndex !== "number" || !Number.isFinite(d.stepIndex) || d.stepIndex < 0 || d.stepIndex > 1000) {
+      throw new Error("stepIndex inválido");
+    }
+    return {
+      funnelId: d.funnelId,
+      sessionId: d.sessionId,
+      stepIndex: Math.floor(d.stepIndex),
+      completed: !!d.completed,
+    };
+  })
   .handler(async ({ data }) => {
     await checkAndLogRate("trackStep", {
       sessionId: data.sessionId,

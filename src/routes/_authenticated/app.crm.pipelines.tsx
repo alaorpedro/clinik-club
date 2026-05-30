@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
+import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { Loader2, Mail, Phone, User as UserIcon, Plus } from "lucide-react";
 import { ensureDefaultPipeline, getBoard, moveCard } from "@/lib/crm.functions";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,10 @@ function PipelinesPage() {
     onSettled: () => qc.invalidateQueries({ queryKey: ["crm", "board"] }),
   });
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  );
 
   const byStage = useMemo(() => {
     const map = new Map<string, Card[]>();
