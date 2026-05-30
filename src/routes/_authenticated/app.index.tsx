@@ -25,6 +25,12 @@ export const Route = createFileRoute("/_authenticated/app/")({
 
 type Funnel = { id: string; name: string; slug: string; status: string; created_at: string };
 
+const STATUS_LABEL: Record<string, string> = {
+  published: "Publicado",
+  draft: "Rascunho",
+  archived: "Arquivado",
+};
+
 function AppHome() {
   const [funnels, setFunnels] = useState<Funnel[] | null>(null);
   const [settingsFor, setSettingsFor] = useState<string | null>(null);
@@ -192,7 +198,24 @@ function AppHome() {
         </div>
       </div>
       {funnels === null ? (
-        <p className="text-muted-foreground">Carregando...</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-busy="true" aria-label="Carregando funis">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card p-6 shadow-soft animate-pulse">
+              <div className="flex items-center justify-between">
+                <div className="h-5 w-32 bg-muted rounded" />
+                <div className="h-5 w-16 bg-muted rounded-full" />
+              </div>
+              <div className="mt-2 h-3 w-20 bg-muted rounded" />
+              <div className="mt-5 flex gap-2">
+                <div className="h-8 w-16 bg-muted rounded-full" />
+                <div className="h-8 w-16 bg-muted rounded-full" />
+                <div className="h-8 w-8 bg-muted rounded-full ml-auto" />
+                <div className="h-8 w-8 bg-muted rounded-full" />
+                <div className="h-8 w-8 bg-muted rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : funnels.length === 0 ? (
         hasPlan === false ? (
           <div className="rounded-3xl border-2 border-dashed border-primary/30 bg-background p-12 text-center">
@@ -222,7 +245,7 @@ function AppHome() {
             <div key={f.id} className="rounded-2xl border border-border bg-card p-6 shadow-soft hover:shadow-card transition">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold">{f.name}</h3>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${f.status === "published" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>{f.status}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${f.status === "published" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>{STATUS_LABEL[f.status] ?? f.status}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">/{f.slug}</p>
               <div className="mt-4 flex gap-2">
