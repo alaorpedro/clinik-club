@@ -40,7 +40,8 @@ function CrmLayout() {
     { to: "/app/crm/leads", label: "Leads", icon: ListChecks },
     { to: "/app/crm/relatorios", label: "Relatórios", icon: BarChart3 },
     { to: "/app/crm/configuracoes", label: "Configurações", icon: SettingsIcon },
-  ];
+  ] as const;
+
 
 
   return (
@@ -53,11 +54,12 @@ function CrmLayout() {
             return (
               <Link
                 key={l.to}
-                to={l.to as any}
+                to={l.to}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap cursor-pointer hover:scale-[1.02] active:scale-95 ${
                   active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground/70 hover:bg-secondary"
                 }`}
               >
+
                 <l.icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />
                 {l.label}
               </Link>
