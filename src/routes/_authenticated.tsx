@@ -95,17 +95,18 @@ function AppLayout() {
               <Link
                 key={l.to}
                 to={l.to as any}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-bold transition cursor-pointer hover:scale-[1.02] active:scale-95 ${active ? "bg-primary text-primary-foreground shadow-md" : "text-foreground/70 hover:bg-secondary"}`}
               >
-                <l.icon className="h-4 w-4" />{l.label}
+                <l.icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />{l.label}
               </Link>
             );
           })}
         </nav>
         <div className="border-t border-border pt-4">
-          <div className="px-3 py-2 text-xs text-muted-foreground truncate">{user.email}</div>
-          <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2 cursor-pointer hover:bg-destructive/10 hover:text-destructive"><LogOut className="h-4 w-4" />Sair</Button>
+          <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wider">{user.email}</div>
+          <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2 cursor-pointer font-bold text-foreground/70 hover:bg-destructive/10 hover:text-destructive transition-colors"><LogOut className="h-4 w-4 text-destructive" />Sair</Button>
         </div>
+
       </aside>
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-0">
