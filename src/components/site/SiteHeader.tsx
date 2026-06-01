@@ -10,7 +10,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2" aria-label="Clinik.Club">
+        <Link to={user ? "/app" : "/"} className="flex items-center gap-2" aria-label="Clinik.Club">
           <img src={icon} alt="" className="h-8 w-8" />
           <img src={logo} alt="Clinik.Club" className="h-7 w-auto hidden sm:block" />
         </Link>
