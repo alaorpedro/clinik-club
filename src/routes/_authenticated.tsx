@@ -79,7 +79,7 @@ function AppLayout() {
   ];
 
   return (
-    <div className="h-screen flex bg-secondary/30 overflow-hidden relative">
+    <div className="h-screen flex bg-secondary/30 overflow-hidden relative isolate">
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[999]">
         <Link 
           to="/app"
@@ -108,7 +108,7 @@ function AppLayout() {
           <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2"><LogOut className="h-4 w-4" />Sair</Button>
         </div>
       </aside>
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-0">
         <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-[999]">
           <Link 
             to="/app"
@@ -135,7 +135,7 @@ function AppLayout() {
             <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9 pointer-events-auto relative z-[1000]"><LogOut className="h-4 w-4" /></Button>
           </nav>
         </header>
-        <main className="flex-1 p-6 md:p-10 overflow-y-auto"><Outlet /></main>
+        <main className="flex-1 p-6 md:p-10 overflow-y-auto relative z-0"><Outlet /></main>
       </div>
     </div>
   );
