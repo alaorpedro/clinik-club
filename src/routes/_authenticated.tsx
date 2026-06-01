@@ -87,7 +87,7 @@ function AppLayout() {
         </Link>
         <nav className="flex-1 space-y-1">
           {links.map((l) => {
-            const active = l.to === "/app" ? path === "/app" : path.startsWith(l.to);
+            const active = l.to === "/app" ? (path === "/app" || path === "/app/") : path.startsWith(l.to);
             return (
               <Link 
                 key={l.to} 
