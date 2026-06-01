@@ -15,7 +15,7 @@ async function getCurrentUserWithFallback() {
     ]);
     if (result?.data.user) return result.data.user;
   } catch {
-    // Fall back to the local session below so private browsing never gets stuck loading.
+    // Fall back to the local session
   }
   const sessionResult = await Promise.race([
     supabase.auth.getSession(),
@@ -29,8 +29,6 @@ export const Route = createFileRoute("/_authenticated")({
     if (typeof window === "undefined") return;
     const user = await getCurrentUserWithFallback();
     if (!user) throw redirect({ to: "/login", search: { next: location.pathname } as never });
-    // Note: plan check happens inside individual app pages (e.g. funnel creation),
-    // so users can explore the dashboard and see a clear CTA to activate a plan.
   },
   component: AppLayout,
 });
@@ -80,10 +78,11 @@ function AppLayout() {
 
   return (
     <div className="h-screen flex bg-secondary/30 overflow-hidden relative isolate">
-      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[999]">
+      {/* Sidebar Desktop */}
+      <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen relative z-[50]">
         <Link 
           to="/app"
-          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity pointer-events-auto relative z-[1000]" 
+          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
           aria-label="Clinik.Club"
         >
           <img src={icon} alt="" className="h-8 w-8" />
@@ -96,7 +95,7 @@ function AppLayout() {
               <Link
                 key={l.to}
                 to={l.to as any}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition pointer-events-auto relative z-[1000] ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
               >
                 <l.icon className="h-4 w-4" />{l.label}
               </Link>
@@ -108,11 +107,13 @@ function AppLayout() {
           <Button variant="ghost" size="sm" onClick={logout} className="w-full justify-start gap-2"><LogOut className="h-4 w-4" />Sair</Button>
         </div>
       </aside>
-      <div className="flex-1 flex flex-col h-screen overflow-hidden relative z-0">
-        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 sticky top-0 z-[999]">
+
+      <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        {/* Header Mobile */}
+        <header className="md:hidden flex items-center justify-between gap-2 border-b border-border bg-background px-4 py-3 z-[50]">
           <Link 
             to="/app"
-            className="flex items-center gap-2 pointer-events-auto relative z-[1000]" 
+            className="flex items-center gap-2" 
             aria-label="Clinik.Club"
           >
             <img src={icon} alt="" className="h-7 w-7" />
@@ -125,17 +126,21 @@ function AppLayout() {
                 <Link
                   key={l.to}
                   to={l.to as any}
-                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition pointer-events-auto relative z-[1000] ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                  className={`h-9 w-9 flex items-center justify-center rounded-lg transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
                   aria-label={l.label}
                 >
                   <l.icon className="h-4 w-4" />
                 </Link>
               );
             })}
-            <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9 pointer-events-auto relative z-[1000]"><LogOut className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={logout} aria-label="Sair" className="h-9 w-9"><LogOut className="h-4 w-4" /></Button>
           </nav>
         </header>
-        <main className="flex-1 p-6 md:p-10 overflow-y-auto relative z-0"><Outlet /></main>
+
+        {/* Main Content */}
+        <main className="flex-1 p-6 md:p-10 overflow-y-auto z-0">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
