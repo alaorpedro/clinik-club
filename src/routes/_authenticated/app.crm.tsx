@@ -42,31 +42,33 @@ function CrmLayout() {
     { to: "/app/crm/configuracoes", label: "Configurações", icon: SettingsIcon },
   ];
 
+
   return (
-    <div className="-m-6 md:-m-10 flex min-h-full">
-      <aside className="hidden lg:flex w-52 flex-col border-r border-border bg-background/60 p-4">
+    <div className="flex flex-col lg:flex-row min-h-full">
+      <aside className="lg:w-52 flex flex-col border-r border-border bg-background/60 p-4">
         <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2 mb-3">CRM</div>
-        <nav className="space-y-1">
+        <nav className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-1 lg:space-y-1 no-scrollbar">
           {links.map((l) => {
             const active = path.startsWith(l.to);
             return (
               <Link
                 key={l.to}
-                to={l.to}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  active ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-secondary"
+                to={l.to as any}
+                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap cursor-pointer hover:scale-[1.02] active:scale-95 ${
+                  active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground/70 hover:bg-secondary"
                 }`}
               >
-                <l.icon className="h-4 w-4" />
+                <l.icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />
                 {l.label}
               </Link>
             );
           })}
         </nav>
       </aside>
-      <div className="flex-1 p-6 md:p-10 overflow-y-auto">
+      <div className="flex-1 p-6 lg:p-10">
         <Outlet />
       </div>
     </div>
+
   );
 }
