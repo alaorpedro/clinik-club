@@ -83,7 +83,7 @@ function AppLayout() {
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[100]">
         <Link 
           to="/app"
-          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
+          className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity pointer-events-auto relative z-[110]" 
           aria-label="Clinik.Club"
         >
           <img src={icon} alt="" className="h-8 w-8" />
@@ -96,7 +96,7 @@ function AppLayout() {
               <Link
                 key={l.to}
                 to={l.to as any}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition pointer-events-auto relative z-[110] ${active ? "bg-primary/10 text-primary hover:bg-primary/20" : "text-foreground/70 hover:bg-secondary"}`}
               >
                 <l.icon className="h-4 w-4" />{l.label}
               </Link>
