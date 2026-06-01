@@ -72,9 +72,9 @@ function UpgradePage() {
         </div>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen} modal={false}>
-        <DialogContent allowStripePointerPassThrough className="max-w-2xl p-0 overflow-hidden">
-          <DialogHeader className="px-6 pt-6">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 text-left">
             <DialogTitle>Ativar CRM Clinik.Club</DialogTitle>
           </DialogHeader>
           <div className="p-6">
@@ -82,7 +82,6 @@ function UpgradePage() {
               <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>}>
                 <StripeEmbeddedCheckout
                   priceId="crm_addon_monthly"
-                  
                   customerEmail={user.email ?? undefined}
                   returnUrl={`${window.location.origin}/app/crm/pipelines`}
                 />
