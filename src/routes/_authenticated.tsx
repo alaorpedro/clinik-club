@@ -86,7 +86,7 @@ function AppLayout() {
       {/* Sidebar Desktop */}
       <aside className="hidden md:flex w-64 flex-col border-r border-border bg-background p-5 h-screen sticky top-0 z-[50]">
         <Link 
-          to="/app/index"
+          to="/app"
           className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity" 
           aria-label="Clinik.Club"
         >
@@ -95,11 +95,11 @@ function AppLayout() {
         </Link>
         <nav className="flex-1 space-y-1">
           {links.map((l) => {
-            const active = path.startsWith(l.to);
+            const active = path === l.to || (l.to !== "/app" && path.startsWith(l.to));
             return (
-              <button
+              <Link
                 key={l.to}
-                onClick={() => navigate({ to: l.to as any })}
+                to={l.to as any}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-bold transition cursor-pointer hover:scale-[1.02] active:scale-95 ${active ? "bg-primary text-primary-foreground shadow-md" : "text-foreground/70 hover:bg-secondary"}`}
               >
                 <div className="flex items-center gap-3">
@@ -107,7 +107,7 @@ function AppLayout() {
                   {l.label}
                 </div>
                 {active && <ChevronRight className="h-3.5 w-3.5 opacity-70" />}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -120,17 +120,15 @@ function AppLayout() {
 
       {/* Header Mobile */}
       <header className="md:hidden flex items-center justify-between border-b border-border bg-background px-4 py-3 sticky top-0 z-[60]">
-        <button 
-          onClick={() => {
-            setMobileMenuOpen(false);
-            navigate({ to: "/app/index" as any });
-          }}
+        <Link 
+          to="/app"
+          onClick={() => setMobileMenuOpen(false)}
           className="flex items-center gap-2" 
           aria-label="Clinik.Club"
         >
           <img src={icon} alt="" className="h-7 w-7" />
           <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
-        </button>
+        </Link>
         <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="h-9 w-9">
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -142,18 +140,16 @@ function AppLayout() {
         <div className="md:hidden fixed inset-0 top-[53px] bg-background z-[55] flex flex-col p-6 animate-in slide-in-from-top duration-300">
           <nav className="flex-1 space-y-2">
             {links.map((l) => {
-              const active = path.startsWith(l.to);
+              const active = path === l.to || (l.to !== "/app" && path.startsWith(l.to));
               return (
-                <button
+                <Link
                   key={l.to}
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    navigate({ to: l.to as any });
-                  }}
+                  to={l.to as any}
+                  onClick={() => setMobileMenuOpen(false)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold transition ${active ? "bg-primary text-primary-foreground" : "text-foreground/70 bg-secondary/50"}`}
                 >
                   <l.icon className="h-5 w-5" />{l.label}
-                </button>
+                </Link>
               );
             })}
 
