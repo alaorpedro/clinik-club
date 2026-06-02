@@ -27,7 +27,7 @@ function UpgradePage() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="max-w-6xl mx-auto py-10 px-4 relative z-0 min-h-screen">
+    <div className="max-w-6xl mx-auto py-10 px-4">
       <Link to="/app" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-8">
         <ArrowLeft className="h-4 w-4" /> Voltar ao Painel
       </Link>

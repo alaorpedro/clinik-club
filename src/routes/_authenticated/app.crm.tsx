@@ -27,15 +27,16 @@ function CrmLayout() {
     );
   }
 
-  // Normalize path to check for upgrade page without worrying about trailing slashes
+  // Only handle redirects if we are actually on a CRM route
   const normalizedPath = path.replace(/\/$/, "");
+  const isCrmPath = normalizedPath.startsWith("/app/crm");
   const isUpgradePage = normalizedPath === "/app/crm/upgrade";
 
-  if (!data?.hasAccess && !isUpgradePage) {
+  if (isCrmPath && !data?.hasAccess && !isUpgradePage) {
     return <Navigate to="/app/crm/upgrade" replace />;
   }
   
-  if (data?.hasAccess && isUpgradePage) {
+  if (isCrmPath && data?.hasAccess && isUpgradePage) {
     return <Navigate to="/app/crm/pipelines" replace />;
   }
 
