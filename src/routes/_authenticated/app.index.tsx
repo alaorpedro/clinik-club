@@ -318,7 +318,7 @@ function AppHome() {
                 <span className={`text-xs px-2 py-0.5 rounded-full ${f.status === "published" ? "bg-primary/10 text-primary" : "bg-secondary text-muted-foreground"}`}>{STATUS_LABEL[f.status] ?? f.status}</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">/{f.slug}</p>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex flex-wrap gap-2 items-center">
                 <Button asChild size="sm" variant="outline" className="rounded-full">
                   <Link to="/app/funis/$id/editar" params={{ id: f.id }}>Editar</Link>
                 </Button>
