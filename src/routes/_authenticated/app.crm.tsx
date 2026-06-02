@@ -27,7 +27,7 @@ function CrmLayout() {
     );
   }
 
-  const isUpgradePage = path.endsWith("/app/crm/upgrade");
+  const isUpgradePage = path.includes("/app/crm/upgrade");
   if (!data?.hasAccess && !isUpgradePage) {
     return <Navigate to="/app/crm/upgrade" replace />;
   }
@@ -35,7 +35,11 @@ function CrmLayout() {
     return <Navigate to="/app/crm/pipelines" replace />;
   }
 
-  if (isUpgradePage) return <Outlet />;
+  if (isUpgradePage) return (
+    <div className="flex-1">
+      <Outlet />
+    </div>
+  );
 
   const links = [
     { to: "/app/crm/pipelines", label: "Pipeline", icon: LayoutGrid },
