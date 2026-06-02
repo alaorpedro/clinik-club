@@ -27,19 +27,26 @@ function CrmLayout() {
     );
   }
 
-  const isUpgradePage = path.includes("/app/crm/upgrade");
+  // Normalize path to check for upgrade page without worrying about trailing slashes
+  const normalizedPath = path.replace(/\/$/, "");
+  const isUpgradePage = normalizedPath === "/app/crm/upgrade";
+
   if (!data?.hasAccess && !isUpgradePage) {
     return <Navigate to="/app/crm/upgrade" replace />;
   }
+  
   if (data?.hasAccess && isUpgradePage) {
     return <Navigate to="/app/crm/pipelines" replace />;
   }
 
-  if (isUpgradePage) return (
-    <div className="flex-1">
-      <Outlet />
-    </div>
-  );
+  if (isUpgradePage) {
+    return (
+      <div className="flex-1">
+        <Outlet />
+      </div>
+    );
+  }
+
 
   const links = [
     { to: "/app/crm/pipelines", label: "Pipeline", icon: LayoutGrid },
