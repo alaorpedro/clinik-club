@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
 
+export const APP_VERSION = "1.01";
+
 export function SiteFooter() {
   const { user } = useAuth();
   
@@ -43,6 +45,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border/60 py-6 text-center text-xs text-muted-foreground">
         © {new Date().getFullYear()} Clinik.Club. Todos os direitos reservados.
+        <span className="ml-2 opacity-60">v{APP_VERSION}</span>
       </div>
     </footer>
   );
