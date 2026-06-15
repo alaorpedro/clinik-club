@@ -168,8 +168,9 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
       .select("clinic_name, clinic_logo_url, instagram_url")
       .eq("id", funnel.owner_id)
       .maybeSingle();
+    const { owner_id: _ownerId, ...publicFunnel } = funnel as any;
     const enriched = {
-      ...funnel,
+      ...publicFunnel,
       clinic_name: profile?.clinic_name ?? null,
       clinic_logo_url: profile?.clinic_logo_url ?? null,
       instagram_url: profile?.instagram_url ?? null,

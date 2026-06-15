@@ -24,7 +24,7 @@ function sanitizeReturnUrl(input: string | undefined): string | undefined {
   }
 }
 
-async function getVerifiedUserIdFromRequest(): Promise<string | undefined> {
+async function getVerifiedUserFromRequest(): Promise<{ id: string; email: string | null } | undefined> {
   try {
     const request = getRequest();
     const auth = request?.headers?.get("authorization") ?? undefined;
@@ -33,7 +33,7 @@ async function getVerifiedUserIdFromRequest(): Promise<string | undefined> {
     if (!token) return undefined;
     const { data, error } = await supabaseAdmin.auth.getUser(token);
     if (error || !data?.user) return undefined;
-    return data.user.id;
+    return { id: data.user.id, email: data.user.email ?? null };
   } catch {
     return undefined;
   }
@@ -44,33 +44,20 @@ type PortalSessionResult = { url: string } | { error: string };
 
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
-  options: { email?: string; userId?: string },
+  options: { email?: string | null; userId: string },
 ): Promise<string> {
-  if (options.userId && !/^[a-zA-Z0-9_-]+$/.test(options.userId)) {
+  if (!/^[a-zA-Z0-9_-]+$/.test(options.userId)) {
     throw new Error("Invalid userId");
   }
-  if (options.userId) {
-    const found = await stripe.customers.search({
-      query: `metadata['userId']:'${options.userId}'`,
-      limit: 1,
-    });
-    if (found.data.length) return found.data[0].id;
-  }
-  if (options.email) {
-    const existing = await stripe.customers.list({ email: options.email, limit: 1 });
-    if (existing.data.length) {
-      const customer = existing.data[0];
-      if (options.userId && customer.metadata?.userId !== options.userId) {
-        await stripe.customers.update(customer.id, {
-          metadata: { ...customer.metadata, userId: options.userId },
-        });
-      }
-      return customer.id;
-    }
-  }
+  const found = await stripe.customers.search({
+    query: `metadata['userId']:'${options.userId}'`,
+    limit: 1,
+  });
+  if (found.data.length) return found.data[0].id;
+
   const created = await stripe.customers.create({
     ...(options.email && { email: options.email }),
-    ...(options.userId && { metadata: { userId: options.userId } }),
+    metadata: { userId: options.userId },
   });
   return created.id;
 }
@@ -87,16 +74,17 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<CheckoutSessionResult> => {
     try {
-      // Never trust client-supplied userId — derive from the verified bearer token.
-      const verifiedUserId = await getVerifiedUserIdFromRequest();
+      // Never trust client-supplied identity fields. Derive user id/email from the verified bearer token.
+      const verifiedUser = await getVerifiedUserFromRequest();
+      if (!verifiedUser) {
+        return { error: "Faça login ou crie sua conta antes de assinar." };
+      }
       const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
       if (!prices.data.length) throw new Error("Price not found");
       const stripePrice = prices.data[0];
 
-      const customerId = (data.customerEmail || verifiedUserId)
-        ? await resolveOrCreateCustomer(stripe, { email: data.customerEmail, userId: verifiedUserId })
-        : undefined;
+      const customerId = await resolveOrCreateCustomer(stripe, { email: verifiedUser.email, userId: verifiedUser.id });
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
@@ -106,13 +94,13 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         allow_promotion_codes: true,
         ...(customerId && { customer: customerId }),
         metadata: {
-          ...(verifiedUserId && { userId: verifiedUserId }),
-          ...(data.customerEmail && { customerEmail: data.customerEmail }),
+          ...(verifiedUser && { userId: verifiedUser.id }),
+          ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
         },
         subscription_data: {
           metadata: {
-            ...(verifiedUserId && { userId: verifiedUserId }),
-            ...(data.customerEmail && { customerEmail: data.customerEmail }),
+            ...(verifiedUser && { userId: verifiedUser.id }),
+            ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
           },
         },
       });

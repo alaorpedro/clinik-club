@@ -10,7 +10,7 @@ import icon from "@/assets/clinik-icon.png";
 
 
 async function getCurrentUserWithFallback() {
-  if (typeof window === "undefined") return null;
+  if (typeof window === "undefined") return undefined;
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) return session.user;
@@ -24,6 +24,7 @@ async function getCurrentUserWithFallback() {
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     const user = await getCurrentUserWithFallback();
+    if (user === undefined) return;
     if (!user) {
       throw redirect({ 
         to: "/login", 

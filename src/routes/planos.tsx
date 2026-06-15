@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, lazy, Suspense } from "react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -57,6 +57,7 @@ const plans = [
 ];
 
 function PlanosPage() {
+  const navigate = useNavigate();
   const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("monthly");
@@ -68,6 +69,10 @@ function PlanosPage() {
   }, []);
 
   function handleSubscribe(priceId: string) {
+    if (!user) {
+      navigate({ to: "/cadastro" });
+      return;
+    }
     setCheckoutPriceId(priceId);
   }
 

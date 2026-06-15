@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
-import { type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
+import { createStripeClient, type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
 
 let _supabase: any = null;
 function getSupabase(): any {
@@ -13,23 +13,6 @@ function getSupabase(): any {
   return _supabase;
 }
 
-async function findUserIdByEmail(supabase: any, email: string): Promise<string | null> {
-  // Paginate to avoid silent miss after 1000 users.
-  const lower = email.toLowerCase();
-  for (let page = 1; page <= 50; page++) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) {
-      console.error("[webhook] listUsers error", error);
-      return null;
-    }
-    const users = data?.users ?? [];
-    const match = users.find((u: any) => (u.email ?? "").toLowerCase() === lower);
-    if (match) return match.id;
-    if (users.length < 200) return null;
-  }
-  return null;
-}
-
 function requireOk(error: any, label: string) {
   if (error) {
     console.error(`[webhook] ${label} failed:`, error);
@@ -37,9 +20,29 @@ function requireOk(error: any, label: string) {
   }
 }
 
+async function getCustomerEmail(subscription: any, env: StripeEnv): Promise<string | null> {
+  const metadataEmail = subscription.metadata?.customerEmail;
+  if (typeof metadataEmail === "string" && metadataEmail.includes("@")) return metadataEmail;
+
+  const customer = subscription.customer;
+  if (customer && typeof customer === "object") {
+    return typeof customer.email === "string" ? customer.email : null;
+  }
+  if (typeof customer !== "string") return null;
+
+  try {
+    const stripe = createStripeClient(env);
+    const found = await stripe.customers.retrieve(customer);
+    if (!found.deleted && typeof found.email === "string") return found.email;
+  } catch (error) {
+    console.warn("[webhook] customer email lookup failed", error);
+  }
+  return null;
+}
+
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const userId: string | null = subscription.metadata?.userId ?? null;
-  const customerEmail: string | null = subscription.metadata?.customerEmail ?? null;
+  const customerEmail = await getCustomerEmail(subscription, env);
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.lookup_key
     || item?.price?.metadata?.lovable_external_id
@@ -49,12 +52,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   const periodEnd = item?.current_period_end ?? subscription.current_period_end;
 
   const supabase = getSupabase();
-
-  // For anonymous checkouts, try to link by email to an existing auth user.
-  let linkedUserId: string | null = userId;
-  if (!linkedUserId && customerEmail) {
-    linkedUserId = await findUserIdByEmail(supabase, customerEmail);
-  }
+  const linkedUserId: string | null = userId;
 
   const { error: upsertErr } = await supabase.from("subscriptions").upsert(
     {
@@ -91,7 +89,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
     }).eq("id", linkedUserId);
     requireOk(error, "profiles.update(created)");
   } else if (customerEmail) {
-    console.warn("[webhook] subscription created but no linked user yet for email", customerEmail);
+    console.warn("[webhook] subscription created without verified user metadata for email", customerEmail);
   }
 }
 

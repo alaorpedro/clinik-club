@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
 
 const StripeEmbeddedCheckout = lazy(() =>
   import("@/components/StripeEmbeddedCheckout").then((m) => ({ default: m.StripeEmbeddedCheckout })),
@@ -42,6 +43,7 @@ interface PlansDialogProps {
 }
 
 export function PlansDialog({ open, onOpenChange }: PlansDialogProps) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<{ id: string; email: string | null } | null>(null);
   const [checkoutPriceId, setCheckoutPriceId] = useState<string | null>(null);
   const [interval, setInterval] = useState<Interval>("monthly");
@@ -57,6 +59,15 @@ export function PlansDialog({ open, onOpenChange }: PlansDialogProps) {
       setCheckoutPriceId(null);
       onOpenChange(false);
     }
+  }
+
+  function handleSubscribe(priceId: string) {
+    if (!user) {
+      onOpenChange(false);
+      navigate({ to: "/cadastro" });
+      return;
+    }
+    setCheckoutPriceId(priceId);
   }
 
   return (
@@ -123,7 +134,7 @@ export function PlansDialog({ open, onOpenChange }: PlansDialogProps) {
                       <p className={`mt-1 text-[11px] ${p.highlight ? "text-background/60" : "text-muted-foreground"}`}>{current.note}</p>
                     )}
                     <Button
-                      onClick={() => setCheckoutPriceId(current.priceId)}
+                      onClick={() => handleSubscribe(current.priceId)}
                       className={`mt-5 w-full rounded-full font-semibold ${p.highlight ? "bg-highlight text-foreground hover:bg-highlight/90" : ""}`}
                     >
                       {p.cta}
