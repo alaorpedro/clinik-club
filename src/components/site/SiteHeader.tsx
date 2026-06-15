@@ -2,7 +2,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/clinik-club-logo.png";
-import icon from "@/assets/clinik-icon.png";
 
 
 export function SiteHeader() {
@@ -13,12 +12,11 @@ export function SiteHeader() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Button 
           variant="ghost" 
-          className="flex items-center gap-2 p-0 h-auto hover:bg-transparent" 
+          className="flex items-center p-0 h-auto hover:bg-transparent" 
           onClick={() => navigate({ to: user ? "/app" : "/" })}
           aria-label="Clinik.Club"
         >
-          <img src={icon} alt="" className="h-8 w-8" />
-          <img src={logo} alt="Clinik.Club" className="h-7 w-auto hidden sm:block" />
+          <img src={logo} alt="Clinik.Club" className="h-7 w-auto" />
         </Button>
         <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
           <Button variant="ghost" className="text-foreground/70 hover:text-foreground h-auto p-0" onClick={() => navigate({ to: "/" })}>Home</Button>
