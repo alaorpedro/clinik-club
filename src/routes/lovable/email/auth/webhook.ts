@@ -12,12 +12,12 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
-  invite: "You've been invited",
-  magiclink: 'Your login link',
-  recovery: 'Reset your password',
-  email_change: 'Confirm your new email',
-  reauthentication: 'Your verification code',
+  signup: 'Confirme seu email — Clinik.Club',
+  invite: 'Você foi convidado para o Clinik.Club',
+  magiclink: 'Seu link de acesso ao Clinik.Club',
+  recovery: 'Redefinir sua senha — Clinik.Club',
+  email_change: 'Confirme seu novo email — Clinik.Club',
+  reauthentication: 'Seu código de verificação — Clinik.Club',
 }
 
 // Template mapping
@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "kindred-ignite-forge"
+const SITE_NAME = "Clinik.Club"
 const SENDER_DOMAIN = "mail.clinik.club"
 const ROOT_DOMAIN = "clinik.club"
 const FROM_DOMAIN = "mail.clinik.club"
