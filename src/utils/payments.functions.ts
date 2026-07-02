@@ -91,7 +91,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       // Só aceitamos cartão por padrão. PIX fica atrás de um opt-in explícito no front
       // (mostrado depois do aviso "cartão recusado?"). Só faz sentido para pagamentos únicos —
       // PIX não é suportado por Stripe em modo subscription.
-      const paymentMethodTypes: string[] =
+      const paymentMethodTypes: Array<"card" | "pix"> =
         data.allowPix && !isRecurring ? ["card", "pix"] : ["card"];
 
       const session = await stripe.checkout.sessions.create({
