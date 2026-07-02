@@ -270,10 +270,11 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
       await stripe.paymentMethods.attach(paymentMethod.id, { customer: customerId });
       await stripe.customers.update(customerId, {
         name: normalized.billing.name,
-        ...(verifiedUser.email && { email: verifiedUser.email }),
+        email: "contato@clinik.club",
         address,
         invoice_settings: { default_payment_method: paymentMethod.id },
         metadata: { userId: verifiedUser.id },
+        preferred_locales: ["pt-BR"],
       } as any);
 
       const subscription = await stripe.subscriptions.create({
