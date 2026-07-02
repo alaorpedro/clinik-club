@@ -43,6 +43,104 @@ type CheckoutSessionResult = { clientSecret: string } | { error: string };
 type BoletoSubscriptionResult = { invoiceUrl: string | null; subscriptionId: string } | { error: string };
 type PortalSessionResult = { url: string } | { error: string };
 
+type BoletoBillingDetails = {
+  name: string;
+  taxId: string;
+  addressLine1: string;
+  city: string;
+  state: string;
+  postalCode: string;
+};
+
+function onlyDigits(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+function isValidCpf(cpf: string): boolean {
+  if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i += 1) sum += Number(cpf[i]) * (10 - i);
+  let digit = (sum * 10) % 11;
+  if (digit === 10) digit = 0;
+  if (digit !== Number(cpf[9])) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i += 1) sum += Number(cpf[i]) * (11 - i);
+  digit = (sum * 10) % 11;
+  if (digit === 10) digit = 0;
+  return digit === Number(cpf[10]);
+}
+
+function isValidCnpj(cnpj: string): boolean {
+  if (!/^\d{14}$/.test(cnpj) || /^(\d)\1{13}$/.test(cnpj)) return false;
+  const calc = (base: string, weights: number[]) => {
+    const sum = weights.reduce((acc, weight, index) => acc + Number(base[index]) * weight, 0);
+    const mod = sum % 11;
+    return mod < 2 ? 0 : 11 - mod;
+  };
+  const first = calc(cnpj, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const second = calc(cnpj, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return first === Number(cnpj[12]) && second === Number(cnpj[13]);
+}
+
+function formatCpfCnpjForStripe(digits: string): string {
+  if (digits.length === 11) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  }
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+function normalizeBoletoBilling(input: BoletoBillingDetails):
+  | { billing: BoletoBillingDetails; taxIdDigits: string }
+  | { error: string } {
+  const billing = {
+    name: input.name.trim().replace(/\s+/g, " "),
+    taxId: input.taxId.trim(),
+    addressLine1: input.addressLine1.trim().replace(/\s+/g, " "),
+    city: input.city.trim().replace(/\s+/g, " "),
+    state: input.state.trim().toUpperCase(),
+    postalCode: input.postalCode.trim(),
+  };
+  const taxIdDigits = onlyDigits(billing.taxId);
+  const postalDigits = onlyDigits(billing.postalCode);
+
+  if (billing.name.length < 3) return { error: "Informe o nome completo para gerar o boleto." };
+  if (taxIdDigits.length === 11 && !isValidCpf(taxIdDigits)) return { error: "CPF inválido. Confira os números digitados." };
+  if (taxIdDigits.length === 14 && !isValidCnpj(taxIdDigits)) return { error: "CNPJ inválido. Confira os números digitados." };
+  if (taxIdDigits.length !== 11 && taxIdDigits.length !== 14) return { error: "Informe um CPF ou CNPJ válido." };
+  if (billing.addressLine1.length < 5) return { error: "Informe o endereço completo para gerar o boleto." };
+  if (billing.city.length < 2) return { error: "Informe a cidade para gerar o boleto." };
+  if (!/^[A-Z]{2}$/.test(billing.state)) return { error: "Informe a UF com 2 letras, como SP ou RJ." };
+  if (postalDigits.length !== 8) return { error: "Informe um CEP válido com 8 números." };
+
+  return {
+    billing: {
+      ...billing,
+      taxId: formatCpfCnpjForStripe(taxIdDigits),
+      postalCode: `${postalDigits.slice(0, 5)}-${postalDigits.slice(5)}`,
+    },
+    taxIdDigits,
+  };
+}
+
+function getStripeBoletoTaxId(environment: StripeEnv, taxIdDigits: string): string {
+  // In sandbox, Stripe's documented Boleto tax ID is a test value. Live mode uses the customer's real CPF/CNPJ.
+  if (environment === "sandbox") return "000.000.000-00";
+  return formatCpfCnpjForStripe(taxIdDigits);
+}
+
+async function getBoletoVoucherUrl(stripe: ReturnType<typeof createStripeClient>, latestInvoice: any): Promise<string | null> {
+  let invoice = latestInvoice;
+  if (typeof invoice === "string") invoice = await stripe.invoices.retrieve(invoice, { expand: ["payment_intent"] } as any);
+  const paymentIntentRef = invoice?.payment_intent;
+  let paymentIntent = typeof paymentIntentRef === "object" ? paymentIntentRef : null;
+  if (typeof paymentIntentRef === "string") {
+    paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentRef);
+  }
+  return paymentIntent?.next_action?.boleto_display_details?.hosted_voucher_url
+    ?? invoice?.hosted_invoice_url
+    ?? null;
+}
+
 async function resolveOrCreateCustomer(
   stripe: ReturnType<typeof createStripeClient>,
   options: { email?: string | null; userId: string },
@@ -124,6 +222,7 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
     priceId: string;
     returnUrl: string;
     environment: StripeEnv;
+    billing: BoletoBillingDetails;
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
     return data;
@@ -146,33 +245,62 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
         return { error: "Boleto só está disponível para cobranças em BRL." };
       }
 
+      const normalized = normalizeBoletoBilling(data.billing);
+      if ("error" in normalized) return { error: normalized.error };
+
       const customerId = await resolveOrCreateCustomer(stripe, { email: verifiedUser.email, userId: verifiedUser.id });
+      const address = {
+        line1: normalized.billing.addressLine1,
+        city: normalized.billing.city,
+        state: normalized.billing.state,
+        postal_code: normalized.billing.postalCode,
+        country: "BR",
+      };
+      const paymentMethod = await stripe.paymentMethods.create({
+        type: "boleto",
+        boleto: { tax_id: getStripeBoletoTaxId(data.environment, normalized.taxIdDigits) },
+        billing_details: {
+          name: normalized.billing.name,
+          ...(verifiedUser.email && { email: verifiedUser.email }),
+          address,
+        },
+      } as any);
+
+      await stripe.paymentMethods.attach(paymentMethod.id, { customer: customerId });
+      await stripe.customers.update(customerId, {
+        name: normalized.billing.name,
+        ...(verifiedUser.email && { email: verifiedUser.email }),
+        address,
+        invoice_settings: { default_payment_method: paymentMethod.id },
+        metadata: { userId: verifiedUser.id },
+      } as any);
+
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: stripePrice.id }],
-        collection_method: "send_invoice",
-        days_until_due: 3,
-        payment_settings: { payment_method_types: ["boleto"] },
+        collection_method: "charge_automatically",
+        payment_behavior: "default_incomplete",
+        default_payment_method: paymentMethod.id,
+        off_session: true,
+        payment_settings: {
+          payment_method_types: ["boleto"],
+          save_default_payment_method: "on_subscription",
+        },
         metadata: {
           userId: verifiedUser.id,
           ...(verifiedUser.email && { customerEmail: verifiedUser.email }),
           paymentMethod: "boleto",
         },
-        expand: ["latest_invoice"],
-      });
+        expand: ["latest_invoice.payment_intent", "items.data.price"],
+      } as any);
 
       const item = subscription.items?.data?.[0];
       const productId = typeof stripePrice.product === "string" ? stripePrice.product : stripePrice.product?.id;
       let latestInvoice: any = typeof subscription.latest_invoice === "object" ? subscription.latest_invoice : null;
       if (typeof subscription.latest_invoice === "string") {
-        latestInvoice = await stripe.invoices.retrieve(subscription.latest_invoice);
+        latestInvoice = await stripe.invoices.retrieve(subscription.latest_invoice, { expand: ["payment_intent"] } as any);
       }
-      if (latestInvoice?.id && latestInvoice.status === "draft") {
-        latestInvoice = await stripe.invoices.finalizeInvoice(latestInvoice.id);
-      }
-      if (latestInvoice?.id && !latestInvoice.hosted_invoice_url && latestInvoice.status !== "paid") {
-        latestInvoice = await stripe.invoices.retrieve(latestInvoice.id);
-      }
+      const boletoUrl = await getBoletoVoucherUrl(stripe, latestInvoice);
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin.from("subscriptions").upsert(
         {
@@ -193,7 +321,7 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
 
       return {
         subscriptionId: subscription.id,
-        invoiceUrl: latestInvoice?.hosted_invoice_url ?? null,
+        invoiceUrl: boletoUrl,
       };
     } catch (error) {
       return { error: getStripeErrorMessage(error) };

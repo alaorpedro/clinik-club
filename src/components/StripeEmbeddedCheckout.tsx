@@ -14,6 +14,14 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
   const [boletoLoading, setBoletoLoading] = useState(false);
   const [boletoError, setBoletoError] = useState<string | null>(null);
   const [boletoInvoiceUrl, setBoletoInvoiceUrl] = useState<string | null>(null);
+  const [boletoBilling, setBoletoBilling] = useState({
+    name: "",
+    taxId: "",
+    addressLine1: "",
+    city: "",
+    state: "",
+    postalCode: "",
+  });
 
   useEffect(() => {
     document.body.setAttribute("data-stripe-checkout-open", "true");
@@ -47,17 +55,23 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
           priceId,
           returnUrl: returnUrl || `${window.location.origin}/checkout/return`,
           environment: getStripeEnvironment(),
+          billing: boletoBilling,
         },
       });
       if ("error" in result) throw new Error(result.error);
+      if (!result.invoiceUrl) throw new Error("O Stripe não retornou o link do boleto. Tente novamente em instantes.");
       setBoletoInvoiceUrl(result.invoiceUrl);
-      if (result.invoiceUrl) window.open(result.invoiceUrl, "_blank", "noopener,noreferrer");
+      window.open(result.invoiceUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       setBoletoError(error instanceof Error ? error.message : "Não foi possível gerar o boleto.");
     } finally {
       setBoletoLoading(false);
     }
-  }, [priceId, returnUrl]);
+  }, [priceId, returnUrl, boletoBilling]);
+
+  const updateBoletoBilling = useCallback((field: keyof typeof boletoBilling, value: string) => {
+    setBoletoBilling((current) => ({ ...current, [field]: value }));
+  }, []);
 
   return (
     <div id="checkout">
@@ -91,11 +105,78 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
         )}
       </div>
       {paymentMethod === "boleto" ? (
-        <div className="rounded-lg border border-border bg-background p-6 text-center">
+        <div className="rounded-lg border border-border bg-background p-6">
           <h3 className="text-lg font-semibold text-foreground">Gerar boleto mensal</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
             O boleto abre em uma página segura e também será enviado por email. O plano só ativa depois da compensação do pagamento.
           </p>
+          <div className="mt-5 grid gap-3 text-left sm:grid-cols-2">
+            <label className="sm:col-span-2 text-sm font-medium text-foreground">
+              Nome completo
+              <input
+                value={boletoBilling.name}
+                onChange={(event) => updateBoletoBilling("name", event.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                autoComplete="name"
+                required
+              />
+            </label>
+            <label className="text-sm font-medium text-foreground">
+              CPF ou CNPJ
+              <input
+                value={boletoBilling.taxId}
+                onChange={(event) => updateBoletoBilling("taxId", event.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                inputMode="numeric"
+                placeholder="123.456.789-09"
+                required
+              />
+            </label>
+            <label className="text-sm font-medium text-foreground">
+              CEP
+              <input
+                value={boletoBilling.postalCode}
+                onChange={(event) => updateBoletoBilling("postalCode", event.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                required
+              />
+            </label>
+            <label className="sm:col-span-2 text-sm font-medium text-foreground">
+              Endereço
+              <input
+                value={boletoBilling.addressLine1}
+                onChange={(event) => updateBoletoBilling("addressLine1", event.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                autoComplete="street-address"
+                placeholder="Rua, número e complemento"
+                required
+              />
+            </label>
+            <label className="text-sm font-medium text-foreground">
+              Cidade
+              <input
+                value={boletoBilling.city}
+                onChange={(event) => updateBoletoBilling("city", event.target.value)}
+                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                autoComplete="address-level2"
+                required
+              />
+            </label>
+            <label className="text-sm font-medium text-foreground">
+              UF
+              <input
+                value={boletoBilling.state}
+                onChange={(event) => updateBoletoBilling("state", event.target.value.toUpperCase().slice(0, 2))}
+                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm uppercase outline-none ring-ring focus:ring-2"
+                autoComplete="address-level1"
+                maxLength={2}
+                placeholder="SP"
+                required
+              />
+            </label>
+          </div>
           <button
             type="button"
             onClick={handleStartBoleto}
