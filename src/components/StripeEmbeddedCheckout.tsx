@@ -14,6 +14,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
   const [boletoLoading, setBoletoLoading] = useState(false);
   const [boletoError, setBoletoError] = useState<string | null>(null);
   const [boletoInvoiceUrl, setBoletoInvoiceUrl] = useState<string | null>(null);
+  const [cepLoading, setCepLoading] = useState(false);
   const [boletoBilling, setBoletoBilling] = useState({
     name: "",
     taxId: "",
@@ -30,6 +31,45 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
       document.body.removeAttribute("data-stripe-checkout-open");
     };
   }, []);
+
+  // Pré-preenche com dados salvos localmente do último boleto
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("clinik.boleto.billing");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setBoletoBilling((current) => ({ ...current, ...parsed }));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Busca endereço via ViaCEP quando o CEP tiver 8 dígitos
+  useEffect(() => {
+    const digits = boletoBilling.postalCode.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    let cancelled = false;
+    setCepLoading(true);
+    fetch(`https://viacep.com.br/ws/${digits}/json/`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || data?.erro) return;
+        setBoletoBilling((current) => ({
+          ...current,
+          addressLine1: current.addressLine1 || [data.logradouro, data.bairro].filter(Boolean).join(", "),
+          city: current.city || data.localidade || "",
+          state: current.state || (data.uf || "").toUpperCase(),
+        }));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setCepLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [boletoBilling.postalCode]);
 
   const fetchClientSecret = useCallback(async (): Promise<string> => {
     const result = await createCheckoutSession({
@@ -60,6 +100,11 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
       });
       if ("error" in result) throw new Error(result.error);
       if (!result.invoiceUrl) throw new Error("O Stripe não retornou o link do boleto. Tente novamente em instantes.");
+      try {
+        localStorage.setItem("clinik.boleto.billing", JSON.stringify(boletoBilling));
+      } catch {
+        /* ignore */
+      }
       setBoletoInvoiceUrl(result.invoiceUrl);
       window.open(result.invoiceUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
@@ -142,6 +187,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
                 autoComplete="postal-code"
                 required
               />
+              {cepLoading && <span className="mt-1 block text-xs text-muted-foreground">Buscando endereço…</span>}
             </label>
             <label className="sm:col-span-2 text-sm font-medium text-foreground">
               Endereço
