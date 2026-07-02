@@ -285,7 +285,6 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
         payment_settings: {
           payment_method_types: ["boleto"],
           save_default_payment_method: "on_subscription",
-          payment_method_options: { boleto: { expires_after_days: 3 } },
         },
         metadata: {
           userId: verifiedUser.id,
