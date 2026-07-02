@@ -102,14 +102,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
         payment_method_types: paymentMethodTypes,
         allow_promotion_codes: true,
-        payment_method_collection: "always",
         // Boleto exige CPF/CNPJ do pagador.
         ...(useBoleto && { tax_id_collection: { enabled: true } }),
-        wallet_options: {
-          link: {
-            display: "never",
-          },
-        },
+        // wallet_options.link só é válido quando `card` está habilitado.
+        ...(!useBoleto && {
+          wallet_options: { link: { display: "never" } },
+        }),
         ...(customerId && { customer: customerId }),
         metadata: {
           ...(verifiedUser && { userId: verifiedUser.id }),
