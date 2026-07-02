@@ -122,10 +122,18 @@ function normalizeBoletoBilling(input: BoletoBillingDetails):
   };
 }
 
-function getStripeBoletoTaxId(environment: StripeEnv, taxIdDigits: string): string {
-  // In sandbox, Stripe's documented Boleto tax ID is a test value. Live mode uses the customer's real CPF/CNPJ.
-  if (environment === "sandbox") return "000.000.000-00";
-  return formatCpfCnpjForStripe(taxIdDigits);
+function getStripeBoletoTaxId(taxIdDigits: string): string {
+  // Always send the payer's validated CPF/CNPJ. Stripe rejects its generic sandbox
+  // test CPF when it matches the account legal entity tax ID.
+  return taxIdDigits;
+}
+
+function getBoletoErrorMessage(error: unknown): string {
+  const message = getStripeErrorMessage(error);
+  if (message.toLowerCase().includes("cannot match your legal entity tax id")) {
+    return "O CPF/CNPJ do pagador não pode ser igual ao CPF/CNPJ cadastrado como empresa recebedora. Use o CPF/CNPJ do cliente responsável pelo pagamento.";
+  }
+  return message;
 }
 
 async function getBoletoVoucherUrl(stripe: ReturnType<typeof createStripeClient>, latestInvoice: any): Promise<string | null> {
@@ -259,7 +267,7 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
       };
       const paymentMethod = await stripe.paymentMethods.create({
         type: "boleto",
-        boleto: { tax_id: getStripeBoletoTaxId(data.environment, normalized.taxIdDigits) },
+        boleto: { tax_id: getStripeBoletoTaxId(normalized.taxIdDigits) },
         billing_details: {
           name: normalized.billing.name,
           ...(verifiedUser.email && { email: verifiedUser.email }),
@@ -326,7 +334,7 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
         invoiceUrl: boletoUrl,
       };
     } catch (error) {
-      return { error: getStripeErrorMessage(error) };
+      return { error: getBoletoErrorMessage(error) };
     }
   });
 
