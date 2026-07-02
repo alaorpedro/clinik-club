@@ -68,6 +68,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     customerEmail?: string;
     returnUrl: string;
     environment: StripeEnv;
+    allowPix?: boolean;
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
     return data;
@@ -86,12 +87,19 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
       const customerId = await resolveOrCreateCustomer(stripe, { email: verifiedUser.email, userId: verifiedUser.id });
 
+      const isRecurring = stripePrice.type === "recurring";
+      // Só aceitamos cartão por padrão. PIX fica atrás de um opt-in explícito no front
+      // (mostrado depois do aviso "cartão recusado?"). Só faz sentido para pagamentos únicos —
+      // PIX não é suportado por Stripe em modo subscription.
+      const paymentMethodTypes: string[] =
+        data.allowPix && !isRecurring ? ["card", "pix"] : ["card"];
+
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
-        mode: "subscription",
+        mode: isRecurring ? "subscription" : "payment",
         ui_mode: "embedded_page",
         return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
-        payment_method_types: ["card"],
+        payment_method_types: paymentMethodTypes,
         allow_promotion_codes: true,
         payment_method_collection: "always",
         wallet_options: {
