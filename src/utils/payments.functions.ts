@@ -68,7 +68,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     customerEmail?: string;
     returnUrl: string;
     environment: StripeEnv;
-    allowPix?: boolean;
+    paymentMethod?: "card" | "boleto";
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
     return data;
@@ -87,14 +87,13 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
 
       const customerId = await resolveOrCreateCustomer(stripe, { email: verifiedUser.email, userId: verifiedUser.id });
 
-      // Cartão é padrão. PIX só é oferecido em pagamentos únicos (Stripe não permite
-      // PIX em subscription). Se o cliente pediu PIX mas o preço é recorrente,
-      // devolvemos erro claro para o front tratar.
+      // Cartão é padrão. Boleto vira opção quando o cliente clica em "Prefere boleto?".
+      // Stripe suporta boleto em assinaturas recorrentes no Brasil (renovação automática
+      // com novo boleto por email todo mês). O acesso só é liberado depois que o
+      // pagamento é confirmado (subscription entra em `active` via webhook).
       const isRecurring = stripePrice.type === "recurring";
-      if (data.allowPix && isRecurring) {
-        return { error: "PIX ainda não está disponível para assinaturas recorrentes. Tente outro cartão." };
-      }
-      const paymentMethodTypes: Array<"card" | "pix"> = data.allowPix ? ["card", "pix"] : ["card"];
+      const useBoleto = data.paymentMethod === "boleto";
+      const paymentMethodTypes: Array<"card" | "boleto"> = useBoleto ? ["boleto"] : ["card"];
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
@@ -104,6 +103,8 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         payment_method_types: paymentMethodTypes,
         allow_promotion_codes: true,
         payment_method_collection: "always",
+        // Boleto exige CPF/CNPJ do pagador.
+        ...(useBoleto && { tax_id_collection: { enabled: true } }),
         wallet_options: {
           link: {
             display: "never",
@@ -113,11 +114,13 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         metadata: {
           ...(verifiedUser && { userId: verifiedUser.id }),
           ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
+          paymentMethod: useBoleto ? "boleto" : "card",
         },
         subscription_data: {
           metadata: {
             ...(verifiedUser && { userId: verifiedUser.id }),
             ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
+            paymentMethod: useBoleto ? "boleto" : "card",
           },
         },
       });
