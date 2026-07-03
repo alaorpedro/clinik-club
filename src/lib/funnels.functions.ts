@@ -11,7 +11,20 @@ function normalizePaymentsEnv(value: unknown): PaymentsEnv | null {
   return value === "live" || value === "sandbox" ? value : null;
 }
 
+function getRequestHost(): string | null {
+  try {
+    return getRequest()?.headers?.get("host")?.split(":")[0]?.toLowerCase() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
+  const host = getRequestHost();
+  if (host === "clinik.club" || host === "www.clinik.club" || host === "kindred-ignite-forge.lovable.app") {
+    return "live";
+  }
+
   const explicit = normalizePaymentsEnv(process.env.PAYMENTS_ENV);
   if (explicit) return explicit;
 
