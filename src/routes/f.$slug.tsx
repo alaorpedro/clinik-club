@@ -177,6 +177,50 @@ function maskPhone(value: string) {
   return `(${digits.slice(0, 2)})${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
 }
 
+function YouTubePlayer({ videoId, style, className }: { videoId: string; style: React.CSSProperties; className: string }) {
+  const [started, setStarted] = useState(false);
+  const src = `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&controls=1&modestbranding=1&rel=0&iv_load_policy=3`;
+
+  if (started) {
+    return (
+      <div style={style} className={className}>
+        <iframe
+          title="Vídeo do funil"
+          src={src}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      style={style}
+      className={`${className} relative block bg-slate-950 text-primary-foreground group`}
+      onClick={() => setStarted(true)}
+      aria-label="Tocar vídeo"
+    >
+      <img
+        src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+        alt="Prévia do vídeo"
+        className="h-full w-full object-cover opacity-80 transition group-hover:opacity-70"
+        loading="lazy"
+      />
+      <span className="absolute inset-0 flex items-center justify-center bg-slate-950/20">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg shadow-primary/30 transition group-hover:scale-105">
+          <svg viewBox="0 0 24 24" className="ml-1 h-8 w-8" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </span>
+      </span>
+    </button>
+  );
+}
+
 function PublicFunnel() {
   const { funnel, steps } = Route.useLoaderData() as { funnel: { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null; gtm_id: string | null; meta_pixel_id: string | null }; steps: Step[] };
   const submit = useServerFn(submitLead);
@@ -421,11 +465,7 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
       const url: string = cfg.mediaUrl;
       const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]+)/);
       if (yt) {
-        return (
-          <div style={style} className={`${hasW ? "" : "w-full"} ${hasH ? "" : "aspect-video"} mb-4 rounded-2xl overflow-hidden`}>
-            <iframe src={`https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&modestbranding=1&rel=0&iv_load_policy=3`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
-          </div>
-        );
+        return <YouTubePlayer videoId={yt[1]} style={style} className={`${hasW ? "" : "w-full"} ${hasH ? "" : "aspect-video"} mb-4 rounded-2xl overflow-hidden`} />;
       }
       const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
       if (vimeo) {
