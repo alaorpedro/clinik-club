@@ -25,6 +25,9 @@ function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
     return "live";
   }
 
+  const requested = normalizePaymentsEnv(preferred);
+  if (requested) return requested;
+
   const explicit = normalizePaymentsEnv(process.env.PAYMENTS_ENV);
   if (explicit) return explicit;
 
@@ -32,7 +35,7 @@ function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
   if (token?.startsWith("pk_test_")) return "sandbox";
   if (token?.startsWith("pk_live_")) return "live";
 
-  return normalizePaymentsEnv(preferred) ?? "sandbox";
+  return "sandbox";
 }
 
 const MAX_JSON_BYTES = 50_000;
