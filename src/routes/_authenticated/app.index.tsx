@@ -47,6 +47,7 @@ function AppHome() {
   const [planName, setPlanName] = useState<string | null>(null);
   const [usage, setUsage] = useState<{
     tier: string;
+    hasPlan: boolean;
     maxFunnels: number | null;
     maxLeadsPerMonth: number;
     funnelsUsed: number;
@@ -70,27 +71,14 @@ function AppHome() {
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
       setFunnels(data ?? []);
-      const env = getPaymentsEnvironment();
-      const { data: ok } = await supabase.rpc("has_active_subscription", {
-        user_uuid: u.user.id,
-        check_env: env,
-      });
-      setHasPlan(!!ok);
-      if (ok) {
-        const { data: priceId } = await supabase.rpc("get_active_plan", {
-          user_uuid: u.user.id,
-          check_env: env,
-        });
-        if (priceId) {
-          const tier = String(priceId).split("_")[0];
-          setPlanName(tier.charAt(0).toUpperCase() + tier.slice(1));
-        }
-        try {
-          const u2 = await getPlanUsageFn({ data: { environment: env } });
-          setUsage(u2);
-        } catch {
-          // silencioso — uso é apenas informativo
-        }
+      try {
+        const u2 = await getPlanUsageFn({ data: { environment: getPaymentsEnvironment() } });
+        setUsage(u2);
+        setHasPlan(u2.hasPlan);
+        setPlanName(u2.hasPlan ? u2.tier.charAt(0).toUpperCase() + u2.tier.slice(1) : null);
+      } catch (err: any) {
+        setHasPlan(false);
+        toast.error(err?.message ?? "Não foi possível verificar seu plano.");
       }
     })();
   }, [getPlanUsageFn]);

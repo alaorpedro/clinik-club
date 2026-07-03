@@ -107,18 +107,59 @@ async function checkAndLogRate(action: string, opts: {
   });
 }
 
-async function getActivePriceId(userId: string, env: string): Promise<string | null> {
-  const { data } = await supabaseAdmin
+type SubscriptionPlanRow = {
+  id?: string;
+  price_id?: string | null;
+  status?: string | null;
+  current_period_end?: string | null;
+  environment?: string | null;
+  created_at?: string | null;
+};
+
+function isActiveSubscription(row: SubscriptionPlanRow): boolean {
+  const endOk = !row.current_period_end || new Date(row.current_period_end) > new Date();
+  return (["active", "trialing", "past_due"].includes(row.status ?? "") && endOk) || (row.status === "canceled" && endOk);
+}
+
+function pickActivePriceId(rows: SubscriptionPlanRow[], env: PaymentsEnv): string | null {
+  const active = rows.filter(isActiveSubscription);
+  const preferred = active.find((s) => s.environment === env)
+    ?? active.find((s) => s.environment === "live")
+    ?? active.find((s) => s.environment === "sandbox")
+    ?? active[0];
+  return preferred?.price_id ?? null;
+}
+
+async function getUserEmail(userId: string): Promise<string | null> {
+  try {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+    return data.user?.email?.trim().toLowerCase() ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function getActivePriceId(userId: string, env: PaymentsEnv): Promise<string | null> {
+  const { data: userRows } = await supabaseAdmin
     .from("subscriptions")
-    .select("price_id, status, current_period_end")
+    .select("id, price_id, status, current_period_end, environment, created_at")
     .eq("user_id", userId)
-    .eq("environment", env)
     .order("created_at", { ascending: false });
-  const row = (data ?? []).find((s: any) => {
-    const endOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
-    return (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk);
-  });
-  return (row?.price_id as string | undefined) ?? null;
+
+  const byUser = (userRows ?? []) as SubscriptionPlanRow[];
+  const userPriceId = pickActivePriceId(byUser, env);
+  if (userPriceId) return userPriceId;
+
+  const email = await getUserEmail(userId);
+  if (!email) return null;
+
+  const { data: emailRows } = await supabaseAdmin
+    .from("subscriptions")
+    .select("id, price_id, status, current_period_end, environment, created_at")
+    .ilike("customer_email", email)
+    .order("created_at", { ascending: false });
+
+  return pickActivePriceId((emailRows ?? []) as SubscriptionPlanRow[], env);
 }
 
 function startOfMonthIso(): string {
