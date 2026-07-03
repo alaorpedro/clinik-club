@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
 
-export const APP_VERSION = "1.09";
+export const APP_VERSION = "1.10";
 
 export function SiteFooter() {
   const { user } = useAuth();
