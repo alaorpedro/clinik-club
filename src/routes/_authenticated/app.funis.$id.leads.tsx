@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Download, Mail, Phone, Calendar, ChevronDown, User } from "lucide-react";
+import { FunnelSettingsDialog } from "@/components/FunnelSettingsDialog";
+import { ArrowLeft, Calendar, ChevronDown, ExternalLink, FileSpreadsheet, Mail, Phone, User } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/funis/$id/leads")({
@@ -17,11 +18,23 @@ function LeadsPage() {
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [steps, setSteps] = useState<Step[]>([]);
   const [funnelName, setFunnelName] = useState("");
+  const [sheetsUrl, setSheetsUrl] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [q, setQ] = useState("");
 
+  async function loadFunnelMeta() {
+    const { data } = await supabase
+      .from("funnels")
+      .select("name, sheets_webhook_url")
+      .eq("id", id)
+      .maybeSingle();
+    setFunnelName((data as any)?.name ?? "");
+    setSheetsUrl((data as any)?.sheets_webhook_url ?? null);
+  }
+
   useEffect(() => {
-    supabase.from("funnels").select("name").eq("id", id).maybeSingle().then(({ data }) => setFunnelName((data as any)?.name ?? ""));
+    loadFunnelMeta();
     supabase.from("leads").select("*").eq("funnel_id", id).order("created_at", { ascending: false }).then(({ data, error }) => {
       if (error) toast.error(error.message);
       setLeads((data as Lead[]) ?? []);
@@ -62,25 +75,13 @@ function LeadsPage() {
     return leads.filter((l) => [l.name, l.email, l.phone, JSON.stringify(l.answers ?? {})].join(" ").toLowerCase().includes(t));
   }, [leads, q]);
 
-  function exportCsv() {
-    if (!leads?.length) return;
-    const stepCols = steps.map((s, i) => ({ key: `step_${s.id}`, label: (s.config?.title || `Etapa ${i + 1}`) }));
-    const rows = [
-      ["Data", "Nome", "Email", "WhatsApp", ...stepCols.map((c) => c.label)],
-      ...leads.map((l) => [
-        new Date(l.created_at).toLocaleString("pt-BR"),
-        l.name ?? "",
-        l.email ?? "",
-        l.phone ?? "",
-        ...stepCols.map((c) => formatAnswer(l.answers?.[c.key])),
-      ]),
-    ];
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `leads-${id}.csv`; a.click();
-    URL.revokeObjectURL(url);
+  function openSheetsOrSetup() {
+    const url = sheetsUrl?.trim();
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setSettingsOpen(true);
   }
 
   function initials(name: string | null, email: string | null) {
@@ -110,7 +111,17 @@ function LeadsPage() {
             <p className="text-xs text-muted-foreground">{funnelName}</p>
           </div>
         </div>
-        <Button onClick={exportCsv} disabled={!leads?.length} variant="outline" size="sm" className="rounded-full"><Download className="h-4 w-4 mr-1" />Exportar CSV</Button>
+        <Button onClick={openSheetsOrSetup} variant="outline" size="sm" className="rounded-full">
+          {sheetsUrl ? (
+            <>
+              <ExternalLink className="h-4 w-4 mr-1" />Abrir planilha
+            </>
+          ) : (
+            <>
+              <FileSpreadsheet className="h-4 w-4 mr-1" />Conectar planilha
+            </>
+          )}
+        </Button>
       </div>
 
       {leads && leads.length > 0 && (
@@ -205,6 +216,14 @@ function LeadsPage() {
           )}
         </div>
       )}
+      <FunnelSettingsDialog
+        funnelId={id}
+        open={settingsOpen}
+        onOpenChange={(v) => {
+          setSettingsOpen(v);
+          if (!v) loadFunnelMeta();
+        }}
+      />
     </div>
   );
 }

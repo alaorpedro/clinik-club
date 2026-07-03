@@ -46,6 +46,14 @@ const APPS_SCRIPT_CODE = `function doPost(e) {
 
   return ContentService.createTextOutput(JSON.stringify({ok:true}))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet() {
+  return HtmlService.createHtmlOutput(
+    '<script>window.top.location.href="' +
+      SpreadsheetApp.getActiveSpreadsheet().getUrl() +
+      '";</script>'
+  );
 }`;
 
 type Funnel = { id: string; slug: string; gtm_id: string | null; meta_pixel_id: string | null; sheets_webhook_url: string | null };
