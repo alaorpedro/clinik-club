@@ -5,8 +5,21 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
 
-function getPaymentsEnv(): string {
-  return (process.env.PAYMENTS_ENV ?? "sandbox") as string;
+type PaymentsEnv = "sandbox" | "live";
+
+function normalizePaymentsEnv(value: unknown): PaymentsEnv | null {
+  return value === "live" || value === "sandbox" ? value : null;
+}
+
+function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
+  const explicit = normalizePaymentsEnv(process.env.PAYMENTS_ENV);
+  if (explicit) return explicit;
+
+  const token = process.env.VITE_PAYMENTS_CLIENT_TOKEN;
+  if (token?.startsWith("pk_test_")) return "sandbox";
+  if (token?.startsWith("pk_live_")) return "live";
+
+  return normalizePaymentsEnv(preferred) ?? "sandbox";
 }
 
 const MAX_JSON_BYTES = 50_000;
@@ -449,11 +462,12 @@ export const createFunnelChecked = createServerFn({ method: "POST" })
         .min(1)
         .max(80)
         .regex(/^[a-z0-9-]+$/, "slug inválido"),
+      environment: z.enum(["sandbox", "live"]).optional(),
     }),
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const env = getPaymentsEnv();
+    const env = getPaymentsEnv(data.environment);
     const priceId = await getActivePriceId(userId, env);
     const limits = getPlanLimits(priceId);
     if (limits.maxFunnels === 0) {
@@ -485,9 +499,12 @@ export const createFunnelChecked = createServerFn({ method: "POST" })
 
 export const getPlanUsage = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data?: { environment?: PaymentsEnv }) => ({
+    environment: normalizePaymentsEnv(data?.environment) ?? undefined,
+  }))
+  .handler(async ({ data, context }) => {
     const { userId } = context;
-    const env = getPaymentsEnv();
+    const env = getPaymentsEnv(data.environment);
     const priceId = await getActivePriceId(userId, env);
     const limits = getPlanLimits(priceId);
     const { count } = await supabaseAdmin
