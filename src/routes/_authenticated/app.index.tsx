@@ -11,6 +11,8 @@ import { showPrompt, showConfirm } from "@/components/ModalDialogs";
 import { useServerFn } from "@tanstack/react-start";
 import { createFunnelChecked, deleteFunnel, getPlanUsage } from "@/lib/funnels.functions";
 
+type PaymentsEnv = "sandbox" | "live";
+
 export const Route = createFileRoute("/_authenticated/app/")({
   component: AppHome,
   errorComponent: ({ error, reset }) => (
@@ -31,6 +33,11 @@ const STATUS_LABEL: Record<string, string> = {
   draft: "Rascunho",
   archived: "Arquivado",
 };
+
+function getPaymentsEnvironment(): PaymentsEnv {
+  const token = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
+  return token?.startsWith("pk_test_") ? "sandbox" : "live";
+}
 
 function AppHome() {
   const [funnels, setFunnels] = useState<Funnel[] | null>(null);
@@ -63,7 +70,7 @@ function AppHome() {
         .order("created_at", { ascending: false });
       if (error) toast.error(error.message);
       setFunnels(data ?? []);
-      const env = (import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined)?.startsWith("pk_test_") ? "sandbox" : "live";
+      const env = getPaymentsEnvironment();
       const { data: ok } = await supabase.rpc("has_active_subscription", {
         user_uuid: u.user.id,
         check_env: env,
@@ -79,7 +86,7 @@ function AppHome() {
           setPlanName(tier.charAt(0).toUpperCase() + tier.slice(1));
         }
         try {
-          const u2 = await getPlanUsageFn();
+          const u2 = await getPlanUsageFn({ data: { environment: env } });
           setUsage(u2);
         } catch {
           // silencioso — uso é apenas informativo
@@ -106,7 +113,7 @@ function AppHome() {
       return;
     }
     try {
-      const data = await createFunnelFn({ data: { name, slug } });
+      const data = await createFunnelFn({ data: { name, slug, environment: getPaymentsEnvironment() } });
       toast.success("Funil criado!");
       setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
       setUsage((prev) => prev ? { ...prev, funnelsUsed: prev.funnelsUsed + 1 } : prev);
