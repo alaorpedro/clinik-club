@@ -419,11 +419,19 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
     }
     if (cfg.mediaType === "video") {
       const url: string = cfg.mediaUrl;
-      const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/);
+      const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]+)/);
       if (yt) {
         return (
           <div style={style} className={`${hasW ? "" : "w-full"} ${hasH ? "" : "aspect-video"} mb-4 rounded-2xl overflow-hidden`}>
             <iframe src={`https://www.youtube.com/embed/${yt[1]}?autoplay=1&mute=1&modestbranding=1&rel=0&iv_load_policy=3`} className="w-full h-full" allow="autoplay; encrypted-media" allowFullScreen />
+          </div>
+        );
+      }
+      const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+      if (vimeo) {
+        return (
+          <div style={style} className={`${hasW ? "" : "w-full"} ${hasH ? "" : "aspect-video"} mb-4 rounded-2xl overflow-hidden`}>
+            <iframe src={`https://player.vimeo.com/video/${vimeo[1]}?autoplay=1&muted=1`} className="w-full h-full" allow="autoplay; encrypted-media; fullscreen" allowFullScreen />
           </div>
         );
       }
