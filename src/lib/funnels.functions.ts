@@ -185,6 +185,32 @@ async function countLeadsThisMonthForOwner(ownerId: string): Promise<number> {
   return count ?? 0;
 }
 
+async function postJsonToSheetsWebhook(url: string, payload: Record<string, unknown>) {
+  if (!/^https:\/\/script\.google\.com\//.test(url)) return { ok: false, error: "URL inválida" };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+      redirect: "follow",
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error("[sheets-webhook] non-2xx", res.status, text.slice(0, 300));
+      return { ok: false, error: "A planilha recusou o envio. Verifique a implantação do Apps Script." };
+    }
+    return { ok: true };
+  } catch (e: any) {
+    console.error("[sheets-webhook] fetch error", e?.message ?? e);
+    return { ok: false, error: "Não foi possível chamar a planilha. Verifique a URL publicada." };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function postToSheetsWebhook(funnelId: string, payload: Record<string, unknown>) {
   try {
     const { data: f } = await supabaseAdmin
@@ -195,29 +221,47 @@ async function postToSheetsWebhook(funnelId: string, payload: Record<string, unk
     const url = (f as any)?.sheets_webhook_url as string | null | undefined;
     if (!url) return;
     if (!/^https:\/\/script\.google\.com\//.test(url)) return;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-        redirect: "follow",
-      });
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        console.error("[sheets-webhook] non-2xx", res.status, text.slice(0, 300));
-      }
-    } catch (e: any) {
-      console.error("[sheets-webhook] fetch error", e?.message ?? e);
-    } finally {
-      clearTimeout(timeout);
-    }
+    await postJsonToSheetsWebhook(url, payload);
   } catch (e) {
     console.error("[sheets-webhook] lookup error", e);
   }
 }
+
+export const testSheetsConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { funnelId: string }) => {
+    if (!d?.funnelId || typeof d.funnelId !== "string") throw new Error("funil inválido");
+    return d;
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true } | { error: string }> => {
+    const { data: funnel, error } = await supabaseAdmin
+      .from("funnels")
+      .select("id, sheets_webhook_url")
+      .eq("id", data.funnelId)
+      .eq("owner_id", context.userId)
+      .maybeSingle();
+    if (error) return { error: error.message };
+    if (!funnel) return { error: "Funil não encontrado para este usuário." };
+    const url = (funnel as any).sheets_webhook_url as string | null | undefined;
+    if (!url) return { error: "Cole e salve a URL do Google Sheets antes de testar." };
+    const result = await postJsonToSheetsWebhook(url, {
+      type: "test",
+      status: "teste",
+      funnel_id: data.funnelId,
+      session_id: "teste",
+      name: "Lead de teste",
+      email: "teste@clinik.club",
+      phone: "(00) 00000-0000",
+      answers: {},
+      answers_pretty: {
+        "Pergunta de exemplo": "Resposta de teste",
+      },
+      questions: ["Pergunta de exemplo"],
+      utm: { origem: "teste manual" },
+      created_at: new Date().toISOString(),
+    });
+    return result.ok ? { ok: true } : { error: result.error ?? "Falha ao enviar teste." };
+  });
 
 export const getPublicFunnel = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => {

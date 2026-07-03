@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Copy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { testSheetsConnection } from "@/lib/funnels.functions";
+import { CheckCircle2, Copy, FileSpreadsheet, Send, ShieldCheck, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 const APPS_SCRIPT_CODE = `function doPost(e) {
@@ -13,12 +15,12 @@ const APPS_SCRIPT_CODE = `function doPost(e) {
   const questions = Array.isArray(data.questions) ? data.questions : [];
   const pretty = data.answers_pretty || {};
 
-  // Initialize header on first run
+  // Cria o cabecalho na primeira execucao
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(FIXED.concat(questions));
   }
 
-  // Read current header and add any new question columns
+  // Le o cabecalho atual e adiciona novas perguntas como colunas
   const lastCol = Math.max(sheet.getLastColumn(), FIXED.length);
   let header = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
   questions.forEach(function (q) {
@@ -28,7 +30,7 @@ const APPS_SCRIPT_CODE = `function doPost(e) {
     }
   });
 
-  // Build row aligned to header
+  // Monta a linha do lead na ordem correta das colunas
   const row = header.map(function (col) {
     switch (col) {
       case "Data": return data.created_at;
@@ -73,6 +75,7 @@ export function FunnelSettingsDialog({
   const [clinic, setClinic] = useState<Clinic>({ clinic_name: null, clinic_logo_url: null, instagram_url: null });
   const [slugDraft, setSlugDraft] = useState("");
   const [slugError, setSlugError] = useState<string | null>(null);
+  const [testingSheets, setTestingSheets] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -91,10 +94,11 @@ export function FunnelSettingsDialog({
   }, [open, funnelId]);
 
   async function updateFunnel(patch: Partial<Funnel>) {
-    if (!funnel) return;
+    if (!funnel) return false;
     setFunnel({ ...funnel, ...patch });
     const { error } = await supabase.from("funnels").update(patch).eq("id", funnel.id);
     if (error) toast.error(error.message);
+    return !error;
   }
 
   async function updateClinic(patch: Partial<Clinic>) {
@@ -118,6 +122,47 @@ export function FunnelSettingsDialog({
     await updateFunnel({ slug: next });
     onSlugChange?.(next);
     toast.success("URL pública atualizada!");
+  }
+
+  async function copyAppsScript() {
+    await navigator.clipboard.writeText(APPS_SCRIPT_CODE);
+    toast.success("Código copiado!");
+  }
+
+  async function saveSheetsUrl(url: string) {
+    const v = url.trim();
+    if (v && !/^https:\/\/script\.google\.com\//.test(v)) {
+      toast.error("Cole a URL do Apps Script publicada. Ela começa com https://script.google.com/");
+      return false;
+    }
+    const ok = await updateFunnel({ sheets_webhook_url: v || null });
+    if (ok) toast.success(v ? "Google Sheets conectado ao funil." : "Conexão com Google Sheets removida.");
+    return ok;
+  }
+
+  async function testSheets() {
+    if (!funnel) return;
+    const url = funnel.sheets_webhook_url?.trim();
+    if (!url) {
+      toast.error("Cole a URL do Apps Script antes de testar.");
+      return;
+    }
+    if (!/^https:\/\/script\.google\.com\//.test(url)) {
+      toast.error("A URL precisa começar com https://script.google.com/");
+      return;
+    }
+    setTestingSheets(true);
+    try {
+      await updateFunnel({ sheets_webhook_url: url });
+      const result = await testSheetsConnection({ data: { funnelId: funnel.id } });
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Lead de teste enviado. Confira a primeira linha da planilha.");
+    } finally {
+      setTestingSheets(false);
+    }
   }
 
   return (
@@ -201,56 +246,96 @@ export function FunnelSettingsDialog({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-background p-4">
-              <p className="text-xs font-semibold uppercase text-muted-foreground mb-1">Google Sheets (tempo real)</p>
-              <p className="text-[11px] text-muted-foreground mb-3">
-                Envie cada novo lead automaticamente para uma planilha. Cole abaixo a URL do <strong>Apps Script</strong> publicado como <em>aplicativo da web</em>.
-              </p>
-              <Label className="text-xs">URL do webhook</Label>
-              <Input
-                value={funnel.sheets_webhook_url ?? ""}
-                onChange={(e) => setFunnel({ ...funnel, sheets_webhook_url: e.target.value })}
-                onBlur={(e) => {
-                  const v = e.target.value.trim();
-                  if (v && !/^https:\/\/script\.google\.com\//.test(v)) {
-                    toast.error("A URL precisa começar com https://script.google.com/");
-                    return;
-                  }
-                  updateFunnel({ sheets_webhook_url: v || null });
-                }}
-                placeholder="https://script.google.com/macros/s/AKfy.../exec"
-              />
-              <details className="mt-3 text-[11px] text-muted-foreground">
-                <summary className="cursor-pointer font-semibold text-foreground">Como configurar (2 minutos)</summary>
-                <ol className="list-decimal pl-4 mt-2 space-y-1">
-                  <li>Abra sua planilha no Google Sheets.</li>
-                  <li>Menu <code>Extensões → Apps Script</code>.</li>
-                  <li>
-                    <div className="flex items-center justify-between gap-2 mt-1 mb-1">
-                      <span>Apague tudo e cole o código abaixo:</span>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await navigator.clipboard.writeText(APPS_SCRIPT_CODE);
-                          toast.success("Código copiado!");
-                        }}
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline"
-                      >
-                        <Copy className="h-3 w-3" /> Copiar
-                      </button>
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <FileSpreadsheet className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold">Enviar leads para Google Sheets</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Cada funil pode ter sua própria planilha. A conexão fica salva apenas neste funil e os leads são enviados pelo servidor do Clinik.Club.
+                  </p>
+                  <div className="mt-3 flex items-start gap-2 rounded-xl border border-border bg-background/80 p-3 text-[11px] leading-5 text-muted-foreground">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span>
+                      Recomendação: mantenha a planilha privada no seu Drive. Não é necessário deixar os dados dos pacientes públicos.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {[
+                  ["1", "Crie a planilha", "Abra uma planilha limpa no Google Sheets."],
+                  ["2", "Cole o código", "Use o botão abaixo para copiar o script."],
+                  ["3", "Publique e conecte", "Cole aqui a URL final terminada em /exec."],
+                ].map(([step, title, text]) => (
+                  <div key={step} className="rounded-xl border border-border bg-background p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">{step}</span>
+                      <span className="text-xs font-bold">{title}</span>
                     </div>
-                    <textarea
-                      readOnly
-                      value={APPS_SCRIPT_CODE}
-                      onFocus={(e) => e.currentTarget.select()}
-                      className="w-full font-mono bg-secondary/60 p-2 rounded text-[10px] h-44 resize-none"
-                    />
-                  </li>
-                  <li>Clique em <strong>Implantar → Nova implantação</strong>.</li>
-                  <li>Tipo: <strong>Aplicativo da Web</strong>. Executar como: <em>Eu</em>. Acesso: <strong>Qualquer pessoa</strong>.</li>
-                  <li>Copie a URL gerada (termina em <code>/exec</code>) e cole acima.</li>
+                    <p className="text-[11px] leading-5 text-muted-foreground">{text}</p>
+                  </div>
+                ))}
+              </div>
+
+              <details className="mt-4 rounded-xl border border-border bg-background p-3 text-[11px] text-muted-foreground" open={!funnel.sheets_webhook_url}>
+                <summary className="cursor-pointer text-sm font-semibold text-foreground">Ver passo a passo para conectar</summary>
+                <ol className="mt-3 list-decimal space-y-2 pl-4 leading-5">
+                  <li>Abra a planilha que receberá os leads deste funil.</li>
+                  <li>No menu do Google Sheets, clique em <code>Extensões</code> e depois em <code>Apps Script</code>.</li>
+                  <li>Apague o conteúdo que aparecer e cole o código abaixo.</li>
+                  <li>Clique em <strong>Implantar</strong>, depois em <strong>Nova implantação</strong>.</li>
+                  <li>Escolha o tipo <strong>Aplicativo da Web</strong>.</li>
+                  <li>Em <strong>Executar como</strong>, selecione <strong>Eu</strong>. Em <strong>Quem pode acessar</strong>, selecione <strong>Qualquer pessoa</strong>.</li>
+                  <li>Copie a URL gerada pelo Google. Ela termina com <code>/exec</code>. Cole no campo abaixo e clique em testar.</li>
                 </ol>
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  <span className="font-semibold text-foreground">Código para colar no Apps Script</span>
+                  <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={copyAppsScript}>
+                    <Copy className="h-3.5 w-3.5" /> Copiar código
+                  </Button>
+                </div>
+                <textarea
+                  readOnly
+                  value={APPS_SCRIPT_CODE}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="mt-2 h-44 w-full resize-none rounded-lg bg-secondary/60 p-2 font-mono text-[10px]"
+                />
               </details>
+
+              <div className="mt-4">
+                <Label className="text-xs">URL gerada pelo Google Apps Script</Label>
+                <div className="mt-1.5 flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    value={funnel.sheets_webhook_url ?? ""}
+                    onChange={(e) => setFunnel({ ...funnel, sheets_webhook_url: e.target.value })}
+                    onBlur={(e) => saveSheetsUrl(e.target.value)}
+                    placeholder="https://script.google.com/macros/s/AKfy.../exec"
+                  />
+                  <Button type="button" variant="outline" className="rounded-full sm:w-36" onClick={testSheets} disabled={testingSheets}>
+                    {testingSheets ? (
+                      "Testando..."
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5" /> Testar
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {funnel.sheets_webhook_url ? (
+                  <p className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-primary">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Conexão configurada para este funil. Envie um teste para confirmar.
+                  </p>
+                ) : (
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    Sem conexão ativa. Os leads continuarão salvos normalmente no Clinik.Club.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
