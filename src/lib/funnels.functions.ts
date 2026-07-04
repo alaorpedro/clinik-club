@@ -227,6 +227,50 @@ async function postToSheetsWebhook(funnelId: string, payload: Record<string, unk
   }
 }
 
+async function buildSheetsLeadPayload(
+  funnelId: string,
+  payload: {
+    sessionId?: string | null;
+    name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    answers?: Record<string, unknown>;
+    utm?: Record<string, unknown>;
+    status: "partial" | "completed";
+  },
+) {
+  const { data: steps } = await supabaseAdmin
+    .from("funnel_steps")
+    .select("id, type, config, order")
+    .eq("funnel_id", funnelId)
+    .order("order", { ascending: true });
+  const answersIn = (payload.answers ?? {}) as Record<string, unknown>;
+  const questions: string[] = [];
+  const answers_pretty: Record<string, unknown> = {};
+  for (const s of (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>) {
+    if (s.type === "contact" || s.type === "lead" || s.type === "text") continue;
+    const title = (s.config?.title as string) || `Etapa ${s.order ?? ""}`.trim();
+    const key = `step_${s.id}`;
+    const raw = answersIn[key];
+    questions.push(title);
+    answers_pretty[title] = Array.isArray(raw) ? raw.join(", ") : (raw ?? "");
+  }
+  return {
+    type: "lead",
+    status: payload.status,
+    funnel_id: funnelId,
+    session_id: payload.sessionId ?? null,
+    name: payload.name ?? null,
+    email: payload.email ?? null,
+    phone: payload.phone ?? null,
+    answers: payload.answers ?? {},
+    answers_pretty,
+    questions,
+    utm: payload.utm ?? {},
+    created_at: new Date().toISOString(),
+  };
+}
+
 export const testSheetsConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { funnelId: string }) => {
@@ -368,37 +412,15 @@ export const submitLead = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
-    // Build friendly answers (question title -> answer label) for sheet columns
-    const { data: steps } = await supabaseAdmin
-      .from("funnel_steps")
-      .select("id, type, config, order")
-      .eq("funnel_id", data.funnelId)
-      .order("order", { ascending: true });
-    const answersIn = (data.answers ?? {}) as Record<string, unknown>;
-    const questions: string[] = [];
-    const answers_pretty: Record<string, unknown> = {};
-    for (const s of (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>) {
-      if (s.type === "contact" || s.type === "lead" || s.type === "text") continue;
-      const title = (s.config?.title as string) || `Etapa ${s.order ?? ""}`.trim();
-      const key = `step_${s.id}`;
-      const raw = answersIn[key];
-      questions.push(title);
-      answers_pretty[title] = Array.isArray(raw) ? raw.join(", ") : (raw ?? "");
-    }
-    await postToSheetsWebhook(data.funnelId, {
-      type: "lead",
-      status: "completed",
-      funnel_id: data.funnelId,
-      session_id: data.sessionId ?? null,
+    await postToSheetsWebhook(data.funnelId, await buildSheetsLeadPayload(data.funnelId, {
+      sessionId: data.sessionId ?? null,
       name: data.name ?? null,
       email: data.email ?? null,
       phone: data.phone ?? null,
       answers: data.answers ?? {},
-      answers_pretty,
-      questions,
       utm: data.utm ?? {},
-      created_at: new Date().toISOString(),
-    });
+      status: "completed",
+    }));
     return { ok: true };
   });
 
@@ -482,6 +504,15 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
+    await postToSheetsWebhook(data.funnelId, await buildSheetsLeadPayload(data.funnelId, {
+      sessionId: data.sessionId,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      answers: mergedAnswers,
+      utm: data.utm,
+      status: "partial",
+    }));
     return { ok: true };
   });
 

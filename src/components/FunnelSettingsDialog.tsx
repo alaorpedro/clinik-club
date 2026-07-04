@@ -11,7 +11,7 @@ import { toast } from "sonner";
 const APPS_SCRIPT_CODE = `function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = JSON.parse(e.postData.contents);
-  const FIXED = ["Data","Nome","Email","Telefone","Status","UTM"];
+  const FIXED = ["Session ID","Data","Nome","Email","Telefone","Status","UTM"];
   const questions = Array.isArray(data.questions) ? data.questions : [];
   const pretty = data.answers_pretty || {};
 
@@ -23,16 +23,17 @@ const APPS_SCRIPT_CODE = `function doPost(e) {
   // Le o cabecalho atual e adiciona novas perguntas como colunas
   const lastCol = Math.max(sheet.getLastColumn(), FIXED.length);
   let header = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
-  questions.forEach(function (q) {
-    if (header.indexOf(q) === -1) {
-      sheet.getRange(1, header.length + 1).setValue(q);
-      header.push(q);
+  FIXED.concat(questions).forEach(function (col) {
+    if (header.indexOf(col) === -1) {
+      sheet.getRange(1, header.length + 1).setValue(col);
+      header.push(col);
     }
   });
 
   // Monta a linha do lead na ordem correta das colunas
   const row = header.map(function (col) {
     switch (col) {
+      case "Session ID": return data.session_id;
       case "Data": return data.created_at;
       case "Nome": return data.name;
       case "Email": return data.email;
@@ -42,7 +43,23 @@ const APPS_SCRIPT_CODE = `function doPost(e) {
       default: return pretty[col] != null ? pretty[col] : "";
     }
   });
-  sheet.appendRow(row);
+
+  const sessionCol = header.indexOf("Session ID") + 1;
+  let targetRow = 0;
+  if (data.session_id && sheet.getLastRow() > 1 && sessionCol > 0) {
+    const ids = sheet.getRange(2, sessionCol, sheet.getLastRow() - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]) === String(data.session_id)) {
+        targetRow = i + 2;
+        break;
+      }
+    }
+  }
+  if (targetRow > 0) {
+    sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
+  } else {
+    sheet.appendRow(row);
+  }
 
   return ContentService.createTextOutput(JSON.stringify({ok:true}))
     .setMimeType(ContentService.MimeType.JSON);
