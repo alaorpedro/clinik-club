@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { checkIsAdmin, deleteAdminCustomerAccount, listAdminCustomers, type AdminCustomerRow } from "@/lib/admin.functions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -287,178 +287,24 @@ function AdminPage() {
         <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : customersQuery.error ? (
         <div className="text-sm text-destructive">Erro ao carregar: {(customersQuery.error as Error).message}</div>
-      ) : (
+      ) : filtered.length === 0 ? (
         <Card>
-          <CardContent className="p-0 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Plano</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Cadastro</TableHead>
-                  <TableHead>Último acesso</TableHead>
-                  <TableHead className="text-right">Funis</TableHead>
-                  <TableHead className="text-right">Leads</TableHead>
-                  <TableHead>Último lead</TableHead>
-                  <TableHead>Planilha</TableHead>
-                  <TableHead>Ambiente</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={13} className="text-center text-muted-foreground py-10">
-                      Nenhum cliente encontrado.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filtered.map((c) => {
-                    const dleft = daysUntil(c.subscription?.current_period_end ?? null);
-                    const expanded = expandedCustomer === c.user_id;
-                    return (
-                      <Fragment key={c.user_id}>
-                        <TableRow>
-                          <TableCell>
-                            <div className="font-semibold">{c.name ?? c.clinic_name ?? "—"}</div>
-                            {c.clinic_name && c.name && (
-                              <div className="text-xs text-muted-foreground">{c.clinic_name}</div>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="mt-1 h-7 px-0 text-xs text-primary hover:bg-transparent"
-                              onClick={() => setExpandedCustomer(expanded ? null : c.user_id)}
-                            >
-                              <ChevronDown className={`mr-1 h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
-                              {expanded ? "Ocultar detalhes" : "Ver detalhes"}
-                            </Button>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">{c.email ?? "—"}</div>
-                            {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm font-medium">{c.subscription?.price_id ?? c.plan ?? "free"}</span>
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge row={c} />
-                            {c.subscription?.cancel_at_period_end && (
-                              <div className="text-[10px] text-yellow-700 mt-0.5">Cancelará no fim do período</div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">{fmtDate(c.subscription?.current_period_end ?? null)}</div>
-                            {dleft !== null && c.subscription && ["active", "trialing", "canceled"].includes(c.subscription.status) && (
-                              <div className={`text-xs ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-yellow-700" : "text-muted-foreground"}`}>
-                                {dleft < 0 ? `Venceu há ${-dleft}d` : dleft === 0 ? "Vence hoje" : `Em ${dleft}d`}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm">{fmtDate(c.created_at)}</TableCell>
-                          <TableCell className="text-sm">{fmtDateTime(c.last_sign_in_at)}</TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            <div className="font-semibold">{c.active_funnels_count}/{c.funnels_count}</div>
-                            <div className="text-[10px] text-muted-foreground">ativos/total</div>
-                          </TableCell>
-                          <TableCell className="text-right tabular-nums">
-                            <div className="font-semibold">{c.leads_count}</div>
-                            <div className="text-[10px] text-muted-foreground">{c.completed_leads_count} comp. · {c.partial_leads_count} parc.</div>
-                          </TableCell>
-                          <TableCell className="text-sm">{fmtDateTime(c.last_lead_at)}</TableCell>
-                          <TableCell>
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${c.connected_sheets_count > 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                              {c.connected_sheets_count}/{c.funnels_count}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            {c.subscription ? (
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${c.subscription.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
-                                {c.subscription.environment}
-                              </span>
-                            ) : "—"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                              onClick={() => setDeleteTarget(c)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                        {expanded && (
-                          <TableRow>
-                            <TableCell colSpan={13} className="bg-muted/30 p-4">
-                              <div className="grid gap-3 md:grid-cols-4">
-                                <DetailStat label="Funis publicados" value={`${c.active_funnels_count}/${c.funnels_count}`} />
-                                <DetailStat label="Leads completos" value={c.completed_leads_count.toLocaleString("pt-BR")} />
-                                <DetailStat label="Leads parciais" value={c.partial_leads_count.toLocaleString("pt-BR")} />
-                                <DetailStat label="Último lead" value={fmtDateTime(c.last_lead_at)} />
-                              </div>
-                              <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background">
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow>
-                                      <TableHead>Funil</TableHead>
-                                      <TableHead>Status</TableHead>
-                                      <TableHead className="text-right">Leads</TableHead>
-                                      <TableHead className="text-right">Completos</TableHead>
-                                      <TableHead className="text-right">Parciais</TableHead>
-                                      <TableHead>Último lead</TableHead>
-                                      <TableHead>Planilha</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {c.funnels.length === 0 ? (
-                                      <TableRow>
-                                        <TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
-                                          Cliente ainda não criou funis.
-                                        </TableCell>
-                                      </TableRow>
-                                    ) : (
-                                      c.funnels.map((funnel) => (
-                                        <TableRow key={funnel.id}>
-                                          <TableCell>
-                                            <div className="font-medium">{funnel.name ?? "Sem nome"}</div>
-                                            <div className="text-xs text-muted-foreground">/{funnel.slug ?? "sem-slug"} · criado em {fmtDate(funnel.created_at)}</div>
-                                          </TableCell>
-                                          <TableCell>
-                                            <span className={`text-xs px-2 py-0.5 rounded-full ${funnel.status === "published" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                                              {funnel.status === "published" ? "Publicado" : funnel.status ?? "Rascunho"}
-                                            </span>
-                                          </TableCell>
-                                          <TableCell className="text-right tabular-nums font-semibold">{funnel.leads_count}</TableCell>
-                                          <TableCell className="text-right tabular-nums">{funnel.completed_leads_count}</TableCell>
-                                          <TableCell className="text-right tabular-nums">{funnel.partial_leads_count}</TableCell>
-                                          <TableCell className="text-sm">{fmtDateTime(funnel.last_lead_at)}</TableCell>
-                                          <TableCell>
-                                            <span className={`text-xs px-2 py-0.5 rounded-full ${funnel.sheets_connected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                                              {funnel.sheets_connected ? "Conectada" : "Não conectada"}
-                                            </span>
-                                          </TableCell>
-                                        </TableRow>
-                                      ))
-                                    )}
-                                  </TableBody>
-                                </Table>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </Fragment>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            Nenhum cliente encontrado.
           </CardContent>
         </Card>
+      ) : (
+        <div className="space-y-4">
+          {filtered.map((customer) => (
+            <CustomerCard
+              key={customer.user_id}
+              customer={customer}
+              expanded={expandedCustomer === customer.user_id}
+              onToggle={() => setExpandedCustomer(expandedCustomer === customer.user_id ? null : customer.user_id)}
+              onDelete={() => setDeleteTarget(customer)}
+            />
+          ))}
+        </div>
       )}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !deletingCustomer && setDeleteTarget(null)}>
         <AlertDialogContent>
@@ -488,6 +334,153 @@ function AdminPage() {
   );
 }
 
+function CustomerCard({
+  customer,
+  expanded,
+  onToggle,
+  onDelete,
+}: {
+  customer: AdminCustomerRow;
+  expanded: boolean;
+  onToggle: () => void;
+  onDelete: () => void;
+}) {
+  const dleft = daysUntil(customer.subscription?.current_period_end ?? null);
+  const plan = customer.subscription?.price_id ?? customer.plan ?? "free";
+  const title = customer.name ?? customer.clinic_name ?? customer.email ?? "Cliente sem nome";
+
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="p-0">
+        <div className="grid gap-4 p-4 lg:grid-cols-[minmax(240px,1.35fr)_minmax(360px,2fr)_auto] lg:items-start">
+          <div className="min-w-0">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-black text-primary">
+                {title.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-base font-black">{title}</div>
+                {customer.clinic_name && customer.name && (
+                  <div className="truncate text-xs text-muted-foreground">{customer.clinic_name}</div>
+                )}
+                <div className="mt-1 truncate text-sm text-muted-foreground">{customer.email ?? "Sem e-mail"}</div>
+                {customer.phone && <div className="text-xs text-muted-foreground">{customer.phone}</div>}
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <StatusBadge row={customer} />
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{plan}</span>
+              {customer.subscription && (
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${customer.subscription.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
+                  {customer.subscription.environment}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <MiniMetric label="Funis ativos" value={`${customer.active_funnels_count}/${customer.funnels_count}`} hint={`${customer.draft_funnels_count} rascunhos`} />
+            <MiniMetric label="Leads" value={customer.leads_count.toLocaleString("pt-BR")} hint={`${customer.completed_leads_count} comp. · ${customer.partial_leads_count} parc.`} />
+            <MiniMetric label="Último lead" value={fmtDateTime(customer.last_lead_at)} />
+            <MiniMetric label="Planilhas" value={`${customer.connected_sheets_count}/${customer.funnels_count}`} hint="funis conectados" />
+          </div>
+
+          <div className="flex items-center justify-between gap-2 lg:flex-col lg:items-end">
+            <div className="text-left text-xs text-muted-foreground lg:text-right">
+              <div>Cadastro: <span className="font-medium text-foreground">{fmtDate(customer.created_at)}</span></div>
+              <div>Último acesso: <span className="font-medium text-foreground">{fmtDateTime(customer.last_sign_in_at)}</span></div>
+              {customer.subscription && (
+                <div>
+                  Vencimento: <span className="font-medium text-foreground">{fmtDate(customer.subscription.current_period_end)}</span>
+                  {dleft !== null && (
+                    <span className={`ml-1 ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-yellow-700" : ""}`}>
+                      ({dleft < 0 ? `${-dleft}d vencido` : dleft === 0 ? "hoje" : `${dleft}d`})
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-1">
+              <Button variant="outline" size="sm" className="rounded-full" onClick={onToggle}>
+                <ChevronDown className={`mr-1 h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
+                {expanded ? "Ocultar" : "Detalhes"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={onDelete}
+                title="Excluir conta"
+                aria-label="Excluir conta"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {expanded && (
+          <div className="border-t border-border bg-muted/25 p-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <DetailStat label="Funis publicados" value={`${customer.active_funnels_count}/${customer.funnels_count}`} />
+              <DetailStat label="Leads completos" value={customer.completed_leads_count.toLocaleString("pt-BR")} />
+              <DetailStat label="Leads parciais" value={customer.partial_leads_count.toLocaleString("pt-BR")} />
+              <DetailStat label="Último lead" value={fmtDateTime(customer.last_lead_at)} />
+            </div>
+            <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Funil</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Leads</TableHead>
+                    <TableHead className="text-right">Completos</TableHead>
+                    <TableHead className="text-right">Parciais</TableHead>
+                    <TableHead>Último lead</TableHead>
+                    <TableHead>Planilha</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {customer.funnels.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
+                        Cliente ainda não criou funis.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    customer.funnels.map((funnel) => (
+                      <TableRow key={funnel.id}>
+                        <TableCell>
+                          <div className="font-medium">{funnel.name ?? "Sem nome"}</div>
+                          <div className="text-xs text-muted-foreground">/{funnel.slug ?? "sem-slug"} · criado em {fmtDate(funnel.created_at)}</div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`rounded-full px-2 py-0.5 text-xs ${funnel.status === "published" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                            {funnel.status === "published" ? "Publicado" : funnel.status ?? "Rascunho"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold tabular-nums">{funnel.leads_count}</TableCell>
+                        <TableCell className="text-right tabular-nums">{funnel.completed_leads_count}</TableCell>
+                        <TableCell className="text-right tabular-nums">{funnel.partial_leads_count}</TableCell>
+                        <TableCell className="text-sm">{fmtDateTime(funnel.last_lead_at)}</TableCell>
+                        <TableCell>
+                          <span className={`rounded-full px-2 py-0.5 text-xs ${funnel.sheets_connected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                            {funnel.sheets_connected ? "Conectada" : "Não conectada"}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function StatCard({ icon: Icon, label, value, hint, accent }: { icon: typeof Users; label: string; value: number; hint?: string; accent?: string }) {
   return (
     <Card>
@@ -500,6 +493,16 @@ function StatCard({ icon: Icon, label, value, hint, accent }: { icon: typeof Use
         {hint && <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>}
       </CardContent>
     </Card>
+  );
+}
+
+function MiniMetric({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-background/70 p-3">
+      <div className="text-[11px] font-medium text-muted-foreground">{label}</div>
+      <div className="mt-1 min-h-6 text-base font-black tabular-nums">{value}</div>
+      {hint && <div className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</div>}
+    </div>
   );
 }
 
