@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { checkIsAdmin, deleteAdminCustomerAccount, listAdminCustomers, type AdminCustomerRow } from "@/lib/admin.functions";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -66,6 +67,11 @@ function daysUntil(iso: string | null): number | null {
   return Math.ceil((d - Date.now()) / (1000 * 60 * 60 * 24));
 }
 
+function isPayingCustomer(row: AdminCustomerRow | null): boolean {
+  if (!row?.subscription) return false;
+  return ["active", "trialing", "past_due", "unpaid", "incomplete"].includes(row.subscription.status);
+}
+
 function StatusBadge({ row }: { row: AdminCustomerRow }) {
   const s = row.subscription;
   if (!s) {
@@ -122,6 +128,7 @@ function AdminPage() {
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminCustomerRow | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const customers = customersQuery.data?.customers ?? [];
 
@@ -183,6 +190,10 @@ function AdminPage() {
 
   async function deleteCustomer() {
     if (!deleteTarget) return;
+    if (isPayingCustomer(deleteTarget) && deleteConfirmText.trim().toUpperCase() !== "EXCLUIR") {
+      toast.error("Digite EXCLUIR para confirmar a exclusão de um cliente pagante.");
+      return;
+    }
     setDeletingCustomer(true);
     try {
       const result = await deleteCustomerFn({ data: { userId: deleteTarget.user_id } });
@@ -192,6 +203,7 @@ function AdminPage() {
       }
       toast.success("Conta excluída com sucesso.");
       setDeleteTarget(null);
+      setDeleteConfirmText("");
       setExpandedCustomer(null);
       await customersQuery.refetch();
     } catch (error) {
@@ -306,19 +318,55 @@ function AdminPage() {
           ))}
         </div>
       )}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !deletingCustomer && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (open || deletingCustomer) return;
+          setDeleteTarget(null);
+          setDeleteConfirmText("");
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir conta do cliente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação cancela assinaturas ativas, remove o acesso do cliente e exclui os dados vinculados à conta no sistema.
-              Não é possível desfazer. Cliente: <strong>{deleteTarget?.email ?? deleteTarget?.name ?? deleteTarget?.clinic_name ?? "sem identificação"}</strong>.
+              {deleteTarget?.is_admin ? (
+                <>Este usuário é administrador e não pode ser excluído pelo painel.</>
+              ) : isPayingCustomer(deleteTarget) ? (
+                <>
+                  Atenção: este cliente tem pagamento/assinatura em status ativo ou de cobrança. Excluir vai cancelar a assinatura, remover o acesso e apagar dados vinculados à conta.
+                  Faça isso somente após tratar o cliente manualmente. Cliente: <strong>{deleteTarget?.email ?? deleteTarget?.name ?? deleteTarget?.clinic_name ?? "sem identificação"}</strong>.
+                </>
+              ) : (
+                <>
+                  Esta ação cancela assinaturas ativas, remove o acesso do cliente e exclui os dados vinculados à conta no sistema.
+                  Não é possível desfazer. Cliente: <strong>{deleteTarget?.email ?? deleteTarget?.name ?? deleteTarget?.clinic_name ?? "sem identificação"}</strong>.
+                </>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteTarget && isPayingCustomer(deleteTarget) && !deleteTarget.is_admin && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+              <Label htmlFor="delete-confirm" className="text-sm font-semibold text-destructive">
+                Cliente pagante: digite EXCLUIR para liberar a ação
+              </Label>
+              <Input
+                id="delete-confirm"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className="mt-2"
+                placeholder="EXCLUIR"
+              />
+            </div>
+          )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingCustomer}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletingCustomer} onClick={() => setDeleteConfirmText("")}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              disabled={deletingCustomer}
+              disabled={
+                deletingCustomer ||
+                !!deleteTarget?.is_admin ||
+                (!!deleteTarget && isPayingCustomer(deleteTarget) && deleteConfirmText.trim().toUpperCase() !== "EXCLUIR")
+              }
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={(event) => {
                 event.preventDefault();
@@ -346,7 +394,7 @@ function CustomerCard({
   onDelete: () => void;
 }) {
   const dleft = daysUntil(customer.subscription?.current_period_end ?? null);
-  const plan = customer.subscription?.price_id ?? customer.plan ?? "free";
+  const plan = customer.is_admin ? "agency liberado" : customer.subscription?.price_id ?? customer.plan ?? "free";
   const title = customer.name ?? customer.clinic_name ?? customer.email ?? "Cliente sem nome";
 
   return (
@@ -368,8 +416,16 @@ function CustomerCard({
               </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
+              {customer.is_admin && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                  <ShieldCheck className="h-3 w-3" /> Admin
+                </span>
+              )}
               <StatusBadge row={customer} />
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{plan}</span>
+              {customer.is_admin && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">CRM liberado</span>
+              )}
               {customer.subscription && (
                 <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${customer.subscription.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
                   {customer.subscription.environment}
@@ -408,10 +464,11 @@ function CustomerCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={customer.is_admin}
+                className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={onDelete}
-                title="Excluir conta"
-                aria-label="Excluir conta"
+                title={customer.is_admin ? "Administradores não podem ser excluídos" : isPayingCustomer(customer) ? "Excluir cliente pagante exige confirmação extra" : "Excluir conta"}
+                aria-label={customer.is_admin ? "Administrador protegido" : "Excluir conta"}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>

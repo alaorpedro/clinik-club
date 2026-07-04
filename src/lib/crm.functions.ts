@@ -1,5 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+async function isAdminUser(userId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
 
 async function assertCardOwnership(supabase: any, userId: string, cardId: string) {
   const { data: card } = await supabase
@@ -13,6 +24,8 @@ async function assertCardOwnership(supabase: any, userId: string, cardId: string
 }
 
 async function assertCrmAccess(supabase: any, userId: string) {
+  if (await isAdminUser(userId)) return;
+
   const { data } = await supabase
     .from("subscriptions")
     .select("status, current_period_end, price_id, product_id")
@@ -41,6 +54,8 @@ export const hasCrmAccess = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const env = (process.env.PAYMENTS_ENV ?? "sandbox") as string;
+    if (await isAdminUser(userId)) return { hasAccess: true, env, source: "admin" };
+
     const { data } = await supabase
       .from("subscriptions")
       .select("status, current_period_end, price_id, product_id")

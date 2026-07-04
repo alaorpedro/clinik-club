@@ -26,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/app/conta")({
 function ContaPage() {
   const [profile, setProfile] = useState<{ name: string | null; plan: string } | null>(null);
   const [email, setEmail] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [saving, setSaving] = useState(false);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -36,7 +37,11 @@ function ContaPage() {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       setEmail(u.user.email ?? "");
-      const { data } = await supabase.from("profiles").select("name, plan").eq("id", u.user.id).maybeSingle();
+      const [{ data }, { data: role }] = await Promise.all([
+        supabase.from("profiles").select("name, plan").eq("id", u.user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", u.user.id).eq("role", "admin").maybeSingle(),
+      ]);
+      setIsAdmin(!!role);
       setProfile(data ?? { name: "", plan: "free" });
     })();
   }, []);
@@ -89,7 +94,8 @@ function ContaPage() {
     }
   }
 
-  const hasPaidPlan = profile?.plan && profile.plan !== "free";
+  const hasPaidPlan = !isAdmin && profile?.plan && profile.plan !== "free";
+  const planLabel = isAdmin ? "agency liberado" : profile?.plan ?? "free";
 
   return (
     <div className="max-w-xl">
@@ -104,9 +110,13 @@ function ContaPage() {
       )}
       <div className="mt-8 rounded-2xl border border-border bg-card p-6">
         <h2 className="font-bold">Plano atual</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Você está no plano <strong className="text-foreground capitalize">{profile?.plan ?? "free"}</strong>.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Você está no plano <strong className="text-foreground capitalize">{planLabel}</strong>.</p>
         <div className="mt-4 flex flex-wrap gap-2">
-          {hasPaidPlan ? (
+          {isAdmin ? (
+            <Button variant="outline" className="rounded-full" disabled>
+              Acesso admin liberado
+            </Button>
+          ) : hasPaidPlan ? (
             <Button variant="outline" className="rounded-full" onClick={openPortal} disabled={openingPortal}>
               {openingPortal ? "Abrindo..." : "Gerenciar assinatura"}
             </Button>

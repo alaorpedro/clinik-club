@@ -139,7 +139,19 @@ async function getUserEmail(userId: string): Promise<string | null> {
   }
 }
 
+async function isAdminUser(userId: string): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
+
 async function getActivePriceId(userId: string, env: PaymentsEnv): Promise<string | null> {
+  if (await isAdminUser(userId)) return "agency_monthly";
+
   const { data: userRows } = await supabaseAdmin
     .from("subscriptions")
     .select("id, price_id, status, current_period_end, environment, created_at")

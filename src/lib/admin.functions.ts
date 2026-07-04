@@ -18,6 +18,7 @@ async function ensureAdmin(userId: string) {
 
 export type AdminCustomerRow = {
   user_id: string;
+  is_admin: boolean;
   email: string | null;
   name: string | null;
   clinic_name: string | null;
@@ -78,6 +79,14 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
     if (profErr) throw new Error(profErr.message);
 
     const profileIds = (profiles ?? []).map((p) => p.id);
+
+    const { data: roles, error: rolesErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("user_id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"])
+      .eq("role", "admin");
+    if (rolesErr) throw new Error(rolesErr.message);
+    const adminUserIds = new Set((roles ?? []).map((role) => role.user_id));
 
     // 2. Auth metadata for ONLY the profiles we need (parallel, bounded concurrency).
     const authUsers = new Map<
@@ -237,6 +246,7 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
         .sort((a, b) => (b.leads_count - a.leads_count) || String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
       return {
         user_id: p.id,
+        is_admin: adminUserIds.has(p.id),
         email: au?.email ?? null,
         name: p.name,
         clinic_name: p.clinic_name,
@@ -272,6 +282,17 @@ export const deleteAdminCustomerAccount = createServerFn({ method: "POST" })
 
     if (data.userId === context.userId) {
       return { error: "Você não pode excluir sua própria conta pelo painel admin." };
+    }
+
+    const { data: targetRole, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (roleError) return { error: roleError.message };
+    if (targetRole) {
+      return { error: "Contas administradoras não podem ser excluídas pelo painel." };
     }
 
     try {
