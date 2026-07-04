@@ -176,7 +176,10 @@ export async function postToWhatsAppAlert(
       .select("group_jid, status, evolution_instance")
       .eq("funnel_id", funnelId)
       .maybeSingle();
-    if (!alert || alert.status !== "active" || !alert.group_jid) return;
+    // "action_needed" still means a real, working group — it only flags that not every
+    // registered number auto-joined. Whoever did join should still get the alert, so we
+    // send whenever the group exists; only pending/provisioning/canceled/failed skip.
+    if (!alert || !alert.group_jid || !["active", "action_needed"].includes(alert.status)) return;
 
     const lines = [
       "🔔 *Novo lead recebido*",
