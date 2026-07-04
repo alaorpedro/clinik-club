@@ -441,7 +441,7 @@ export const submitLead = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
-    await postToSheetsWebhook(data.funnelId, await buildSheetsLeadPayload(data.funnelId, {
+    const leadPayload = await buildSheetsLeadPayload(data.funnelId, {
       sessionId: data.sessionId ?? null,
       name: finalName,
       email: finalEmail,
@@ -449,8 +449,16 @@ export const submitLead = createServerFn({ method: "POST" })
       answers: finalAnswers,
       utm: finalUtm,
       status: "completed",
-    }));
-    await postToWhatsAppAlert(data.funnelId, { name: finalName, email: finalEmail, phone: finalPhone });
+    });
+    await postToSheetsWebhook(data.funnelId, leadPayload);
+    await postToWhatsAppAlert(data.funnelId, {
+      name: finalName,
+      email: finalEmail,
+      phone: finalPhone,
+      answers_pretty: leadPayload.answers_pretty,
+      questions: leadPayload.questions,
+      utm: leadPayload.utm,
+    });
     return { ok: true };
   });
 

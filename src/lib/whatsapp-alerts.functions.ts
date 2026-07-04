@@ -165,10 +165,53 @@ export async function provisionWhatsappAlert(funnelId: string): Promise<void> {
   }
 }
 
+function formatLeadMessage(opts: {
+  funnelId: string;
+  funnelName: string;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  answersPretty?: Record<string, unknown>;
+  questions?: string[];
+  utm?: Record<string, unknown>;
+}): string {
+  const lines: string[] = [`🔔 *Novo lead — ${opts.funnelName}*`, ""];
+
+  if (opts.name) lines.push(`👤 *Nome:* ${opts.name}`);
+  if (opts.phone) lines.push(`📱 *Telefone:* ${opts.phone}`);
+  if (opts.email) lines.push(`📧 *Email:* ${opts.email}`);
+
+  const qa = (opts.questions ?? [])
+    .map((q): [string, string] => [q, String(opts.answersPretty?.[q] ?? "").trim()])
+    .filter(([, a]) => a.length > 0);
+  if (qa.length) {
+    lines.push("", "📝 *Respostas:*");
+    for (const [q, a] of qa) lines.push(`• ${q}: ${a}`);
+  }
+
+  const utm = opts.utm ?? {};
+  const origin = [utm.utm_source ?? utm.source, utm.utm_campaign ?? utm.campaign].filter(Boolean).join(" · ");
+  if (origin) lines.push("", `📊 *Origem:* ${origin}`);
+
+  lines.push(
+    "",
+    `🕒 ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })}`,
+    `🔗 https://clinik.club/app/funis/${opts.funnelId}/leads`,
+  );
+  return lines.join("\n");
+}
+
 // Fire-and-forget lead notification, mirrors postToSheetsWebhook's error-swallowing behavior.
 export async function postToWhatsAppAlert(
   funnelId: string,
-  payload: { name?: string | null; phone?: string | null; email?: string | null },
+  payload: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    answers_pretty?: Record<string, unknown>;
+    questions?: string[];
+    utm?: Record<string, unknown>;
+  },
 ): Promise<void> {
   try {
     const { data: alert } = await supabaseAdmin
@@ -181,14 +224,20 @@ export async function postToWhatsAppAlert(
     // send whenever the group exists; only pending/provisioning/canceled/failed skip.
     if (!alert || !alert.group_jid || !["active", "action_needed"].includes(alert.status)) return;
 
-    const lines = [
-      "🔔 *Novo lead recebido*",
-      payload.name ? `Nome: ${payload.name}` : null,
-      payload.phone ? `Telefone: ${payload.phone}` : null,
-      payload.email ? `Email: ${payload.email}` : null,
-    ].filter(Boolean) as string[];
+    const { data: funnel } = await supabaseAdmin.from("funnels").select("name").eq("id", funnelId).maybeSingle();
 
-    await sendGroupMessage({ groupJid: alert.group_jid, text: lines.join("\n"), instance: alert.evolution_instance });
+    const text = formatLeadMessage({
+      funnelId,
+      funnelName: funnel?.name ?? "Funil",
+      name: payload.name,
+      phone: payload.phone,
+      email: payload.email,
+      answersPretty: payload.answers_pretty,
+      questions: payload.questions,
+      utm: payload.utm,
+    });
+
+    await sendGroupMessage({ groupJid: alert.group_jid, text, instance: alert.evolution_instance });
   } catch (error) {
     console.error("[whatsapp-alerts] send failed", error);
   }
