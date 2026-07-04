@@ -1,12 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { testSheetsConnection } from "@/lib/funnels.functions";
-import { CheckCircle2, Copy, FileSpreadsheet, Send, ShieldCheck, Upload, X } from "lucide-react";
+import { getWhatsappAlert, saveWhatsappAlertNumbers, type WhatsappAlertRow } from "@/lib/whatsapp-alerts.functions";
+import { useAuth } from "@/hooks/use-auth";
+import { CheckCircle2, Copy, ExternalLink, FileSpreadsheet, Loader2, MessageCircle, Plus, Send, ShieldCheck, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+
+const StripeEmbeddedCheckout = lazy(() =>
+  import("@/components/StripeEmbeddedCheckout").then((m) => ({ default: m.StripeEmbeddedCheckout })),
+);
+
+const WHATSAPP_ALERT_PRICE_ID = "whatsapp_alerts_monthly";
 
 const APPS_SCRIPT_CODE = `function doPost(e) {
   const lock = LockService.getScriptLock();
@@ -121,11 +129,23 @@ export function FunnelSettingsDialog({
   onOpenChange: (v: boolean) => void;
   onSlugChange?: (slug: string) => void;
 }) {
+  const { user } = useAuth();
   const [funnel, setFunnel] = useState<Funnel | null>(null);
   const [clinic, setClinic] = useState<Clinic>({ clinic_name: null, clinic_logo_url: null, instagram_url: null });
   const [slugDraft, setSlugDraft] = useState("");
   const [slugError, setSlugError] = useState<string | null>(null);
   const [testingSheets, setTestingSheets] = useState(false);
+  const [wa, setWa] = useState<WhatsappAlertRow | null>(null);
+  const [waNumbers, setWaNumbers] = useState<string[]>([""]);
+  const [waCoupon, setWaCoupon] = useState("");
+  const [waSaving, setWaSaving] = useState(false);
+  const [waCheckoutOpen, setWaCheckoutOpen] = useState(false);
+
+  async function refreshWhatsappAlert() {
+    const result = await getWhatsappAlert({ data: { funnelId } });
+    setWa(result.alert);
+    if (result.alert?.phone_numbers?.length) setWaNumbers(result.alert.phone_numbers);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -140,8 +160,59 @@ export function FunnelSettingsDialog({
         const { data: p } = await supabase.from("profiles").select("clinic_name, clinic_logo_url, instagram_url").eq("id", u.user.id).maybeSingle();
         if (p) setClinic({ clinic_name: (p as any).clinic_name ?? null, clinic_logo_url: (p as any).clinic_logo_url ?? null, instagram_url: (p as any).instagram_url ?? null });
       }
+      await refreshWhatsappAlert();
     })();
   }, [open, funnelId]);
+
+  function updateWaNumber(index: number, value: string) {
+    setWaNumbers((prev) => prev.map((n, i) => (i === index ? value : n)));
+  }
+  function addWaNumberField() {
+    setWaNumbers((prev) => (prev.length >= 5 ? prev : [...prev, ""]));
+  }
+  function removeWaNumberField(index: number) {
+    setWaNumbers((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+  }
+
+  async function handleActivateWhatsappAlert() {
+    const numbers = waNumbers.map((n) => n.trim()).filter(Boolean);
+    if (!numbers.length) {
+      toast.error("Cadastre ao menos um número de WhatsApp.");
+      return;
+    }
+    setWaSaving(true);
+    try {
+      const result = await saveWhatsappAlertNumbers({ data: { funnelId, phoneNumbers: numbers } });
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      await refreshWhatsappAlert();
+      setWaCheckoutOpen(true);
+    } finally {
+      setWaSaving(false);
+    }
+  }
+
+  async function handleSaveWhatsappNumbers() {
+    const numbers = waNumbers.map((n) => n.trim()).filter(Boolean);
+    if (!numbers.length) {
+      toast.error("Cadastre ao menos um número de WhatsApp.");
+      return;
+    }
+    setWaSaving(true);
+    try {
+      const result = await saveWhatsappAlertNumbers({ data: { funnelId, phoneNumbers: numbers } });
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      await refreshWhatsappAlert();
+      toast.success("Números atualizados.");
+    } finally {
+      setWaSaving(false);
+    }
+  }
 
   async function updateFunnel(patch: Partial<Funnel>) {
     if (!funnel) return false;
@@ -216,6 +287,7 @@ export function FunnelSettingsDialog({
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -387,10 +459,131 @@ export function FunnelSettingsDialog({
                 )}
               </div>
             </div>
+
+            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                  <MessageCircle className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-bold">Alertas de leads no WhatsApp</p>
+                    {wa?.status === "active" && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        <CheckCircle2 className="h-3 w-3" /> Ativo
+                      </span>
+                    )}
+                    {wa?.status === "canceled" && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">Cancelado</span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Criamos um grupo privado no WhatsApp (só nós como admin) com o(s) seu(s) número(s). Cada lead que chegar
+                    neste funil também cai como mensagem no grupo, em tempo real. <strong>R$ 29,90/mês.</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                <Label className="text-xs">Seu(s) número(s) de WhatsApp (com DDD)</Label>
+                {waNumbers.map((n, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Input value={n} onChange={(e) => updateWaNumber(i, e.target.value)} placeholder="(11) 91234-5678" />
+                    {waNumbers.length > 1 && (
+                      <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => removeWaNumberField(i)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {waNumbers.length < 5 && (
+                  <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addWaNumberField}>
+                    <Plus className="h-3.5 w-3.5" /> Adicionar número
+                  </Button>
+                )}
+              </div>
+
+              {(!wa || wa.status === "pending_payment" || wa.status === "canceled" || wa.status === "failed") && (
+                <div className="mt-4">
+                  <Label className="text-xs">Cupom de desconto (opcional)</Label>
+                  <Input
+                    value={waCoupon}
+                    onChange={(e) => setWaCoupon(e.target.value.toUpperCase())}
+                    placeholder="Ex: BEMVINDO10"
+                    className="mt-1.5"
+                  />
+                  <Button type="button" className="mt-3 w-full rounded-full" onClick={handleActivateWhatsappAlert} disabled={waSaving}>
+                    {waSaving
+                      ? "Salvando..."
+                      : wa?.status === "canceled" || wa?.status === "failed"
+                        ? "Reativar por R$ 29,90/mês"
+                        : "Ativar por R$ 29,90/mês"}
+                  </Button>
+                </div>
+              )}
+
+              {wa?.status === "provisioning" && (
+                <p className="mt-4 flex items-center gap-1.5 text-[11px] font-medium text-amber-600">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Criando seu grupo no WhatsApp... isso leva só alguns instantes.
+                </p>
+              )}
+
+              {wa?.status === "active" && (
+                <div className="mt-4">
+                  <Button type="button" variant="outline" className="rounded-full w-full" onClick={handleSaveWhatsappNumbers} disabled={waSaving}>
+                    {waSaving ? "Salvando..." : "Salvar números"}
+                  </Button>
+                </div>
+              )}
+
+              {wa?.status === "action_needed" && (
+                <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-[11px] leading-5">
+                  <p className="font-semibold text-amber-700">Um ou mais números não puderam ser adicionados automaticamente.</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Entre no grupo pelo link abaixo e compartilhe com quem mais precisar receber os alertas:
+                  </p>
+                  {wa.invite_link && (
+                    <a
+                      href={wa.invite_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+                    >
+                      Abrir convite do grupo <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                  <Button type="button" variant="outline" size="sm" className="mt-3 rounded-full" onClick={handleSaveWhatsappNumbers} disabled={waSaving}>
+                    {waSaving ? "Salvando..." : "Salvar números"}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </DialogContent>
     </Dialog>
+
+    <Dialog open={waCheckoutOpen} onOpenChange={setWaCheckoutOpen}>
+      <DialogContent className="max-w-2xl p-0 overflow-hidden" allowStripePointerPassThrough={true}>
+        <DialogHeader className="px-6 pt-6 text-left">
+          <DialogTitle>Ativar alertas no WhatsApp</DialogTitle>
+        </DialogHeader>
+        <div className="p-6">
+          {user && waCheckoutOpen && (
+            <Suspense fallback={<div className="py-10 text-center text-sm text-muted-foreground">Carregando…</div>}>
+              <StripeEmbeddedCheckout
+                priceId={WHATSAPP_ALERT_PRICE_ID}
+                customerEmail={user.email ?? undefined}
+                returnUrl={`${window.location.origin}/app/funis/${funnelId}/editar?settings=open`}
+                funnelId={funnelId}
+                promoCode={waCoupon.trim() || undefined}
+              />
+            </Suspense>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 

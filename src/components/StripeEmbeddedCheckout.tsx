@@ -7,9 +7,11 @@ interface Props {
   priceId: string;
   customerEmail?: string;
   returnUrl?: string;
+  funnelId?: string;
+  promoCode?: string;
 }
 
-export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Props) {
+export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funnelId, promoCode }: Props) {
   const [paymentMethod, setPaymentMethod] = useState<"card" | "boleto">("card");
   const [boletoLoading, setBoletoLoading] = useState(false);
   const [boletoError, setBoletoError] = useState<string | null>(null);
@@ -79,12 +81,14 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
         returnUrl: returnUrl || `${window.location.origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
         environment: getStripeEnvironment(),
         paymentMethod,
+        funnelId,
+        promoCode,
       },
     });
     if ("error" in result) throw new Error(result.error);
     if (!result.clientSecret) throw new Error("Stripe did not return a client secret");
     return result.clientSecret;
-  }, [priceId, customerEmail, returnUrl, paymentMethod]);
+  }, [priceId, customerEmail, returnUrl, paymentMethod, funnelId, promoCode]);
 
   const handleStartBoleto = useCallback(async () => {
     setBoletoLoading(true);
@@ -96,6 +100,8 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
           returnUrl: returnUrl || `${window.location.origin}/checkout/return`,
           environment: getStripeEnvironment(),
           billing: boletoBilling,
+          funnelId,
+          promoCode,
         },
       });
       if ("error" in result) throw new Error(result.error);
@@ -112,7 +118,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl }: Pr
     } finally {
       setBoletoLoading(false);
     }
-  }, [priceId, returnUrl, boletoBilling]);
+  }, [priceId, returnUrl, boletoBilling, funnelId, promoCode]);
 
   const updateBoletoBilling = useCallback((field: keyof typeof boletoBilling, value: string) => {
     setBoletoBilling((current) => ({ ...current, [field]: value }));

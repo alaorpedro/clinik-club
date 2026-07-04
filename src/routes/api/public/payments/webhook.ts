@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { createStripeClient, type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
+import { provisionWhatsappAlert } from "@/lib/whatsapp-alerts.functions";
 
 let _supabase: any = null;
 function getSupabase(): any {
@@ -55,7 +56,59 @@ async function isBoletoInitialInvoicePaid(subscription: any, env: StripeEnv): Pr
   }
 }
 
+// Per-funnel WhatsApp alerts add-on is a distinct entity from the account-wide plan tiers
+// (starter/pro/agency/crm_addon), so it's handled separately and never touches profiles.plan.
+async function handleWhatsappAlertsSubscription(subscription: any, env: StripeEnv, canceled: boolean) {
+  const funnelId: string | null = subscription.metadata?.funnelId ?? null;
+  if (!funnelId) {
+    console.warn("[webhook] whatsapp alert subscription without funnelId metadata", subscription.id);
+    return;
+  }
+  const supabase = getSupabase();
+
+  if (canceled) {
+    const { error } = await supabase.from("whatsapp_alerts").update({
+      status: "canceled",
+      stripe_subscription_id: subscription.id,
+      updated_at: new Date().toISOString(),
+    }).eq("funnel_id", funnelId);
+    requireOk(error, "whatsapp_alerts.update(canceled)");
+    return;
+  }
+
+  const { data: existing, error: selErr } = await supabase
+    .from("whatsapp_alerts")
+    .select("status")
+    .eq("funnel_id", funnelId)
+    .maybeSingle();
+  requireOk(selErr, "whatsapp_alerts.select");
+  if (!existing) {
+    console.warn("[webhook] whatsapp alert subscription event but no row found for funnel", funnelId);
+    return;
+  }
+
+  const { error: updErr } = await supabase.from("whatsapp_alerts").update({
+    stripe_subscription_id: subscription.id,
+    updated_at: new Date().toISOString(),
+  }).eq("funnel_id", funnelId);
+  requireOk(updErr, "whatsapp_alerts.update(subscription_id)");
+
+  const invoicePaid = await isBoletoInitialInvoicePaid(subscription, env);
+  if (invoicePaid && ["active", "trialing"].includes(subscription.status) && existing.status === "pending_payment") {
+    const { error: provErr } = await supabase.from("whatsapp_alerts").update({
+      status: "provisioning",
+      updated_at: new Date().toISOString(),
+    }).eq("funnel_id", funnelId);
+    requireOk(provErr, "whatsapp_alerts.update(provisioning)");
+    await provisionWhatsappAlert(funnelId);
+  }
+}
+
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
+  if (subscription.metadata?.funnelId) {
+    await handleWhatsappAlertsSubscription(subscription, env, false);
+    return;
+  }
   const userId: string | null = subscription.metadata?.userId ?? null;
   const customerEmail = await getCustomerEmail(subscription, env);
   const item = subscription.items?.data?.[0];
@@ -110,6 +163,10 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
 }
 
 async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
+  if (subscription.metadata?.funnelId) {
+    await handleWhatsappAlertsSubscription(subscription, env, false);
+    return;
+  }
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.lookup_key
     || item?.price?.metadata?.lovable_external_id
@@ -150,6 +207,10 @@ async function handleInvoicePaid(invoice: any, env: StripeEnv) {
   const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
     expand: ["items.data.price"],
   });
+  if (subscription.metadata?.funnelId) {
+    await handleWhatsappAlertsSubscription(subscription, env, false);
+    return;
+  }
   const item = subscription.items?.data?.[0];
   const priceId = item?.price?.lookup_key
     || item?.price?.metadata?.lovable_external_id
@@ -202,6 +263,10 @@ async function handleInvoicePaid(invoice: any, env: StripeEnv) {
 }
 
 async function handleSubscriptionDeleted(subscription: any, env: StripeEnv) {
+  if (subscription.metadata?.funnelId) {
+    await handleWhatsappAlertsSubscription(subscription, env, true);
+    return;
+  }
   const supabase = getSupabase();
   const { error: delErr } = await supabase.from("subscriptions").update({
     status: "canceled",

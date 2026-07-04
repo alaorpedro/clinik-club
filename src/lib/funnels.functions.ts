@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
+import { postToWhatsAppAlert } from "@/lib/whatsapp-alerts.functions";
 
 type PaymentsEnv = "sandbox" | "live";
 
@@ -448,6 +449,7 @@ export const submitLead = createServerFn({ method: "POST" })
       utm: finalUtm,
       status: "completed",
     }));
+    await postToWhatsAppAlert(data.funnelId, { name: finalName, email: finalEmail, phone: finalPhone });
     return { ok: true };
   });
 

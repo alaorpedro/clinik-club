@@ -170,6 +170,29 @@ async function resolveOrCreateCustomer(
   return created.id;
 }
 
+async function resolveDiscounts(
+  stripe: ReturnType<typeof createStripeClient>,
+  promoCode: string | undefined,
+): Promise<{ discounts: { promotion_code: string }[] } | { error: string } | null> {
+  if (!promoCode) return null;
+  const codes = await stripe.promotionCodes.list({ code: promoCode.trim().toUpperCase(), active: true, limit: 1 });
+  if (!codes.data.length) return { error: "Cupom inválido ou expirado." };
+  return { discounts: [{ promotion_code: codes.data[0].id }] };
+}
+
+async function assertFunnelOwnership(funnelId: string | undefined, userId: string): Promise<string | null> {
+  if (!funnelId) return null;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: funnel } = await supabaseAdmin
+    .from("funnels")
+    .select("id")
+    .eq("id", funnelId)
+    .eq("owner_id", userId)
+    .maybeSingle();
+  if (!funnel) return "Funil não encontrado para este usuário.";
+  return null;
+}
+
 export const createCheckoutSession = createServerFn({ method: "POST" })
   .inputValidator((data: {
     priceId: string;
@@ -177,8 +200,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
     returnUrl: string;
     environment: StripeEnv;
     paymentMethod?: "card" | "boleto";
+    funnelId?: string;
+    promoCode?: string;
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
+    if (data.funnelId && !/^[0-9a-fA-F-]{36}$/.test(data.funnelId)) throw new Error("Invalid funnelId");
+    if (data.promoCode && !/^[A-Za-z0-9_-]{3,40}$/.test(data.promoCode)) throw new Error("Invalid promoCode");
     return data;
   })
   .handler(async ({ data }): Promise<CheckoutSessionResult> => {
@@ -188,14 +215,27 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
       if (!verifiedUser) {
         return { error: "Faça login ou crie sua conta antes de assinar." };
       }
+      const ownershipError = await assertFunnelOwnership(data.funnelId, verifiedUser.id);
+      if (ownershipError) return { error: ownershipError };
+
       const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
       if (!prices.data.length) throw new Error("Price not found");
       const stripePrice = prices.data[0];
 
+      const discountResult = await resolveDiscounts(stripe, data.promoCode);
+      if (discountResult && "error" in discountResult) return discountResult;
+
       const customerId = await resolveOrCreateCustomer(stripe, { email: verifiedUser.email, userId: verifiedUser.id });
 
       const isRecurring = stripePrice.type === "recurring";
+
+      const sharedMetadata = {
+        ...(verifiedUser && { userId: verifiedUser.id }),
+        ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
+        ...(data.funnelId && { funnelId: data.funnelId }),
+        paymentMethod: "card",
+      };
 
       const session = await stripe.checkout.sessions.create({
         line_items: [{ price: stripePrice.id, quantity: 1 }],
@@ -203,20 +243,12 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         ui_mode: "embedded_page",
         return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
         payment_method_types: ["card"],
-        allow_promotion_codes: true,
+        ...(discountResult && "discounts" in discountResult ? { discounts: discountResult.discounts } : { allow_promotion_codes: true }),
         wallet_options: { link: { display: "never" } },
         ...(customerId && { customer: customerId }),
-        metadata: {
-          ...(verifiedUser && { userId: verifiedUser.id }),
-          ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
-          paymentMethod: "card",
-        },
+        metadata: sharedMetadata,
         subscription_data: {
-          metadata: {
-            ...(verifiedUser && { userId: verifiedUser.id }),
-            ...(verifiedUser?.email && { customerEmail: verifiedUser.email }),
-            paymentMethod: "card",
-          },
+          metadata: sharedMetadata,
         },
       });
 
@@ -232,8 +264,12 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
     returnUrl: string;
     environment: StripeEnv;
     billing: BoletoBillingDetails;
+    funnelId?: string;
+    promoCode?: string;
   }) => {
     if (!/^[a-zA-Z0-9_-]+$/.test(data.priceId)) throw new Error("Invalid priceId");
+    if (data.funnelId && !/^[0-9a-fA-F-]{36}$/.test(data.funnelId)) throw new Error("Invalid funnelId");
+    if (data.promoCode && !/^[A-Za-z0-9_-]{3,40}$/.test(data.promoCode)) throw new Error("Invalid promoCode");
     return data;
   })
   .handler(async ({ data }): Promise<BoletoSubscriptionResult> => {
@@ -242,6 +278,8 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
       if (!verifiedUser) {
         return { error: "Faça login ou crie sua conta antes de assinar." };
       }
+      const ownershipError = await assertFunnelOwnership(data.funnelId, verifiedUser.id);
+      if (ownershipError) return { error: ownershipError };
 
       const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
@@ -253,6 +291,8 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
       if (stripePrice.currency?.toLowerCase() !== "brl") {
         return { error: "Boleto só está disponível para cobranças em BRL." };
       }
+      const discountResult = await resolveDiscounts(stripe, data.promoCode);
+      if (discountResult && "error" in discountResult) return discountResult;
 
       const normalized = normalizeBoletoBilling(data.billing);
       if ("error" in normalized) return { error: normalized.error };
@@ -296,9 +336,11 @@ export const startBoletoSubscription = createServerFn({ method: "POST" })
           payment_method_types: ["boleto"],
           save_default_payment_method: "on_subscription",
         },
+        ...(discountResult && "discounts" in discountResult ? { discounts: discountResult.discounts } : {}),
         metadata: {
           userId: verifiedUser.id,
           ...(verifiedUser.email && { customerEmail: verifiedUser.email }),
+          ...(data.funnelId && { funnelId: data.funnelId }),
           paymentMethod: "boleto",
         },
         expand: ["latest_invoice.payment_intent", "items.data.price"],
