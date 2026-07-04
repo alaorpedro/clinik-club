@@ -24,7 +24,25 @@ export type AdminCustomerRow = {
   last_sign_in_at: string | null;
   plan: string | null;
   funnels_count: number;
+  active_funnels_count: number;
+  draft_funnels_count: number;
   leads_count: number;
+  completed_leads_count: number;
+  partial_leads_count: number;
+  connected_sheets_count: number;
+  last_lead_at: string | null;
+  funnels: Array<{
+    id: string;
+    name: string | null;
+    slug: string | null;
+    status: string | null;
+    created_at: string | null;
+    sheets_connected: boolean;
+    leads_count: number;
+    completed_leads_count: number;
+    partial_leads_count: number;
+    last_lead_at: string | null;
+  }>;
   subscription: {
     id: string;
     status: string;
@@ -114,41 +132,106 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
     // 4. Funnels (only for visible owners)
     const { data: funnels, error: funErr } = await supabaseAdmin
       .from("funnels")
-      .select("id, owner_id")
+      .select("id, owner_id, name, slug, status, created_at, sheets_webhook_url")
       .in("owner_id", profileIds.length ? profileIds : ["00000000-0000-0000-0000-000000000000"]);
     if (funErr) throw new Error(funErr.message);
     const funnelsCount = new Map<string, number>();
+    const activeFunnelsCount = new Map<string, number>();
+    const draftFunnelsCount = new Map<string, number>();
+    const connectedSheetsCount = new Map<string, number>();
     const funnelIdsByOwner = new Map<string, string[]>();
+    const funnelById = new Map<string, {
+      id: string;
+      owner_id: string;
+      name: string | null;
+      slug: string | null;
+      status: string | null;
+      created_at: string | null;
+      sheets_webhook_url: string | null;
+    }>();
     for (const f of funnels ?? []) {
       funnelsCount.set(f.owner_id, (funnelsCount.get(f.owner_id) ?? 0) + 1);
+      if (f.status === "published") activeFunnelsCount.set(f.owner_id, (activeFunnelsCount.get(f.owner_id) ?? 0) + 1);
+      if (f.status !== "published") draftFunnelsCount.set(f.owner_id, (draftFunnelsCount.get(f.owner_id) ?? 0) + 1);
+      if (f.sheets_webhook_url) connectedSheetsCount.set(f.owner_id, (connectedSheetsCount.get(f.owner_id) ?? 0) + 1);
       const arr = funnelIdsByOwner.get(f.owner_id) ?? [];
       arr.push(f.id);
       funnelIdsByOwner.set(f.owner_id, arr);
+      funnelById.set(f.id, {
+        id: f.id,
+        owner_id: f.owner_id,
+        name: f.name ?? null,
+        slug: f.slug ?? null,
+        status: f.status ?? null,
+        created_at: f.created_at ?? null,
+        sheets_webhook_url: f.sheets_webhook_url ?? null,
+      });
     }
 
     // 5. Leads (only for funnels of visible owners)
     const allFunnelIds = Array.from(new Set(Array.from(funnelIdsByOwner.values()).flat()));
     const leadsByFunnel = new Map<string, number>();
+    const completedLeadsByFunnel = new Map<string, number>();
+    const partialLeadsByFunnel = new Map<string, number>();
+    const lastLeadByFunnel = new Map<string, string>();
     if (allFunnelIds.length) {
       const { data: leads, error: leadErr } = await supabaseAdmin
         .from("leads")
-        .select("funnel_id")
+        .select("funnel_id, status, created_at")
         .in("funnel_id", allFunnelIds);
       if (leadErr) throw new Error(leadErr.message);
       for (const l of leads ?? []) {
         leadsByFunnel.set(l.funnel_id, (leadsByFunnel.get(l.funnel_id) ?? 0) + 1);
+        if (l.status === "completed") completedLeadsByFunnel.set(l.funnel_id, (completedLeadsByFunnel.get(l.funnel_id) ?? 0) + 1);
+        if (l.status === "partial") partialLeadsByFunnel.set(l.funnel_id, (partialLeadsByFunnel.get(l.funnel_id) ?? 0) + 1);
+        const createdAt = l.created_at as string | null;
+        if (createdAt && (!lastLeadByFunnel.get(l.funnel_id) || createdAt > lastLeadByFunnel.get(l.funnel_id)!)) {
+          lastLeadByFunnel.set(l.funnel_id, createdAt);
+        }
       }
     }
     const leadsByOwner = new Map<string, number>();
+    const completedLeadsByOwner = new Map<string, number>();
+    const partialLeadsByOwner = new Map<string, number>();
+    const lastLeadByOwner = new Map<string, string>();
     for (const [ownerId, ids] of funnelIdsByOwner.entries()) {
       let total = 0;
-      for (const fid of ids) total += leadsByFunnel.get(fid) ?? 0;
+      let completed = 0;
+      let partial = 0;
+      let lastLead: string | null = null;
+      for (const fid of ids) {
+        total += leadsByFunnel.get(fid) ?? 0;
+        completed += completedLeadsByFunnel.get(fid) ?? 0;
+        partial += partialLeadsByFunnel.get(fid) ?? 0;
+        const funnelLastLead = lastLeadByFunnel.get(fid) ?? null;
+        if (funnelLastLead && (!lastLead || funnelLastLead > lastLead)) lastLead = funnelLastLead;
+      }
       leadsByOwner.set(ownerId, total);
+      completedLeadsByOwner.set(ownerId, completed);
+      partialLeadsByOwner.set(ownerId, partial);
+      if (lastLead) lastLeadByOwner.set(ownerId, lastLead);
     }
 
     // 6. Lookup phone from leads when not in auth (best-effort)
     const customers: AdminCustomerRow[] = (profiles ?? []).map((p) => {
       const au = authUsers.get(p.id);
+      const ownerFunnelIds = funnelIdsByOwner.get(p.id) ?? [];
+      const ownerFunnels = ownerFunnelIds
+        .map((id) => funnelById.get(id))
+        .filter(Boolean)
+        .map((f) => ({
+          id: f!.id,
+          name: f!.name,
+          slug: f!.slug,
+          status: f!.status,
+          created_at: f!.created_at,
+          sheets_connected: !!f!.sheets_webhook_url,
+          leads_count: leadsByFunnel.get(f!.id) ?? 0,
+          completed_leads_count: completedLeadsByFunnel.get(f!.id) ?? 0,
+          partial_leads_count: partialLeadsByFunnel.get(f!.id) ?? 0,
+          last_lead_at: lastLeadByFunnel.get(f!.id) ?? null,
+        }))
+        .sort((a, b) => (b.leads_count - a.leads_count) || String(b.created_at ?? "").localeCompare(String(a.created_at ?? "")));
       return {
         user_id: p.id,
         email: au?.email ?? null,
@@ -160,7 +243,14 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
         last_sign_in_at: au?.last_sign_in_at ?? null,
         plan: p.plan,
         funnels_count: funnelsCount.get(p.id) ?? 0,
+        active_funnels_count: activeFunnelsCount.get(p.id) ?? 0,
+        draft_funnels_count: draftFunnelsCount.get(p.id) ?? 0,
         leads_count: leadsByOwner.get(p.id) ?? 0,
+        completed_leads_count: completedLeadsByOwner.get(p.id) ?? 0,
+        partial_leads_count: partialLeadsByOwner.get(p.id) ?? 0,
+        connected_sheets_count: connectedSheetsCount.get(p.id) ?? 0,
+        last_lead_at: lastLeadByOwner.get(p.id) ?? null,
+        funnels: ownerFunnels,
         subscription: subByUser.get(p.id) ?? null,
       };
     });

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { listAdminCustomers, checkIsAdmin, type AdminCustomerRow } from "@/lib/admin.functions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Search, ShieldCheck, Users, CreditCard, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, ChevronDown, CreditCard, FileSpreadsheet, Loader2, Search, ShieldCheck, Users, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   component: AdminPage,
@@ -107,6 +107,7 @@ function AdminPage() {
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "issues" | "none">("all");
+  const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
 
   const customers = customersQuery.data?.customers ?? [];
 
@@ -137,7 +138,19 @@ function AdminPage() {
     let issues = 0;
     let none = 0;
     let expiringSoon = 0;
+    let totalFunnels = 0;
+    let activeFunnels = 0;
+    let totalLeads = 0;
+    let completedLeads = 0;
+    let partialLeads = 0;
+    let connectedSheets = 0;
     for (const c of customers) {
+      totalFunnels += c.funnels_count;
+      activeFunnels += c.active_funnels_count;
+      totalLeads += c.leads_count;
+      completedLeads += c.completed_leads_count;
+      partialLeads += c.partial_leads_count;
+      connectedSheets += c.connected_sheets_count;
       const s = c.subscription;
       if (!s) {
         none += 1;
@@ -151,7 +164,7 @@ function AdminPage() {
         issues += 1;
       }
     }
-    return { total, active, issues, none, expiringSoon };
+    return { total, active, issues, none, expiringSoon, totalFunnels, activeFunnels, totalLeads, completedLeads, partialLeads, connectedSheets };
   }, [customers]);
 
   if (adminQuery.isLoading) {
@@ -177,7 +190,7 @@ function AdminPage() {
           <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
             <ShieldCheck className="h-7 w-7 text-primary" /> Administração
           </h1>
-          <p className="text-muted-foreground mt-1">Clientes, planos e assinaturas.</p>
+          <p className="text-muted-foreground mt-1">Clientes, planos, funis, leads e sinais de uso.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => customersQuery.refetch()} disabled={customersQuery.isFetching}>
           {customersQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Atualizar"}
@@ -189,12 +202,19 @@ function AdminPage() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
         <StatCard icon={Users} label="Total" value={stats.total} />
         <StatCard icon={CheckCircle2} label="Ativos" value={stats.active} accent="text-primary" />
         <StatCard icon={AlertCircle} label="Problemas" value={stats.issues} accent="text-yellow-700" />
         <StatCard icon={XCircle} label="Sem plano" value={stats.none} accent="text-muted-foreground" />
         <StatCard icon={CreditCard} label="Vence em 7d" value={stats.expiringSoon} accent="text-destructive" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+        <StatCard icon={BarChart3} label="Funis ativos" value={stats.activeFunnels} hint={`${stats.totalFunnels} no total`} accent="text-primary" />
+        <StatCard icon={Activity} label="Leads totais" value={stats.totalLeads} hint={`${stats.completedLeads} completos`} />
+        <StatCard icon={CheckCircle2} label="Completos" value={stats.completedLeads} accent="text-primary" />
+        <StatCard icon={AlertCircle} label="Parciais" value={stats.partialLeads} accent="text-yellow-700" />
+        <StatCard icon={FileSpreadsheet} label="Planilhas" value={stats.connectedSheets} hint="funis conectados" />
       </div>
 
       <Card className="mb-6">
@@ -248,60 +268,145 @@ function AdminPage() {
                   <TableHead>Último acesso</TableHead>
                   <TableHead className="text-right">Funis</TableHead>
                   <TableHead className="text-right">Leads</TableHead>
+                  <TableHead>Último lead</TableHead>
+                  <TableHead>Planilha</TableHead>
                   <TableHead>Ambiente</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center text-muted-foreground py-10">
+                    <TableCell colSpan={12} className="text-center text-muted-foreground py-10">
                       Nenhum cliente encontrado.
                     </TableCell>
                   </TableRow>
                 ) : (
                   filtered.map((c) => {
                     const dleft = daysUntil(c.subscription?.current_period_end ?? null);
+                    const expanded = expandedCustomer === c.user_id;
                     return (
-                      <TableRow key={c.user_id}>
-                        <TableCell>
-                          <div className="font-semibold">{c.name ?? c.clinic_name ?? "—"}</div>
-                          {c.clinic_name && c.name && (
-                            <div className="text-xs text-muted-foreground">{c.clinic_name}</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{c.email ?? "—"}</div>
-                          {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm font-medium">{c.subscription?.price_id ?? c.plan ?? "free"}</span>
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge row={c} />
-                          {c.subscription?.cancel_at_period_end && (
-                            <div className="text-[10px] text-yellow-700 mt-0.5">Cancelará no fim do período</div>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{fmtDate(c.subscription?.current_period_end ?? null)}</div>
-                          {dleft !== null && c.subscription && ["active", "trialing", "canceled"].includes(c.subscription.status) && (
-                            <div className={`text-xs ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-yellow-700" : "text-muted-foreground"}`}>
-                              {dleft < 0 ? `Venceu há ${-dleft}d` : dleft === 0 ? "Vence hoje" : `Em ${dleft}d`}
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">{fmtDate(c.created_at)}</TableCell>
-                        <TableCell className="text-sm">{fmtDateTime(c.last_sign_in_at)}</TableCell>
-                        <TableCell className="text-right tabular-nums">{c.funnels_count}</TableCell>
-                        <TableCell className="text-right tabular-nums">{c.leads_count}</TableCell>
-                        <TableCell>
-                          {c.subscription ? (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${c.subscription.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
-                              {c.subscription.environment}
+                      <Fragment key={c.user_id}>
+                        <TableRow>
+                          <TableCell>
+                            <div className="font-semibold">{c.name ?? c.clinic_name ?? "—"}</div>
+                            {c.clinic_name && c.name && (
+                              <div className="text-xs text-muted-foreground">{c.clinic_name}</div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-1 h-7 px-0 text-xs text-primary hover:bg-transparent"
+                              onClick={() => setExpandedCustomer(expanded ? null : c.user_id)}
+                            >
+                              <ChevronDown className={`mr-1 h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
+                              {expanded ? "Ocultar detalhes" : "Ver detalhes"}
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{c.email ?? "—"}</div>
+                            {c.phone && <div className="text-xs text-muted-foreground">{c.phone}</div>}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm font-medium">{c.subscription?.price_id ?? c.plan ?? "free"}</span>
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge row={c} />
+                            {c.subscription?.cancel_at_period_end && (
+                              <div className="text-[10px] text-yellow-700 mt-0.5">Cancelará no fim do período</div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{fmtDate(c.subscription?.current_period_end ?? null)}</div>
+                            {dleft !== null && c.subscription && ["active", "trialing", "canceled"].includes(c.subscription.status) && (
+                              <div className={`text-xs ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-yellow-700" : "text-muted-foreground"}`}>
+                                {dleft < 0 ? `Venceu há ${-dleft}d` : dleft === 0 ? "Vence hoje" : `Em ${dleft}d`}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm">{fmtDate(c.created_at)}</TableCell>
+                          <TableCell className="text-sm">{fmtDateTime(c.last_sign_in_at)}</TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            <div className="font-semibold">{c.active_funnels_count}/{c.funnels_count}</div>
+                            <div className="text-[10px] text-muted-foreground">ativos/total</div>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            <div className="font-semibold">{c.leads_count}</div>
+                            <div className="text-[10px] text-muted-foreground">{c.completed_leads_count} comp. · {c.partial_leads_count} parc.</div>
+                          </TableCell>
+                          <TableCell className="text-sm">{fmtDateTime(c.last_lead_at)}</TableCell>
+                          <TableCell>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${c.connected_sheets_count > 0 ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                              {c.connected_sheets_count}/{c.funnels_count}
                             </span>
-                          ) : "—"}
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                          <TableCell>
+                            {c.subscription ? (
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${c.subscription.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
+                                {c.subscription.environment}
+                              </span>
+                            ) : "—"}
+                          </TableCell>
+                        </TableRow>
+                        {expanded && (
+                          <TableRow>
+                            <TableCell colSpan={12} className="bg-muted/30 p-4">
+                              <div className="grid gap-3 md:grid-cols-4">
+                                <DetailStat label="Funis publicados" value={`${c.active_funnels_count}/${c.funnels_count}`} />
+                                <DetailStat label="Leads completos" value={c.completed_leads_count.toLocaleString("pt-BR")} />
+                                <DetailStat label="Leads parciais" value={c.partial_leads_count.toLocaleString("pt-BR")} />
+                                <DetailStat label="Último lead" value={fmtDateTime(c.last_lead_at)} />
+                              </div>
+                              <div className="mt-4 overflow-hidden rounded-lg border border-border bg-background">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow>
+                                      <TableHead>Funil</TableHead>
+                                      <TableHead>Status</TableHead>
+                                      <TableHead className="text-right">Leads</TableHead>
+                                      <TableHead className="text-right">Completos</TableHead>
+                                      <TableHead className="text-right">Parciais</TableHead>
+                                      <TableHead>Último lead</TableHead>
+                                      <TableHead>Planilha</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {c.funnels.length === 0 ? (
+                                      <TableRow>
+                                        <TableCell colSpan={7} className="py-6 text-center text-sm text-muted-foreground">
+                                          Cliente ainda não criou funis.
+                                        </TableCell>
+                                      </TableRow>
+                                    ) : (
+                                      c.funnels.map((funnel) => (
+                                        <TableRow key={funnel.id}>
+                                          <TableCell>
+                                            <div className="font-medium">{funnel.name ?? "Sem nome"}</div>
+                                            <div className="text-xs text-muted-foreground">/{funnel.slug ?? "sem-slug"} · criado em {fmtDate(funnel.created_at)}</div>
+                                          </TableCell>
+                                          <TableCell>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full ${funnel.status === "published" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                                              {funnel.status === "published" ? "Publicado" : funnel.status ?? "Rascunho"}
+                                            </span>
+                                          </TableCell>
+                                          <TableCell className="text-right tabular-nums font-semibold">{funnel.leads_count}</TableCell>
+                                          <TableCell className="text-right tabular-nums">{funnel.completed_leads_count}</TableCell>
+                                          <TableCell className="text-right tabular-nums">{funnel.partial_leads_count}</TableCell>
+                                          <TableCell className="text-sm">{fmtDateTime(funnel.last_lead_at)}</TableCell>
+                                          <TableCell>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full ${funnel.sheets_connected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                                              {funnel.sheets_connected ? "Conectada" : "Não conectada"}
+                                            </span>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))
+                                    )}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </Fragment>
                     );
                   })
                 )}
@@ -314,7 +419,7 @@ function AdminPage() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, accent }: { icon: typeof Users; label: string; value: number; accent?: string }) {
+function StatCard({ icon: Icon, label, value, hint, accent }: { icon: typeof Users; label: string; value: number; hint?: string; accent?: string }) {
   return (
     <Card>
       <CardContent className="p-4">
@@ -323,7 +428,17 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: typeof Users; la
           {label}
         </div>
         <div className={`mt-1 text-2xl font-black tabular-nums ${accent ?? ""}`}>{value}</div>
+        {hint && <div className="mt-0.5 text-[11px] text-muted-foreground">{hint}</div>}
       </CardContent>
     </Card>
+  );
+}
+
+function DetailStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-3">
+      <div className="text-[11px] font-medium text-muted-foreground">{label}</div>
+      <div className="mt-1 text-lg font-black tabular-nums">{value}</div>
+    </div>
   );
 }
