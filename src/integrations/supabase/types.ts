@@ -669,6 +669,56 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_alerts: {
+        Row: {
+          created_at: string
+          evolution_instance: string
+          funnel_id: string
+          group_jid: string | null
+          id: string
+          invite_link: string | null
+          last_error: string | null
+          phone_numbers: string[]
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          evolution_instance?: string
+          funnel_id: string
+          group_jid?: string | null
+          id?: string
+          invite_link?: string | null
+          last_error?: string | null
+          phone_numbers?: string[]
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          evolution_instance?: string
+          funnel_id?: string
+          group_jid?: string | null
+          id?: string
+          invite_link?: string | null
+          last_error?: string | null
+          phone_numbers?: string[]
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_alerts_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: true
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
