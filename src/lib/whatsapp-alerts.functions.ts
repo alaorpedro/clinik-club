@@ -166,7 +166,6 @@ export async function provisionWhatsappAlert(funnelId: string): Promise<void> {
 }
 
 function formatLeadMessage(opts: {
-  funnelId: string;
   funnelName: string;
   name?: string | null;
   phone?: string | null;
@@ -196,7 +195,6 @@ function formatLeadMessage(opts: {
   lines.push(
     "",
     `🕒 ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" })}`,
-    `🔗 https://clinik.club/app/funis/${opts.funnelId}/leads`,
   );
   return lines.join("\n");
 }
@@ -227,7 +225,6 @@ export async function postToWhatsAppAlert(
     const { data: funnel } = await supabaseAdmin.from("funnels").select("name").eq("id", funnelId).maybeSingle();
 
     const text = formatLeadMessage({
-      funnelId,
       funnelName: funnel?.name ?? "Funil",
       name: payload.name,
       phone: payload.phone,
