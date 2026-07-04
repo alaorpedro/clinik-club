@@ -385,13 +385,23 @@ export const submitLead = createServerFn({ method: "POST" })
       throw new Error("Este funil está temporariamente indisponível. Tente novamente mais tarde.");
     }
     let isExisting = false;
+    let existingLead: {
+      id: string;
+      status: string | null;
+      answers: Record<string, unknown> | null;
+      utm: Record<string, unknown> | null;
+      email: string | null;
+      name: string | null;
+      phone: string | null;
+    } | null = null;
     if (data.sessionId) {
-      const { data: existingLead } = await supabaseAdmin
+      const { data: existingLeadData } = await supabaseAdmin
         .from("leads")
-        .select("id, status")
+        .select("id, status, answers, utm, email, name, phone")
         .eq("funnel_id", data.funnelId)
         .eq("session_id", data.sessionId)
         .maybeSingle();
+      existingLead = (existingLeadData as typeof existingLead) ?? null;
       isExisting = !!existingLead && (existingLead as any).status === "completed";
     }
     if (!isExisting) {
@@ -400,37 +410,42 @@ export const submitLead = createServerFn({ method: "POST" })
         throw new Error("Limite mensal de leads deste funil atingido. Tente novamente no próximo mês.");
       }
     }
+    const finalAnswers = { ...((existingLead?.answers as any) ?? {}), ...(data.answers ?? {}) };
+    const finalUtm = { ...((existingLead?.utm as any) ?? {}), ...(data.utm ?? {}) };
+    const finalEmail = data.email ?? existingLead?.email ?? null;
+    const finalName = data.name ?? existingLead?.name ?? null;
+    const finalPhone = data.phone ?? existingLead?.phone ?? null;
     if (data.sessionId) {
       const { error } = await supabaseAdmin.from("leads").upsert({
         funnel_id: data.funnelId,
         session_id: data.sessionId,
-        email: data.email ?? null,
-        name: data.name ?? null,
-        phone: data.phone ?? null,
-        answers: (data.answers ?? {}) as any,
-        utm: (data.utm ?? {}) as any,
+        email: finalEmail,
+        name: finalName,
+        phone: finalPhone,
+        answers: finalAnswers as any,
+        utm: finalUtm as any,
         status: "completed",
       }, { onConflict: "funnel_id,session_id" });
       if (error) throw new Error(error.message);
     } else {
       const { error } = await supabaseAdmin.from("leads").insert({
         funnel_id: data.funnelId,
-        email: data.email ?? null,
-        name: data.name ?? null,
-        phone: data.phone ?? null,
-        answers: (data.answers ?? {}) as any,
-        utm: (data.utm ?? {}) as any,
+        email: finalEmail,
+        name: finalName,
+        phone: finalPhone,
+        answers: finalAnswers as any,
+        utm: finalUtm as any,
         status: "completed",
       });
       if (error) throw new Error(error.message);
     }
     await postToSheetsWebhook(data.funnelId, await buildSheetsLeadPayload(data.funnelId, {
       sessionId: data.sessionId ?? null,
-      name: data.name ?? null,
-      email: data.email ?? null,
-      phone: data.phone ?? null,
-      answers: data.answers ?? {},
-      utm: data.utm ?? {},
+      name: finalName,
+      email: finalEmail,
+      phone: finalPhone,
+      answers: finalAnswers,
+      utm: finalUtm,
       status: "completed",
     }));
     return { ok: true };

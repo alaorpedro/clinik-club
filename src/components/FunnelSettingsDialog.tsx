@@ -9,6 +9,9 @@ import { CheckCircle2, Copy, FileSpreadsheet, Send, ShieldCheck, Upload, X } fro
 import { toast } from "sonner";
 
 const APPS_SCRIPT_CODE = `function doPost(e) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = JSON.parse(e.postData.contents);
   const FIXED = ["Session ID","Data","Nome","Email","Telefone","Status","UTM"];
@@ -45,16 +48,35 @@ const APPS_SCRIPT_CODE = `function doPost(e) {
   });
 
   const sessionCol = header.indexOf("Session ID") + 1;
+  const emailCol = header.indexOf("Email") + 1;
+  const phoneCol = header.indexOf("Telefone") + 1;
   let targetRow = 0;
   if (data.session_id && sheet.getLastRow() > 1 && sessionCol > 0) {
     const ids = sheet.getRange(2, sessionCol, sheet.getLastRow() - 1, 1).getValues();
-    for (let i = 0; i < ids.length; i++) {
+    for (let i = ids.length - 1; i >= 0; i--) {
       if (String(ids[i][0]) === String(data.session_id)) {
         targetRow = i + 2;
         break;
       }
     }
   }
+
+  // Compatibilidade com planilhas antigas: se ainda nao havia Session ID,
+  // tenta encontrar a ultima linha do mesmo telefone/e-mail e passa a atualiza-la.
+  if (targetRow === 0 && sheet.getLastRow() > 1) {
+    const lastRows = sheet.getRange(2, 1, sheet.getLastRow() - 1, header.length).getValues();
+    const wantedPhone = String(data.phone || "").replace(/\\D/g, "");
+    const wantedEmail = String(data.email || "").trim().toLowerCase();
+    for (let i = lastRows.length - 1; i >= 0; i--) {
+      const currentPhone = phoneCol > 0 ? String(lastRows[i][phoneCol - 1] || "").replace(/\\D/g, "") : "";
+      const currentEmail = emailCol > 0 ? String(lastRows[i][emailCol - 1] || "").trim().toLowerCase() : "";
+      if ((wantedPhone && currentPhone === wantedPhone) || (wantedEmail && currentEmail === wantedEmail)) {
+        targetRow = i + 2;
+        break;
+      }
+    }
+  }
+
   if (targetRow > 0) {
     sheet.getRange(targetRow, 1, 1, row.length).setValues([row]);
   } else {
@@ -63,6 +85,9 @@ const APPS_SCRIPT_CODE = `function doPost(e) {
 
   return ContentService.createTextOutput(JSON.stringify({ok:true}))
     .setMimeType(ContentService.MimeType.JSON);
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function doGet() {
