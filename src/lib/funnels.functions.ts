@@ -386,7 +386,7 @@ export const submitLead = createServerFn({ method: "POST" })
       throw new Error("Este funil está temporariamente indisponível. Tente novamente mais tarde.");
     }
     let isExisting = false;
-    let existingLead: {
+    type ExistingLead = {
       id: string;
       status: string | null;
       answers: Record<string, unknown> | null;
@@ -394,7 +394,8 @@ export const submitLead = createServerFn({ method: "POST" })
       email: string | null;
       name: string | null;
       phone: string | null;
-    } | null = null;
+    };
+    let existingLead: ExistingLead | null = null;
     if (data.sessionId) {
       const { data: existingLeadData } = await supabaseAdmin
         .from("leads")
@@ -402,8 +403,8 @@ export const submitLead = createServerFn({ method: "POST" })
         .eq("funnel_id", data.funnelId)
         .eq("session_id", data.sessionId)
         .maybeSingle();
-      existingLead = (existingLeadData as typeof existingLead) ?? null;
-      isExisting = !!existingLead && (existingLead as any).status === "completed";
+      existingLead = (existingLeadData as ExistingLead | null) ?? null;
+      isExisting = !!existingLead && existingLead.status === "completed";
     }
     if (!isExisting) {
       const used = await countLeadsThisMonthForOwner(ownerId);
