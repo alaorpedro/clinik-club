@@ -1,6 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "@/lib/stripe.server";
+
+const ACTIVE_STRIPE_STATUSES = new Set(["active", "trialing", "past_due", "unpaid"]);
 
 async function ensureAdmin(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -256,6 +259,57 @@ export const listAdminCustomers = createServerFn({ method: "GET" })
     });
 
     return { customers };
+  });
+
+export const deleteAdminCustomerAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => {
+    if (!d?.userId || typeof d.userId !== "string") throw new Error("userId obrigatório");
+    return { userId: d.userId };
+  })
+  .handler(async ({ context, data }): Promise<{ ok: true } | { error: string }> => {
+    await ensureAdmin(context.userId);
+
+    if (data.userId === context.userId) {
+      return { error: "Você não pode excluir sua própria conta pelo painel admin." };
+    }
+
+    try {
+      const { data: targetUser, error: userError } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+      if (userError || !targetUser?.user) return { error: "Cliente não encontrado." };
+
+      const { data: subscriptions, error: subError } = await supabaseAdmin
+        .from("subscriptions")
+        .select("id, stripe_subscription_id, environment, status")
+        .eq("user_id", data.userId);
+      if (subError) return { error: subError.message };
+
+      for (const subscription of subscriptions ?? []) {
+        if (!subscription.stripe_subscription_id || !ACTIVE_STRIPE_STATUSES.has(subscription.status)) continue;
+        const stripe = createStripeClient(subscription.environment as StripeEnv);
+        await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+      }
+
+      if (subscriptions?.length) {
+        const { error: subscriptionUpdateError } = await supabaseAdmin
+          .from("subscriptions")
+          .update({
+            user_id: null,
+            status: "canceled",
+            cancel_at_period_end: false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", data.userId);
+        if (subscriptionUpdateError) return { error: subscriptionUpdateError.message };
+      }
+
+      const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+      if (deleteError) return { error: deleteError.message };
+
+      return { ok: true };
+    } catch (error) {
+      return { error: getStripeErrorMessage(error) };
+    }
   });
 
 export const checkIsAdmin = createServerFn({ method: "GET" })

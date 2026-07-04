@@ -2,10 +2,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Fragment, useMemo, useState } from "react";
-import { listAdminCustomers, checkIsAdmin, type AdminCustomerRow } from "@/lib/admin.functions";
+import { checkIsAdmin, deleteAdminCustomerAccount, listAdminCustomers, type AdminCustomerRow } from "@/lib/admin.functions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -14,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, ChevronDown, CreditCard, FileSpreadsheet, Loader2, Search, ShieldCheck, Users, XCircle } from "lucide-react";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, ChevronDown, CreditCard, FileSpreadsheet, Loader2, Search, ShieldCheck, Trash2, Users, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   component: AdminPage,
@@ -90,6 +101,7 @@ function StatusBadge({ row }: { row: AdminCustomerRow }) {
 function AdminPage() {
   const checkAdminFn = useServerFn(checkIsAdmin);
   const listFn = useServerFn(listAdminCustomers);
+  const deleteCustomerFn = useServerFn(deleteAdminCustomerAccount);
 
   const adminQuery = useQuery({
     queryKey: ["admin", "isAdmin"],
@@ -108,6 +120,8 @@ function AdminPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "active" | "issues" | "none">("all");
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminCustomerRow | null>(null);
+  const [deletingCustomer, setDeletingCustomer] = useState(false);
 
   const customers = customersQuery.data?.customers ?? [];
 
@@ -166,6 +180,26 @@ function AdminPage() {
     }
     return { total, active, issues, none, expiringSoon, totalFunnels, activeFunnels, totalLeads, completedLeads, partialLeads, connectedSheets };
   }, [customers]);
+
+  async function deleteCustomer() {
+    if (!deleteTarget) return;
+    setDeletingCustomer(true);
+    try {
+      const result = await deleteCustomerFn({ data: { userId: deleteTarget.user_id } });
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Conta excluída com sucesso.");
+      setDeleteTarget(null);
+      setExpandedCustomer(null);
+      await customersQuery.refetch();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao excluir conta.");
+    } finally {
+      setDeletingCustomer(false);
+    }
+  }
 
   if (adminQuery.isLoading) {
     return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -271,12 +305,13 @@ function AdminPage() {
                   <TableHead>Último lead</TableHead>
                   <TableHead>Planilha</TableHead>
                   <TableHead>Ambiente</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={12} className="text-center text-muted-foreground py-10">
+                    <TableCell colSpan={13} className="text-center text-muted-foreground py-10">
                       Nenhum cliente encontrado.
                     </TableCell>
                   </TableRow>
@@ -346,10 +381,20 @@ function AdminPage() {
                               </span>
                             ) : "—"}
                           </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => setDeleteTarget(c)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
                         {expanded && (
                           <TableRow>
-                            <TableCell colSpan={12} className="bg-muted/30 p-4">
+                            <TableCell colSpan={13} className="bg-muted/30 p-4">
                               <div className="grid gap-3 md:grid-cols-4">
                                 <DetailStat label="Funis publicados" value={`${c.active_funnels_count}/${c.funnels_count}`} />
                                 <DetailStat label="Leads completos" value={c.completed_leads_count.toLocaleString("pt-BR")} />
@@ -415,6 +460,30 @@ function AdminPage() {
           </CardContent>
         </Card>
       )}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !deletingCustomer && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conta do cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação cancela assinaturas ativas, remove o acesso do cliente e exclui os dados vinculados à conta no sistema.
+              Não é possível desfazer. Cliente: <strong>{deleteTarget?.email ?? deleteTarget?.name ?? deleteTarget?.clinic_name ?? "sem identificação"}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingCustomer}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletingCustomer}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(event) => {
+                event.preventDefault();
+                deleteCustomer();
+              }}
+            >
+              {deletingCustomer ? "Excluindo..." : "Excluir conta"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
