@@ -76,15 +76,33 @@ async function handleWhatsappAlertsSubscription(subscription: any, env: StripeEn
     return;
   }
 
-  const { data: existing, error: selErr } = await supabase
-    .from("whatsapp_alerts")
-    .select("status")
-    .eq("funnel_id", funnelId)
-    .maybeSingle();
-  requireOk(selErr, "whatsapp_alerts.select");
-  if (!existing) {
-    console.warn("[webhook] whatsapp alert subscription event but no row found for funnel", funnelId);
-    return;
+  const invoicePaid = await isBoletoInitialInvoicePaid(subscription, env);
+
+  // Stripe fires multiple events (subscription.created, subscription.updated, invoice.paid) for
+  // the same "payment just completed" moment, often within milliseconds of each other. A prior
+  // select-then-update here let two deliveries both read status='pending_payment' and both call
+  // provisionWhatsappAlert, sending a duplicate group/participant request to the Evolution API —
+  // which got rate-limited by WhatsApp and disconnected the shared instance entirely on 2026-07-04.
+  // This UPDATE ... WHERE status='pending_payment' is an atomic claim: Postgres serializes concurrent
+  // updates to the same row, so only one delivery's WHERE clause can still match, and only that one
+  // proceeds to provision.
+  if (invoicePaid && ["active", "trialing"].includes(subscription.status)) {
+    const { data: claimed, error: claimErr } = await supabase
+      .from("whatsapp_alerts")
+      .update({
+        status: "provisioning",
+        stripe_subscription_id: subscription.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("funnel_id", funnelId)
+      .eq("status", "pending_payment")
+      .select("funnel_id")
+      .maybeSingle();
+    requireOk(claimErr, "whatsapp_alerts.claim");
+    if (claimed) {
+      await provisionWhatsappAlert(funnelId);
+      return;
+    }
   }
 
   const { error: updErr } = await supabase.from("whatsapp_alerts").update({
@@ -92,16 +110,6 @@ async function handleWhatsappAlertsSubscription(subscription: any, env: StripeEn
     updated_at: new Date().toISOString(),
   }).eq("funnel_id", funnelId);
   requireOk(updErr, "whatsapp_alerts.update(subscription_id)");
-
-  const invoicePaid = await isBoletoInitialInvoicePaid(subscription, env);
-  if (invoicePaid && ["active", "trialing"].includes(subscription.status) && existing.status === "pending_payment") {
-    const { error: provErr } = await supabase.from("whatsapp_alerts").update({
-      status: "provisioning",
-      updated_at: new Date().toISOString(),
-    }).eq("funnel_id", funnelId);
-    requireOk(provErr, "whatsapp_alerts.update(provisioning)");
-    await provisionWhatsappAlert(funnelId);
-  }
 }
 
 async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
