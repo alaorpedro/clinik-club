@@ -3,6 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 import { createStripeClient, type StripeEnv, verifyWebhook } from "@/lib/stripe.server";
 import { provisionWhatsappAlert } from "@/lib/whatsapp-alerts.functions";
 
+const PLAN_MAP: Record<string, string> = {
+  starter_monthly: "starter",
+  starter_yearly: "starter",
+  pro_monthly: "pro",
+  pro_yearly: "pro",
+  agency_monthly: "agency",
+  agency_yearly: "agency",
+};
+
 let _supabase: any = null;
 function getSupabase(): any {
   if (!_supabase) {
@@ -149,15 +158,7 @@ async function handleSubscriptionCreated(subscription: any, env: StripeEnv) {
   );
   requireOk(upsertErr, "subscriptions.upsert");
 
-  const planMap: Record<string, string> = {
-    starter_monthly: "starter",
-    starter_yearly: "starter",
-    pro_monthly: "pro",
-    pro_yearly: "pro",
-    agency_monthly: "agency",
-    agency_yearly: "agency",
-  };
-  const plan = planMap[priceId] ?? "free";
+  const plan = PLAN_MAP[priceId] ?? "free";
   if (linkedUserId) {
     const { error } = await supabase.from("profiles").update({
       ...(invoicePaid && { plan }),
@@ -198,7 +199,12 @@ async function handleSubscriptionUpdated(subscription: any, env: StripeEnv) {
 
   const userId = subscription.metadata?.userId;
   if (userId) {
+    // A boleto subscription goes incomplete -> active via this exact event (Stripe doesn't
+    // always follow up with invoice.paid for the plan tier itself), so plan must be kept in
+    // sync here too — not just subscription_status — or paid customers get stuck showing "free".
+    const plan = PLAN_MAP[priceId] ?? "free";
     const { error } = await supabase.from("profiles").update({
+      ...(invoicePaid && { plan }),
       subscription_status: invoicePaid ? subscription.status : "incomplete",
     }).eq("id", userId);
     requireOk(error, "profiles.update(updated)");
@@ -251,15 +257,7 @@ async function handleInvoicePaid(invoice: any, env: StripeEnv) {
   );
   requireOk(upsertErr, "subscriptions.upsert(invoice.paid)");
 
-  const planMap: Record<string, string> = {
-    starter_monthly: "starter",
-    starter_yearly: "starter",
-    pro_monthly: "pro",
-    pro_yearly: "pro",
-    agency_monthly: "agency",
-    agency_yearly: "agency",
-  };
-  const plan = planMap[priceId] ?? "free";
+  const plan = PLAN_MAP[priceId] ?? "free";
   if (userId) {
     const { error } = await supabase.from("profiles").update({
       plan,
