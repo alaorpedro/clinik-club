@@ -621,6 +621,17 @@ export const deleteFunnel = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+async function suggestAvailableSlug(baseSlug: string): Promise<string> {
+  const { data: rows } = await supabaseAdmin
+    .from("funnels")
+    .select("slug")
+    .or(`slug.eq.${baseSlug},slug.ilike.${baseSlug}-%`);
+  const taken = new Set((rows ?? []).map((r: any) => r.slug as string));
+  let n = 2;
+  while (taken.has(`${baseSlug}-${n}`)) n += 1;
+  return `${baseSlug}-${n}`;
+}
+
 export const createFunnelChecked = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -660,7 +671,11 @@ export const createFunnelChecked = createServerFn({ method: "POST" })
       .single();
     if (error) {
       if ((error as any).code === "23505" || /duplicate|unique/i.test(error.message)) {
-        throw new Error("Já existe um funil com esse nome. Escolha outro.");
+        // Slugs are the public URL (/f/<slug>) and must be unique across every clinic on the
+        // platform, not just this account — a name collision with another customer is expected,
+        // so suggest the next free variant instead of a dead-end error.
+        const suggestedSlug = await suggestAvailableSlug(data.slug);
+        return { error: "slug_taken" as const, slug: data.slug, suggestedSlug };
       }
       throw new Error(error.message);
     }

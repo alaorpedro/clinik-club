@@ -83,6 +83,29 @@ function AppHome() {
     })();
   }, [getPlanUsageFn]);
 
+  async function attemptCreateFunnel(name: string, slug: string) {
+    try {
+      const data = await createFunnelFn({ data: { name, slug, environment: getPaymentsEnvironment() } });
+      if (data && "error" in data && data.error === "slug_taken") {
+        const useSuggestion = await showConfirm({
+          title: "Esse link já está em uso",
+          description: `Já existe outro funil usando "/f/${data.slug}" (o link é único em toda a plataforma). Quer usar "/f/${data.suggestedSlug}" no lugar?`,
+          okText: `Usar /f/${data.suggestedSlug}`,
+          cancelText: "Escolher outro nome",
+        });
+        if (useSuggestion) {
+          await attemptCreateFunnel(name, data.suggestedSlug);
+        }
+        return;
+      }
+      toast.success("Funil criado!");
+      setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
+      setUsage((prev) => prev ? { ...prev, funnelsUsed: prev.funnelsUsed + 1 } : prev);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao criar funil.");
+    }
+  }
+
   async function createFunnel() {
     if (!hasPlan) {
       toast.error("Você precisa de um plano ativo para criar funis.");
@@ -100,14 +123,7 @@ function AppHome() {
       toast.error("Nome inválido para gerar o link do funil.");
       return;
     }
-    try {
-      const data = await createFunnelFn({ data: { name, slug, environment: getPaymentsEnvironment() } });
-      toast.success("Funil criado!");
-      setFunnels((prev) => [data as Funnel, ...(prev ?? [])]);
-      setUsage((prev) => prev ? { ...prev, funnelsUsed: prev.funnelsUsed + 1 } : prev);
-    } catch (err: any) {
-      toast.error(err?.message ?? "Erro ao criar funil.");
-    }
+    await attemptCreateFunnel(name, slug);
   }
 
   async function handleDelete(f: Funnel) {
