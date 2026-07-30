@@ -189,9 +189,14 @@ function AdminPaymentsPage() {
           </h1>
           <p className="text-muted-foreground mt-1">Assinaturas, falhas de cobrança e ações rápidas.</p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => paymentsQuery.refetch()} disabled={paymentsQuery.isFetching}>
-          {paymentsQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Link to="/app/admin/nf">Notas fiscais</Link>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => paymentsQuery.refetch()} disabled={paymentsQuery.isFetching}>
+            {paymentsQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

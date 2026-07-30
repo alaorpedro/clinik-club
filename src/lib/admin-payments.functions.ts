@@ -235,6 +235,142 @@ export const retryInvoicePayment = createServerFn({ method: "POST" })
     }
   });
 
+export type ConfirmedPaymentRow = {
+  payment_id: string;
+  environment: string;
+  amount: number;
+  currency: string;
+  paid: boolean;
+  refunded: boolean;
+  amount_refunded: number;
+  paid_at: string | null;
+  description: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  clinic_name: string | null;
+  payment_method: string | null;
+  receipt_url: string | null;
+  stripe_customer_id: string | null;
+  nf_issued: boolean;
+  nf_issued_at: string | null;
+};
+
+// payment_nf_status was created outside Lovable's migration flow, so the
+// generated Database types don't know it yet.
+function nfStatusTable() {
+  return (supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient).from("payment_nf_status");
+}
+
+export const listConfirmedPayments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ payments: ConfirmedPaymentRow[] }> => {
+    await ensureAdmin(context.userId);
+
+    const rows: ConfirmedPaymentRow[] = [];
+    for (const env of ["live", "sandbox"] as StripeEnv[]) {
+      let stripe: ReturnType<typeof createStripeClient>;
+      try {
+        stripe = createStripeClient(env);
+      } catch {
+        continue;
+      }
+      let charges;
+      try {
+        charges = await stripe.charges.list({ limit: 100 });
+      } catch (e) {
+        console.error(`Failed to list ${env} charges`, e);
+        continue;
+      }
+      for (const ch of charges.data) {
+        if (!ch.paid) continue;
+        rows.push({
+          payment_id: ch.id,
+          environment: env,
+          amount: toMajor(ch.amount_captured || ch.amount, ch.currency),
+          currency: ch.currency,
+          paid: ch.paid,
+          refunded: ch.refunded,
+          amount_refunded: toMajor(ch.amount_refunded, ch.currency),
+          paid_at: isoFromUnix(ch.created),
+          description: ch.description ?? null,
+          customer_email: ch.billing_details?.email ?? null,
+          customer_name: ch.billing_details?.name ?? null,
+          clinic_name: null,
+          payment_method: ch.payment_method_details?.type ?? null,
+          receipt_url: ch.receipt_url ?? null,
+          stripe_customer_id: typeof ch.customer === "string" ? ch.customer : (ch.customer?.id ?? null),
+          nf_issued: false,
+          nf_issued_at: null,
+        });
+      }
+    }
+    if (!rows.length) return { payments: [] };
+
+    // clinic name via subscriptions -> profiles
+    const customerIds = Array.from(new Set(rows.map((r) => r.stripe_customer_id).filter(Boolean))) as string[];
+    if (customerIds.length) {
+      const { data: subs } = await supabaseAdmin
+        .from("subscriptions")
+        .select("stripe_customer_id, user_id")
+        .in("stripe_customer_id", customerIds);
+      const userByCustomer = new Map<string, string>();
+      for (const s of subs ?? []) if (s.user_id) userByCustomer.set(s.stripe_customer_id, s.user_id);
+      const userIds = Array.from(new Set(userByCustomer.values()));
+      if (userIds.length) {
+        const { data: profs } = await supabaseAdmin
+          .from("profiles")
+          .select("id, clinic_name")
+          .in("id", userIds);
+        const clinicByUser = new Map<string, string | null>();
+        for (const p of profs ?? []) clinicByUser.set(p.id, p.clinic_name);
+        for (const r of rows) {
+          const uid = r.stripe_customer_id ? userByCustomer.get(r.stripe_customer_id) : undefined;
+          if (uid) r.clinic_name = clinicByUser.get(uid) ?? null;
+        }
+      }
+    }
+
+    // NF status join
+    const { data: nfRows, error: nfError } = await nfStatusTable()
+      .select("payment_id, nf_issued, nf_issued_at")
+      .in("payment_id", rows.map((r) => r.payment_id));
+    if (nfError) throw new Error(nfError.message);
+    const nfById = new Map<string, { nf_issued: boolean; nf_issued_at: string | null }>();
+    for (const n of nfRows ?? []) nfById.set(n.payment_id, { nf_issued: n.nf_issued, nf_issued_at: n.nf_issued_at });
+    for (const r of rows) {
+      const nf = nfById.get(r.payment_id);
+      if (nf) {
+        r.nf_issued = nf.nf_issued;
+        r.nf_issued_at = nf.nf_issued_at;
+      }
+    }
+
+    rows.sort((a, b) => (b.paid_at ?? "").localeCompare(a.paid_at ?? ""));
+    return { payments: rows };
+  });
+
+export const setPaymentNfIssued = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { paymentId: string; environment: StripeEnv; issued: boolean }) => {
+    if (!/^(ch|py)_[a-zA-Z0-9]+$/.test(data.paymentId)) throw new Error("Invalid paymentId");
+    if (data.environment !== "live" && data.environment !== "sandbox") throw new Error("Invalid environment");
+    return data;
+  })
+  .handler(async ({ data, context }): Promise<ActionResult> => {
+    await ensureAdmin(context.userId);
+    const now = new Date().toISOString();
+    const { error } = await nfStatusTable().upsert({
+      payment_id: data.paymentId,
+      environment: data.environment,
+      nf_issued: data.issued,
+      nf_issued_at: data.issued ? now : null,
+      nf_issued_by: data.issued ? context.userId : null,
+      updated_at: now,
+    });
+    if (error) return { error: error.message };
+    return { ok: true, message: data.issued ? "NF marcada como emitida." : "Marcação de NF removida." };
+  });
+
 export const openCustomerPortalAsAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { customerId: string; environment: StripeEnv; returnUrl?: string }) => {

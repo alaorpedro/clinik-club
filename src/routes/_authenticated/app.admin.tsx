@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Activity, AlertCircle, BarChart3, CheckCircle2, ChevronDown, CreditCard, FileSpreadsheet, Loader2, Search, ShieldCheck, Trash2, Users, XCircle } from "lucide-react";
+import { Activity, AlertCircle, BarChart3, CheckCircle2, ChevronDown, CreditCard, FileSpreadsheet, Loader2, ReceiptText, Search, ShieldCheck, Trash2, Users, XCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   component: AdminPage,
@@ -245,6 +245,9 @@ function AdminPage() {
       <div className="mb-6 flex flex-wrap gap-2">
         <Button asChild size="sm" variant="default" className="rounded-full">
           <Link to="/app/admin/pagamentos"><CreditCard className="h-4 w-4 mr-1.5" /> Pagamentos & assinaturas</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline" className="rounded-full">
+          <Link to="/app/admin/nf"><ReceiptText className="h-4 w-4 mr-1.5" /> Notas fiscais</Link>
         </Button>
       </div>
 

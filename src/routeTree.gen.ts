@@ -39,6 +39,7 @@ import { Route as AuthenticatedAppCrmPipelinesRouteImport } from './routes/_auth
 import { Route as AuthenticatedAppCrmLeadsRouteImport } from './routes/_authenticated/app.crm.leads'
 import { Route as AuthenticatedAppCrmConfiguracoesRouteImport } from './routes/_authenticated/app.crm.configuracoes'
 import { Route as AuthenticatedAppAdminPagamentosRouteImport } from './routes/_authenticated/app.admin.pagamentos'
+import { Route as AuthenticatedAppAdminNfRouteImport } from './routes/_authenticated/app.admin.nf'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
 import { Route as AuthenticatedAppFunisIdEditarRouteImport } from './routes/_authenticated/app.funis.$id.editar'
 
@@ -200,6 +201,11 @@ const AuthenticatedAppAdminPagamentosRoute =
     path: '/pagamentos',
     getParentRoute: () => AuthenticatedAppAdminRoute,
   } as any)
+const AuthenticatedAppAdminNfRoute = AuthenticatedAppAdminNfRouteImport.update({
+  id: '/nf',
+  path: '/nf',
+  getParentRoute: () => AuthenticatedAppAdminRoute,
+} as any)
 const AuthenticatedAppFunisIdLeadsRoute =
   AuthenticatedAppFunisIdLeadsRouteImport.update({
     id: '/funis/$id/leads',
@@ -232,6 +238,7 @@ export interface FileRoutesByFullPath {
   '/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/app/cupons': typeof AuthenticatedAppCuponsRoute
   '/app/': typeof AuthenticatedAppIndexRoute
+  '/app/admin/nf': typeof AuthenticatedAppAdminNfRoute
   '/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
   '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
@@ -263,6 +270,7 @@ export interface FileRoutesByTo {
   '/app/conta': typeof AuthenticatedAppContaRoute
   '/app/cupons': typeof AuthenticatedAppCuponsRoute
   '/app': typeof AuthenticatedAppIndexRoute
+  '/app/admin/nf': typeof AuthenticatedAppAdminNfRoute
   '/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
   '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
@@ -298,6 +306,7 @@ export interface FileRoutesById {
   '/_authenticated/app/crm': typeof AuthenticatedAppCrmRouteWithChildren
   '/_authenticated/app/cupons': typeof AuthenticatedAppCuponsRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
+  '/_authenticated/app/admin/nf': typeof AuthenticatedAppAdminNfRoute
   '/_authenticated/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
   '/_authenticated/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/_authenticated/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
@@ -333,6 +342,7 @@ export interface FileRouteTypes {
     | '/app/crm'
     | '/app/cupons'
     | '/app/'
+    | '/app/admin/nf'
     | '/app/admin/pagamentos'
     | '/app/crm/configuracoes'
     | '/app/crm/leads'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/app/conta'
     | '/app/cupons'
     | '/app'
+    | '/app/admin/nf'
     | '/app/admin/pagamentos'
     | '/app/crm/configuracoes'
     | '/app/crm/leads'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/crm'
     | '/_authenticated/app/cupons'
     | '/_authenticated/app/'
+    | '/_authenticated/app/admin/nf'
     | '/_authenticated/app/admin/pagamentos'
     | '/_authenticated/app/crm/configuracoes'
     | '/_authenticated/app/crm/leads'
@@ -645,6 +657,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppAdminPagamentosRouteImport
       parentRoute: typeof AuthenticatedAppAdminRoute
     }
+    '/_authenticated/app/admin/nf': {
+      id: '/_authenticated/app/admin/nf'
+      path: '/nf'
+      fullPath: '/app/admin/nf'
+      preLoaderRoute: typeof AuthenticatedAppAdminNfRouteImport
+      parentRoute: typeof AuthenticatedAppAdminRoute
+    }
     '/_authenticated/app/funis/$id/leads': {
       id: '/_authenticated/app/funis/$id/leads'
       path: '/funis/$id/leads'
@@ -663,10 +682,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppAdminRouteChildren {
+  AuthenticatedAppAdminNfRoute: typeof AuthenticatedAppAdminNfRoute
   AuthenticatedAppAdminPagamentosRoute: typeof AuthenticatedAppAdminPagamentosRoute
 }
 
 const AuthenticatedAppAdminRouteChildren: AuthenticatedAppAdminRouteChildren = {
+  AuthenticatedAppAdminNfRoute: AuthenticatedAppAdminNfRoute,
   AuthenticatedAppAdminPagamentosRoute: AuthenticatedAppAdminPagamentosRoute,
 }
 
@@ -753,3 +774,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
