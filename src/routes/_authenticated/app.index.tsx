@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown, Trash2, Users, MousePointer2, BarChart3, TrendingUp } from "lucide-react";
+import { Plus, Sparkles, Copy, Settings, Lock, CheckCircle2, Crown, Trash2, Users, MousePointer2, BarChart3, TrendingUp, ReceiptText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { PlansDialog } from "@/components/PlansDialog";
 import { showPrompt, showConfirm } from "@/components/ModalDialogs";
 import { useServerFn } from "@tanstack/react-start";
 import { createFunnelChecked, deleteFunnel, getPlanUsage } from "@/lib/funnels.functions";
+import { getMyBillingProfile } from "@/lib/account.functions";
 
 type PaymentsEnv = "sandbox" | "live";
 
@@ -53,6 +54,7 @@ function AppHome() {
     funnelsUsed: number;
     leadsUsedThisMonth: number;
   } | null>(null);
+  const [billingIncomplete, setBillingIncomplete] = useState<boolean | null>(null);
   const deleteFunnelFn = useServerFn(deleteFunnel);
   const createFunnelFn = useServerFn(createFunnelChecked);
   const getPlanUsageFn = useServerFn(getPlanUsage);
@@ -79,6 +81,12 @@ function AppHome() {
       } catch (err: any) {
         setHasPlan(false);
         toast.error(err?.message ?? "Não foi possível verificar seu plano.");
+      }
+      try {
+        const { billing } = await getMyBillingProfile();
+        setBillingIncomplete(!billing?.tax_id);
+      } catch {
+        // never block the dashboard over the billing reminder
       }
     })();
   }, [getPlanUsageFn]);
@@ -157,6 +165,20 @@ function AppHome() {
           </div>
           <Button size="sm" onClick={() => setPlansOpen(true)} className="rounded-full font-semibold shrink-0">
             Ver planos
+          </Button>
+        </div>
+      )}
+      {hasPlan === true && billingIncomplete === true && (
+        <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 flex items-center gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-600">
+            <ReceiptText className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-sm">Complete seus dados de faturamento</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Precisamos do seu CNPJ ou CPF e endereço para emitir a nota fiscal dos seus pagamentos.</p>
+          </div>
+          <Button asChild size="sm" variant="outline" className="rounded-full font-semibold shrink-0">
+            <Link to="/app/conta">Completar dados</Link>
           </Button>
         </div>
       )}
