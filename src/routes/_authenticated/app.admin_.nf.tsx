@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/app/admin/nf")({
+export const Route = createFileRoute("/_authenticated/app/admin_/nf")({
   component: AdminNfPage,
   errorComponent: ({ error, reset }) => (
     <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">
