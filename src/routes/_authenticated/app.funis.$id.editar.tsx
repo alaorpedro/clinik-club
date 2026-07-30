@@ -46,6 +46,7 @@ const STEP_TYPES = [
   { value: "input", label: "Campo de texto" },
   { value: "lead", label: "Página final" },
   { value: "contact", label: "Nome + Telefone" },
+  { value: "contact_full", label: "Nome + Telefone + Cidade + Bairro" },
 ];
 
 function EditFunnel() {
@@ -460,6 +461,7 @@ function defaultConfig(type: string): any {
     case "input": return { title: "Qual a sua resposta?", placeholder: "Digite aqui...", cta: "Continuar" };
     case "lead": return { title: "Parabéns pela sua decisão, {nome}!", subtitle: "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade." };
     case "contact": return { title: "Deixe seu contato", cta: "Enviar", namePlaceholder: "Seu nome", phonePlaceholder: "Seu WhatsApp" };
+    case "contact_full": return { title: "Deixe seu contato", cta: "Enviar", namePlaceholder: "Seu nome", phonePlaceholder: "Seu WhatsApp", cityPlaceholder: "Sua cidade", neighborhoodPlaceholder: "Seu bairro" };
     default: return {};
   }
 }
@@ -537,7 +539,7 @@ function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: {
             </div>
           )}
 
-          {step.type === "contact" && (
+          {(step.type === "contact" || step.type === "contact_full") && (
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs">Placeholder do nome</Label>
@@ -547,6 +549,18 @@ function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: {
                 <Label className="text-xs">Placeholder do telefone</Label>
                 <Input value={cfg.phonePlaceholder ?? ""} onChange={(e) => setCfg({ phonePlaceholder: e.target.value })} />
               </div>
+              {step.type === "contact_full" && (
+                <>
+                  <div>
+                    <Label className="text-xs">Placeholder da cidade</Label>
+                    <Input value={cfg.cityPlaceholder ?? ""} onChange={(e) => setCfg({ cityPlaceholder: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Placeholder do bairro</Label>
+                    <Input value={cfg.neighborhoodPlaceholder ?? ""} onChange={(e) => setCfg({ neighborhoodPlaceholder: e.target.value })} />
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -980,10 +994,16 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
                   ))}
                 </div>
               )}
-              {step.type === "contact" && (
+              {(step.type === "contact" || step.type === "contact_full") && (
                 <div className="mt-3 space-y-1.5">
                   <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.namePlaceholder || "Seu nome"}</div>
                   <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.phonePlaceholder || "Seu WhatsApp"}</div>
+                  {step.type === "contact_full" && (
+                    <>
+                      <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.cityPlaceholder || "Sua cidade"}</div>
+                      <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.neighborhoodPlaceholder || "Seu bairro"}</div>
+                    </>
+                  )}
                 </div>
               )}
               <div className={`${btnCls} ${ring("cta")}`} onClick={click("cta")}>{cfg.cta || "Continuar"}</div>

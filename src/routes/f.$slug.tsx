@@ -403,6 +403,8 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
   const key = `step_${step.id}`;
   const [value, setValue] = useState<any>("");
   const [lead, setLead] = useState({ name: "", email: "", phone: "" });
+  const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
 
   const delaySec = Math.max(0, Number(cfg.ctaDelaySeconds) || 0);
   const [ctaReady, setCtaReady] = useState(delaySec === 0);
@@ -588,6 +590,21 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
           <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
         </div>
         <Cta disabled={!lead.name || !lead.phone} onClick={() => onNext(undefined, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
+      </div>
+    );
+  }
+
+  if (step.type === "contact_full") {
+    return (
+      <div>
+        {header}
+        <div className="mt-6 space-y-3">
+          <Input placeholder={cfg.namePlaceholder || "Seu nome"} value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
+          <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
+          <Input placeholder={cfg.cityPlaceholder || "Sua cidade"} value={city} onChange={(e) => setCity(e.target.value)} />
+          <Input placeholder={cfg.neighborhoodPlaceholder || "Seu bairro"} value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
+        </div>
+        <Cta disabled={!lead.name || !lead.phone || !city || !neighborhood} onClick={() => onNext({ Cidade: city, Bairro: neighborhood }, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
       </div>
     );
   }

@@ -261,6 +261,14 @@ async function buildSheetsLeadPayload(
   const questions: string[] = [];
   const answers_pretty: Record<string, unknown> = {};
   for (const s of (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>) {
+    if (s.type === "contact_full") {
+      // Cidade/Bairro são gravados em answers com chaves fixas pelo StepView
+      for (const label of ["Cidade", "Bairro"]) {
+        questions.push(label);
+        answers_pretty[label] = answersIn[label] ?? "";
+      }
+      continue;
+    }
     if (s.type === "contact" || s.type === "lead" || s.type === "text") continue;
     const title = (s.config?.title as string) || `Etapa ${s.order ?? ""}`.trim();
     const key = `step_${s.id}`;
