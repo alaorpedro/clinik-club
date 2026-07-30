@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { ChevronLeft, GripVertical, Plus, Trash2, Eye, Globe, Copy, Upload, X, Save, CheckCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
@@ -45,9 +46,26 @@ const STEP_TYPES = [
   { value: "multiple", label: "Múltipla escolha" },
   { value: "input", label: "Campo de texto" },
   { value: "lead", label: "Página final" },
-  { value: "contact", label: "Nome + Telefone" },
-  { value: "contact_full", label: "Nome + Telefone + Cidade + Bairro" },
+  { value: "contact", label: "Dados de contato" },
 ];
+
+export type ContactFieldKey = "name" | "phone" | "city" | "neighborhood";
+export const CONTACT_FIELD_LABELS: Record<ContactFieldKey, string> = {
+  name: "Nome",
+  phone: "Telefone (WhatsApp)",
+  city: "Cidade",
+  neighborhood: "Bairro",
+};
+// Ausência de cfg.fields = comportamento antigo (só nome + telefone)
+export function contactFields(cfg: any): Record<ContactFieldKey, boolean> {
+  const f = cfg?.fields ?? {};
+  return {
+    name: f.name !== false,
+    phone: f.phone !== false,
+    city: f.city === true,
+    neighborhood: f.neighborhood === true,
+  };
+}
 
 function EditFunnel() {
   const { id } = Route.useParams();
@@ -460,8 +478,7 @@ function defaultConfig(type: string): any {
     case "multiple": return { title: "Selecione todas que se aplicam", options: ["Item 1", "Item 2"], cta: "Continuar" };
     case "input": return { title: "Qual a sua resposta?", placeholder: "Digite aqui...", cta: "Continuar" };
     case "lead": return { title: "Parabéns pela sua decisão, {nome}!", subtitle: "Seu perfil foi pré-aprovado para uma consulta avaliativa em nossa unidade." };
-    case "contact": return { title: "Deixe seu contato", cta: "Enviar", namePlaceholder: "Seu nome", phonePlaceholder: "Seu WhatsApp" };
-    case "contact_full": return { title: "Deixe seu contato", cta: "Enviar", namePlaceholder: "Seu nome", phonePlaceholder: "Seu WhatsApp", cityPlaceholder: "Sua cidade", neighborhoodPlaceholder: "Seu bairro" };
+    case "contact": return { title: "Deixe seu contato", cta: "Enviar", namePlaceholder: "Seu nome", phonePlaceholder: "Seu WhatsApp", cityPlaceholder: "Sua cidade", neighborhoodPlaceholder: "Seu bairro", fields: { name: true, phone: true, city: true, neighborhood: true } };
     default: return {};
   }
 }
@@ -539,30 +556,34 @@ function StepEditor({ step, steps, onChange, onDelete, onMoveUp, onMoveDown }: {
             </div>
           )}
 
-          {(step.type === "contact" || step.type === "contact_full") && (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">Placeholder do nome</Label>
-                <Input value={cfg.namePlaceholder ?? ""} onChange={(e) => setCfg({ namePlaceholder: e.target.value })} />
-              </div>
-              <div>
-                <Label className="text-xs">Placeholder do telefone</Label>
-                <Input value={cfg.phonePlaceholder ?? ""} onChange={(e) => setCfg({ phonePlaceholder: e.target.value })} />
-              </div>
-              {step.type === "contact_full" && (
-                <>
-                  <div>
-                    <Label className="text-xs">Placeholder da cidade</Label>
-                    <Input value={cfg.cityPlaceholder ?? ""} onChange={(e) => setCfg({ cityPlaceholder: e.target.value })} />
+          {step.type === "contact" && (() => {
+            const fields = contactFields(cfg);
+            const activeCount = Object.values(fields).filter(Boolean).length;
+            const placeholderKey: Record<ContactFieldKey, string> = { name: "namePlaceholder", phone: "phonePlaceholder", city: "cityPlaceholder", neighborhood: "neighborhoodPlaceholder" };
+            return (
+              <div className="space-y-2">
+                <Label className="text-xs">Campos do formulário</Label>
+                {(Object.keys(CONTACT_FIELD_LABELS) as ContactFieldKey[]).map((k) => (
+                  <div key={k} className={`flex items-center gap-3 rounded-lg border border-border px-3 py-2 ${fields[k] ? "" : "opacity-50"}`}>
+                    <Switch
+                      checked={fields[k]}
+                      disabled={fields[k] && activeCount === 1}
+                      onCheckedChange={(on) => setCfg({ fields: { ...fields, [k]: on } })}
+                    />
+                    <span className="text-xs font-medium w-36 shrink-0">{CONTACT_FIELD_LABELS[k]}</span>
+                    <Input
+                      className="h-8 text-xs"
+                      disabled={!fields[k]}
+                      placeholder="Placeholder"
+                      value={cfg[placeholderKey[k]] ?? ""}
+                      onChange={(e) => setCfg({ [placeholderKey[k]]: e.target.value })}
+                    />
                   </div>
-                  <div>
-                    <Label className="text-xs">Placeholder do bairro</Label>
-                    <Input value={cfg.neighborhoodPlaceholder ?? ""} onChange={(e) => setCfg({ neighborhoodPlaceholder: e.target.value })} />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+                ))}
+                <p className="text-[11px] text-muted-foreground">Você também pode remover um campo pelo “×” no preview ao lado. Pelo menos um campo fica ativo.</p>
+              </div>
+            );
+          })()}
 
           {step.type !== "single" && (
             <div>
@@ -994,18 +1015,44 @@ function PhonePreview({ step, clinicName, clinicLogo, onChange }: { step: Step |
                   ))}
                 </div>
               )}
-              {(step.type === "contact" || step.type === "contact_full") && (
-                <div className="mt-3 space-y-1.5">
-                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.namePlaceholder || "Seu nome"}</div>
-                  <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.phonePlaceholder || "Seu WhatsApp"}</div>
-                  {step.type === "contact_full" && (
-                    <>
-                      <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.cityPlaceholder || "Sua cidade"}</div>
-                      <div className="px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">{cfg.neighborhoodPlaceholder || "Seu bairro"}</div>
-                    </>
-                  )}
-                </div>
-              )}
+              {step.type === "contact" && (() => {
+                const fields = contactFields(cfg);
+                const items: { k: ContactFieldKey; text: string }[] = [
+                  { k: "name", text: cfg.namePlaceholder || "Seu nome" },
+                  { k: "phone", text: cfg.phonePlaceholder || "Seu WhatsApp" },
+                  { k: "city", text: cfg.cityPlaceholder || "Sua cidade" },
+                  { k: "neighborhood", text: cfg.neighborhoodPlaceholder || "Seu bairro" },
+                ];
+                const activeCount = items.filter((i) => fields[i.k]).length;
+                return (
+                  <div className="mt-3 space-y-1.5">
+                    {items.filter((i) => fields[i.k]).map((i) => (
+                      <div key={i.k} className="group relative flex items-center px-2 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground">
+                        <span className="truncate flex-1">{i.text}</span>
+                        {editable && activeCount > 1 && (
+                          <button
+                            title={`Remover campo ${CONTACT_FIELD_LABELS[i.k]}`}
+                            onClick={(e) => { e.stopPropagation(); onChange!({ fields: { ...fields, [i.k]: false } }); }}
+                            className="shrink-0 ml-1 h-4 w-4 rounded-full flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {editable && items.filter((i) => !fields[i.k]).map((i) => (
+                      <button
+                        key={i.k}
+                        title={`Adicionar campo ${CONTACT_FIELD_LABELS[i.k]}`}
+                        onClick={(e) => { e.stopPropagation(); onChange!({ fields: { ...fields, [i.k]: true } }); }}
+                        className="w-full flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg border border-dashed border-border text-[11px] text-muted-foreground/70 hover:border-primary/50 hover:text-primary transition"
+                      >
+                        <Plus className="h-3 w-3" /> {CONTACT_FIELD_LABELS[i.k]}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
               <div className={`${btnCls} ${ring("cta")}`} onClick={click("cta")}>{cfg.cta || "Continuar"}</div>
             </div>
           )}

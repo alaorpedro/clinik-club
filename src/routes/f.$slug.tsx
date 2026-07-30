@@ -385,6 +385,17 @@ function PublicFunnel() {
   );
 }
 
+// Espelha contactFields do editor: sem cfg.fields = só nome + telefone (funis antigos)
+function contactFieldsPublic(cfg: any): { name: boolean; phone: boolean; city: boolean; neighborhood: boolean } {
+  const f = cfg?.fields ?? {};
+  return {
+    name: f.name !== false,
+    phone: f.phone !== false,
+    city: f.city === true,
+    neighborhood: f.neighborhood === true,
+  };
+}
+
 type QuizOpt = { label: string; action: "continue" | "disqualify" | "jump"; targetStepId?: string };
 function normalizeOpts(raw: any): QuizOpt[] {
   if (!Array.isArray(raw)) return [];
@@ -582,29 +593,27 @@ function StepView({ step, onNext, onJump, onDisqualify, isLast }: { step: Step; 
   }
 
   if (step.type === "contact") {
+    const fields = contactFieldsPublic(cfg);
+    const missing = (fields.name && !lead.name) || (fields.phone && !lead.phone) || (fields.city && !city) || (fields.neighborhood && !neighborhood);
+    function submitContact() {
+      const extra: Record<string, unknown> = {};
+      if (fields.city) extra.Cidade = city;
+      if (fields.neighborhood) extra.Bairro = neighborhood;
+      const leadExtra: { name?: string; phone?: string } = {};
+      if (fields.name) leadExtra.name = lead.name;
+      if (fields.phone) leadExtra.phone = lead.phone;
+      onNext(Object.keys(extra).length ? extra : undefined, leadExtra);
+    }
     return (
       <div>
         {header}
         <div className="mt-6 space-y-3">
-          <Input placeholder={cfg.namePlaceholder || "Seu nome"} value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
-          <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
+          {fields.name && <Input placeholder={cfg.namePlaceholder || "Seu nome"} value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />}
+          {fields.phone && <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />}
+          {fields.city && <Input placeholder={cfg.cityPlaceholder || "Sua cidade"} value={city} onChange={(e) => setCity(e.target.value)} />}
+          {fields.neighborhood && <Input placeholder={cfg.neighborhoodPlaceholder || "Seu bairro"} value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />}
         </div>
-        <Cta disabled={!lead.name || !lead.phone} onClick={() => onNext(undefined, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
-      </div>
-    );
-  }
-
-  if (step.type === "contact_full") {
-    return (
-      <div>
-        {header}
-        <div className="mt-6 space-y-3">
-          <Input placeholder={cfg.namePlaceholder || "Seu nome"} value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} />
-          <Input placeholder={cfg.phonePlaceholder || "Seu WhatsApp"} type="tel" value={lead.phone} onChange={(e) => setLead({ ...lead, phone: maskPhone(e.target.value) })} />
-          <Input placeholder={cfg.cityPlaceholder || "Sua cidade"} value={city} onChange={(e) => setCity(e.target.value)} />
-          <Input placeholder={cfg.neighborhoodPlaceholder || "Seu bairro"} value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} />
-        </div>
-        <Cta disabled={!lead.name || !lead.phone || !city || !neighborhood} onClick={() => onNext({ Cidade: city, Bairro: neighborhood }, { name: lead.name, phone: lead.phone })}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
+        <Cta disabled={missing} onClick={submitContact}>{cfg.cta || (isLast ? "Enviar" : "Continuar")}</Cta>
       </div>
     );
   }

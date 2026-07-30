@@ -261,15 +261,14 @@ async function buildSheetsLeadPayload(
   const questions: string[] = [];
   const answers_pretty: Record<string, unknown> = {};
   for (const s of (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>) {
-    if (s.type === "contact_full") {
-      // Cidade/Bairro são gravados em answers com chaves fixas pelo StepView
-      for (const label of ["Cidade", "Bairro"]) {
-        questions.push(label);
-        answers_pretty[label] = answersIn[label] ?? "";
-      }
+    if (s.type === "contact") {
+      // Cidade/Bairro são gravados em answers com chaves fixas pelo StepView, quando ativos na etapa
+      const f = (s.config?.fields ?? {}) as Record<string, unknown>;
+      if (f.city === true) { questions.push("Cidade"); answers_pretty["Cidade"] = answersIn["Cidade"] ?? ""; }
+      if (f.neighborhood === true) { questions.push("Bairro"); answers_pretty["Bairro"] = answersIn["Bairro"] ?? ""; }
       continue;
     }
-    if (s.type === "contact" || s.type === "lead" || s.type === "text") continue;
+    if (s.type === "lead" || s.type === "text") continue;
     const title = (s.config?.title as string) || `Etapa ${s.order ?? ""}`.trim();
     const key = `step_${s.id}`;
     const raw = answersIn[key];
