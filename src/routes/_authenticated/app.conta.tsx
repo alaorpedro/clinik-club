@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { createPortalSession } from "@/utils/payments.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
-import { deleteOwnAccount } from "@/lib/account.functions";
+import { deleteOwnAccount, getMyBillingProfile, saveMyBillingProfile } from "@/lib/account.functions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,6 +127,7 @@ function ContaPage() {
           )}
         </div>
       </div>
+      <BillingSection defaultEmail={email} defaultName={profile?.name ?? ""} />
       <div className="mt-8 rounded-2xl border border-destructive/30 bg-card p-6">
         <h2 className="font-bold text-destructive">Excluir minha conta</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -165,5 +166,117 @@ function ContaPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function BillingSection({ defaultEmail, defaultName }: { defaultEmail: string; defaultName: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [legalName, setLegalName] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [addressLine, setAddressLine] = useState("");
+  const [city, setCity] = useState("");
+  const [uf, setUf] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [nfEmail, setNfEmail] = useState("");
+  const [savingBilling, setSavingBilling] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const r = await getMyBillingProfile();
+        const b = r.billing;
+        setLegalName(b?.legal_name ?? "");
+        setTaxId(b?.tax_id ?? "");
+        setAddressLine(b?.address_line ?? "");
+        setCity(b?.city ?? "");
+        setUf(b?.state ?? "");
+        setPostalCode(b?.postal_code ?? "");
+        setNfEmail(b?.email ?? "");
+      } catch {
+        // section still works for first-time fill
+      } finally {
+        setLoaded(true);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    setLegalName((v) => v || defaultName);
+    setNfEmail((v) => v || defaultEmail);
+  }, [loaded, defaultName, defaultEmail]);
+
+  async function saveBilling(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setSavingBilling(true);
+    try {
+      const r = await saveMyBillingProfile({
+        data: {
+          legal_name: legalName,
+          tax_id: taxId,
+          address_line: addressLine,
+          city,
+          state: uf,
+          postal_code: postalCode,
+          email: nfEmail,
+        },
+      });
+      if ("error" in r) toast.error(r.error);
+      else toast.success("Dados de faturamento salvos!");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar dados de faturamento");
+    } finally {
+      setSavingBilling(false);
+    }
+  }
+
+  return (
+    <form onSubmit={saveBilling} className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6">
+      <div>
+        <h2 className="font-bold">Dados de faturamento</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Usados na emissão da nota fiscal dos seus pagamentos.
+        </p>
+      </div>
+      {!loaded ? (
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      ) : (
+        <>
+          <div>
+            <Label htmlFor="billing-legal-name">Razão social / Nome</Label>
+            <Input id="billing-legal-name" value={legalName} onChange={(e) => setLegalName(e.target.value)} className="mt-1.5" />
+          </div>
+          <div>
+            <Label htmlFor="billing-tax-id">CNPJ / CPF</Label>
+            <Input id="billing-tax-id" value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="00.000.000/0000-00" className="mt-1.5" />
+          </div>
+          <div>
+            <Label htmlFor="billing-address">Endereço</Label>
+            <Input id="billing-address" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} placeholder="Rua, número, complemento" className="mt-1.5" />
+          </div>
+          <div className="grid grid-cols-[1fr_80px_120px] gap-3">
+            <div>
+              <Label htmlFor="billing-city">Cidade</Label>
+              <Input id="billing-city" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="billing-uf">UF</Label>
+              <Input id="billing-uf" value={uf} onChange={(e) => setUf(e.target.value)} placeholder="PR" className="mt-1.5" />
+            </div>
+            <div>
+              <Label htmlFor="billing-cep">CEP</Label>
+              <Input id="billing-cep" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="00000-000" className="mt-1.5" />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="billing-email">E-mail para envio da NF</Label>
+            <Input id="billing-email" value={nfEmail} onChange={(e) => setNfEmail(e.target.value)} className="mt-1.5" />
+          </div>
+          <Button type="submit" disabled={savingBilling} className="rounded-full font-semibold">
+            {savingBilling ? "Salvando..." : "Salvar dados de faturamento"}
+          </Button>
+        </>
+      )}
+    </form>
   );
 }

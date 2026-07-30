@@ -342,12 +342,12 @@ export const listConfirmedPayments = createServerFn({ method: "GET" })
 
     // clinic name via subscriptions -> profiles
     const customerIds = Array.from(new Set(rows.map((r) => r.stripe_customer_id).filter(Boolean))) as string[];
+    const userByCustomer = new Map<string, string>();
     if (customerIds.length) {
       const { data: subs } = await supabaseAdmin
         .from("subscriptions")
         .select("stripe_customer_id, user_id")
         .in("stripe_customer_id", customerIds);
-      const userByCustomer = new Map<string, string>();
       for (const s of subs ?? []) if (s.user_id) userByCustomer.set(s.stripe_customer_id, s.user_id);
       const userIds = Array.from(new Set(userByCustomer.values()));
       if (userIds.length) {
@@ -366,14 +366,29 @@ export const listConfirmedPayments = createServerFn({ method: "GET" })
 
     // manual billing data overrides whatever came from the charge
     if (customerIds.length) {
+      // a row may be keyed by stripe_customer_id (admin) or only by user_id
+      // (saved by the customer before having a Stripe customer)
+      const userIds = Array.from(new Set(userByCustomer.values()));
+      const inList = (v: string[]) => `(${v.join(",")})`;
+      const orFilter = userIds.length
+        ? `stripe_customer_id.in.${inList(customerIds)},user_id.in.${inList(userIds)}`
+        : `stripe_customer_id.in.${inList(customerIds)}`;
       const { data: billingRows, error: billingError } = await billingProfilesTable()
-        .select("stripe_customer_id, legal_name, tax_id, address_line, city, state, postal_code, email, notes")
-        .in("stripe_customer_id", customerIds);
+        .select("stripe_customer_id, user_id, legal_name, tax_id, address_line, city, state, postal_code, email, notes")
+        .or(orFilter);
       if (billingError) throw new Error(billingError.message);
-      const billingByCustomer = new Map<string, NonNullable<typeof billingRows>[number]>();
-      for (const b of billingRows ?? []) billingByCustomer.set(b.stripe_customer_id, b);
+      type BillingRow = NonNullable<typeof billingRows>[number];
+      const billingByCustomer = new Map<string, BillingRow>();
+      const billingByUser = new Map<string, BillingRow>();
+      for (const b of billingRows ?? []) {
+        if (b.stripe_customer_id) billingByCustomer.set(b.stripe_customer_id, b);
+        if (b.user_id) billingByUser.set(b.user_id, b);
+      }
       for (const r of rows) {
-        const b = r.stripe_customer_id ? billingByCustomer.get(r.stripe_customer_id) : undefined;
+        const uid = r.stripe_customer_id ? userByCustomer.get(r.stripe_customer_id) : undefined;
+        const b =
+          (r.stripe_customer_id ? billingByCustomer.get(r.stripe_customer_id) : undefined) ??
+          (uid ? billingByUser.get(uid) : undefined);
         if (!b) continue;
         r.billing = {
           legal_name: b.legal_name ?? r.billing.legal_name,
@@ -457,7 +472,29 @@ export const saveBillingProfile = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }): Promise<ActionResult> => {
     await ensureAdmin(context.userId);
-    const { error } = await billingProfilesTable().upsert({
+
+    // Link the row to the owning user when we can, and match on either key:
+    // the customer may already have saved their own row (keyed by user_id).
+    const { data: sub } = await supabaseAdmin
+      .from("subscriptions")
+      .select("user_id")
+      .eq("stripe_customer_id", data.customerId)
+      .not("user_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+    const ownerUserId = sub?.user_id ?? null;
+
+    const orFilter = ownerUserId
+      ? `stripe_customer_id.eq.${data.customerId},user_id.eq.${ownerUserId}`
+      : `stripe_customer_id.eq.${data.customerId}`;
+    const { data: existing, error: findError } = await billingProfilesTable()
+      .select("id")
+      .or(orFilter)
+      .limit(1)
+      .maybeSingle();
+    if (findError) return { error: findError.message };
+
+    const payload: Record<string, unknown> = {
       stripe_customer_id: data.customerId,
       legal_name: cleanBillingField(data.legal_name),
       tax_id: cleanBillingField(data.tax_id),
@@ -469,7 +506,12 @@ export const saveBillingProfile = createServerFn({ method: "POST" })
       notes: cleanBillingField(data.notes),
       updated_by: context.userId,
       updated_at: new Date().toISOString(),
-    });
+    };
+    if (ownerUserId) payload.user_id = ownerUserId;
+
+    const { error } = existing
+      ? await billingProfilesTable().update(payload).eq("id", existing.id)
+      : await billingProfilesTable().insert(payload);
     if (error) return { error: error.message };
     return { ok: true, message: "Dados de faturamento salvos." };
   });
