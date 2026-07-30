@@ -5,19 +5,25 @@ import { useMemo, useState } from "react";
 import {
   listConfirmedPayments,
   setPaymentNfIssued,
+  saveBillingProfile,
   type ConfirmedPaymentRow,
 } from "@/lib/admin-payments.functions";
 import { checkIsAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   Loader2, ShieldCheck, CheckCircle2, ExternalLink, RefreshCw,
   ArrowLeft, Search, ReceiptText, Undo2, FileCheck2, FileClock,
+  Pencil, AlertTriangle, Copy,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -71,6 +77,7 @@ function AdminNfPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"pending" | "issued" | "refunded" | "all">("pending");
   const [actingId, setActingId] = useState<string | null>(null);
+  const [billingTarget, setBillingTarget] = useState<ConfirmedPaymentRow | null>(null);
 
   const payments = paymentsQuery.data?.payments ?? [];
 
@@ -96,11 +103,31 @@ function AdminNfPage() {
         (p.customer_email ?? "").toLowerCase().includes(q) ||
         (p.customer_name ?? "").toLowerCase().includes(q) ||
         (p.clinic_name ?? "").toLowerCase().includes(q) ||
+        (p.billing.tax_id ?? "").toLowerCase().includes(q) ||
+        (p.billing.legal_name ?? "").toLowerCase().includes(q) ||
         p.payment_id.toLowerCase().includes(q) ||
         (p.stripe_customer_id ?? "").toLowerCase().includes(q)
       );
     });
   }, [payments, search, filter]);
+
+  function copyBillingInfo(p: ConfirmedPaymentRow) {
+    const b = p.billing;
+    const lines = [
+      `Razão social / Nome: ${b.legal_name ?? p.customer_name ?? p.clinic_name ?? "—"}`,
+      `CNPJ/CPF: ${b.tax_id ?? "—"}`,
+      `Endereço: ${b.address_line ?? "—"}`,
+      `Cidade/UF: ${[b.city, b.state].filter(Boolean).join("/") || "—"}`,
+      `CEP: ${b.postal_code ?? "—"}`,
+      `E-mail: ${b.email ?? p.customer_email ?? "—"}`,
+      `Valor: ${fmtMoney(p.amount, p.currency)} (pago em ${fmtDate(p.paid_at)})`,
+      `Pagamento: ${p.payment_id}`,
+    ];
+    navigator.clipboard
+      .writeText(lines.join("\n"))
+      .then(() => toast.success("Dados copiados."))
+      .catch(() => toast.error("Não foi possível copiar."));
+  }
 
   async function handleToggleNf(p: ConfirmedPaymentRow, issued: boolean) {
     setActingId(p.payment_id);
@@ -223,6 +250,38 @@ function AdminNfPage() {
                           {p.customer_email ?? "—"}
                           {p.clinic_name && p.customer_name ? ` · ${p.clinic_name}` : ""}
                         </div>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          {p.billing.tax_id ? (
+                            <span className="text-xs font-medium tabular-nums">{p.billing.tax_id}</span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-[10px] font-semibold">
+                              <AlertTriangle className="h-3 w-3" /> sem CNPJ
+                            </span>
+                          )}
+                          {(p.billing.city || p.billing.state) && (
+                            <span className="text-[11px] text-muted-foreground">
+                              {[p.billing.city, p.billing.state].filter(Boolean).join("/")}
+                            </span>
+                          )}
+                          {p.stripe_customer_id && (
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                              onClick={() => setBillingTarget(p)}
+                              title="Editar dados para emissão da NF"
+                            >
+                              <Pencil className="h-3 w-3" /> dados NF
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+                            onClick={() => copyBillingInfo(p)}
+                            title="Copiar dados para emissão"
+                          >
+                            <Copy className="h-3 w-3" /> copiar
+                          </button>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm font-medium tabular-nums">{fmtMoney(p.amount, p.currency)}</div>
@@ -283,6 +342,118 @@ function AdminNfPage() {
           </CardContent>
         </Card>
       )}
+
+      {billingTarget && (
+        <BillingDialog
+          key={billingTarget.stripe_customer_id ?? billingTarget.payment_id}
+          payment={billingTarget}
+          onClose={() => setBillingTarget(null)}
+          onSaved={() => {
+            setBillingTarget(null);
+            paymentsQuery.refetch();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function BillingDialog({
+  payment,
+  onClose,
+  onSaved,
+}: {
+  payment: ConfirmedPaymentRow;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const saveFn = useServerFn(saveBillingProfile);
+  const b = payment.billing;
+  const [legalName, setLegalName] = useState(b.legal_name ?? payment.customer_name ?? "");
+  const [taxId, setTaxId] = useState(b.tax_id ?? "");
+  const [addressLine, setAddressLine] = useState(b.address_line ?? "");
+  const [city, setCity] = useState(b.city ?? "");
+  const [uf, setUf] = useState(b.state ?? "");
+  const [postalCode, setPostalCode] = useState(b.postal_code ?? "");
+  const [email, setEmail] = useState(b.email ?? payment.customer_email ?? "");
+  const [notes, setNotes] = useState(b.notes ?? "");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    if (!payment.stripe_customer_id) return;
+    setSaving(true);
+    try {
+      const r = await saveFn({
+        data: {
+          customerId: payment.stripe_customer_id,
+          legal_name: legalName,
+          tax_id: taxId,
+          address_line: addressLine,
+          city,
+          state: uf,
+          postal_code: postalCode,
+          email,
+          notes,
+        },
+      });
+      if ("error" in r) toast.error(r.error);
+      else {
+        toast.success(r.message);
+        onSaved();
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open && !saving) onClose(); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Dados para emissão da NF</DialogTitle>
+          <DialogDescription>
+            {payment.customer_name ?? payment.clinic_name ?? payment.customer_email ?? payment.stripe_customer_id}
+            {" · "}vale para todos os pagamentos deste cliente.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <Field label="Razão social / Nome" value={legalName} onChange={setLegalName} />
+          <Field label="CNPJ / CPF" value={taxId} onChange={setTaxId} placeholder="00.000.000/0000-00" />
+          <Field label="Endereço" value={addressLine} onChange={setAddressLine} placeholder="Rua, número, complemento" />
+          <div className="grid grid-cols-[1fr_80px_110px] gap-3">
+            <Field label="Cidade" value={city} onChange={setCity} />
+            <Field label="UF" value={uf} onChange={setUf} placeholder="PR" />
+            <Field label="CEP" value={postalCode} onChange={setPostalCode} placeholder="00000-000" />
+          </div>
+          <Field label="E-mail para envio" value={email} onChange={setEmail} />
+          <Field label="Observações" value={notes} onChange={setNotes} placeholder="Opcional" />
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving || !payment.stripe_customer_id}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <Label className="text-xs">{label}</Label>
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
     </div>
   );
 }

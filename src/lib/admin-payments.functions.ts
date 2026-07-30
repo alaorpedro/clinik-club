@@ -235,6 +235,19 @@ export const retryInvoicePayment = createServerFn({ method: "POST" })
     }
   });
 
+export type BillingInfo = {
+  legal_name: string | null;
+  tax_id: string | null;
+  address_line: string | null;
+  city: string | null;
+  state: string | null;
+  postal_code: string | null;
+  email: string | null;
+  notes: string | null;
+  /** "manual" = saved by the admin; "stripe" = derived from the charge (boleto tax_id / billing address). */
+  source: "manual" | "stripe" | null;
+};
+
 export type ConfirmedPaymentRow = {
   payment_id: string;
   environment: string;
@@ -253,12 +266,16 @@ export type ConfirmedPaymentRow = {
   stripe_customer_id: string | null;
   nf_issued: boolean;
   nf_issued_at: string | null;
+  billing: BillingInfo;
 };
 
-// payment_nf_status was created outside Lovable's migration flow, so the
-// generated Database types don't know it yet.
+// payment_nf_status and billing_profiles were created outside Lovable's
+// migration flow, so the generated Database types don't know them yet.
 function nfStatusTable() {
   return (supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient).from("payment_nf_status");
+}
+function billingProfilesTable() {
+  return (supabaseAdmin as unknown as import("@supabase/supabase-js").SupabaseClient).from("billing_profiles");
 }
 
 export const listConfirmedPayments = createServerFn({ method: "GET" })
@@ -283,6 +300,12 @@ export const listConfirmedPayments = createServerFn({ method: "GET" })
       }
       for (const ch of charges.data) {
         if (!ch.paid) continue;
+        const addr = ch.billing_details?.address;
+        const boletoTaxId =
+          ch.payment_method_details?.type === "boleto"
+            ? (ch.payment_method_details.boleto?.tax_id ?? null)
+            : null;
+        const hasStripeBilling = !!(boletoTaxId || addr?.line1 || addr?.city);
         rows.push({
           payment_id: ch.id,
           environment: env,
@@ -301,6 +324,17 @@ export const listConfirmedPayments = createServerFn({ method: "GET" })
           stripe_customer_id: typeof ch.customer === "string" ? ch.customer : (ch.customer?.id ?? null),
           nf_issued: false,
           nf_issued_at: null,
+          billing: {
+            legal_name: ch.billing_details?.name ?? null,
+            tax_id: boletoTaxId,
+            address_line: addr?.line1 ? [addr.line1, addr.line2].filter(Boolean).join(" - ") : null,
+            city: addr?.city ?? null,
+            state: addr?.state ?? null,
+            postal_code: addr?.postal_code ?? null,
+            email: ch.billing_details?.email ?? null,
+            notes: null,
+            source: hasStripeBilling ? "stripe" : null,
+          },
         });
       }
     }
@@ -327,6 +361,31 @@ export const listConfirmedPayments = createServerFn({ method: "GET" })
           const uid = r.stripe_customer_id ? userByCustomer.get(r.stripe_customer_id) : undefined;
           if (uid) r.clinic_name = clinicByUser.get(uid) ?? null;
         }
+      }
+    }
+
+    // manual billing data overrides whatever came from the charge
+    if (customerIds.length) {
+      const { data: billingRows, error: billingError } = await billingProfilesTable()
+        .select("stripe_customer_id, legal_name, tax_id, address_line, city, state, postal_code, email, notes")
+        .in("stripe_customer_id", customerIds);
+      if (billingError) throw new Error(billingError.message);
+      const billingByCustomer = new Map<string, NonNullable<typeof billingRows>[number]>();
+      for (const b of billingRows ?? []) billingByCustomer.set(b.stripe_customer_id, b);
+      for (const r of rows) {
+        const b = r.stripe_customer_id ? billingByCustomer.get(r.stripe_customer_id) : undefined;
+        if (!b) continue;
+        r.billing = {
+          legal_name: b.legal_name ?? r.billing.legal_name,
+          tax_id: b.tax_id ?? r.billing.tax_id,
+          address_line: b.address_line ?? r.billing.address_line,
+          city: b.city ?? r.billing.city,
+          state: b.state ?? r.billing.state,
+          postal_code: b.postal_code ?? r.billing.postal_code,
+          email: b.email ?? r.billing.email,
+          notes: b.notes ?? null,
+          source: "manual",
+        };
       }
     }
 
@@ -369,6 +428,50 @@ export const setPaymentNfIssued = createServerFn({ method: "POST" })
     });
     if (error) return { error: error.message };
     return { ok: true, message: data.issued ? "NF marcada como emitida." : "Marcação de NF removida." };
+  });
+
+const BILLING_FIELD_MAX = 200;
+function cleanBillingField(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim().slice(0, BILLING_FIELD_MAX);
+  return t.length ? t : null;
+}
+
+export const saveBillingProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      customerId: string;
+      legal_name?: string | null;
+      tax_id?: string | null;
+      address_line?: string | null;
+      city?: string | null;
+      state?: string | null;
+      postal_code?: string | null;
+      email?: string | null;
+      notes?: string | null;
+    }) => {
+      if (!/^cus_[a-zA-Z0-9]+$/.test(data.customerId)) throw new Error("Invalid customerId");
+      return data;
+    },
+  )
+  .handler(async ({ data, context }): Promise<ActionResult> => {
+    await ensureAdmin(context.userId);
+    const { error } = await billingProfilesTable().upsert({
+      stripe_customer_id: data.customerId,
+      legal_name: cleanBillingField(data.legal_name),
+      tax_id: cleanBillingField(data.tax_id),
+      address_line: cleanBillingField(data.address_line),
+      city: cleanBillingField(data.city),
+      state: cleanBillingField(data.state),
+      postal_code: cleanBillingField(data.postal_code),
+      email: cleanBillingField(data.email),
+      notes: cleanBillingField(data.notes),
+      updated_by: context.userId,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) return { error: error.message };
+    return { ok: true, message: "Dados de faturamento salvos." };
   });
 
 export const openCustomerPortalAsAdmin = createServerFn({ method: "POST" })
