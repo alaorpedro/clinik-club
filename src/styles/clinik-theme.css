@@ -1,0 +1,177 @@
+/* ============================================================================
+ * Clinik.Club — tokens do design system
+ *
+ * ⚠️  ESTE ARQUIVO AINDA NÃO ESTÁ ATIVO.
+ * Nada muda em produção enquanto ele não for importado por src/styles.css.
+ * Para ativar:  @import "./styles/clinik-theme.css";  (depois do @theme inline)
+ *
+ * Fonte: docs/brand/manual-da-marca.html + docs/brand/design-system.md
+ * Cores em oklch porque o Tailwind v4 do projeto exige. O hex ao lado é o
+ * valor canônico do manual — em caso de divergência, o hex manda.
+ * ========================================================================= */
+
+:root {
+  /* --- Primitivas de marca ------------------------------------------------ */
+  --ck-navy:        oklch(0.2555 0.0785 260.30);  /* #0A2148  Azul Clinik    */
+  --ck-sereno:      oklch(0.5389 0.0637 264.74);  /* #5C6E94  Azul Sereno    */
+  --ck-sereno-text: oklch(0.4858 0.0570 264.36);  /* #4F5F80  só p/ texto sobre Névoa */
+  --ck-nevoa:       oklch(0.9298 0.0133 262.38);  /* #E3E8F1  Névoa          */
+  --ck-off:         oklch(0.9671 0.0041  91.45);  /* #F5F4F1  Off-white      */
+  --ck-surface:     oklch(0.9911 0.0000  89.88);  /* #FCFCFC  Branco de superfície */
+
+  /* --- Rampa de neutros ---------------------------------------------------
+   * Cada degrau tem função declarada. Não usar "o cinza mais próximo": usar
+   * o degrau da função. Contraste medido sobre --ck-off.                    */
+  --ck-n-100: oklch(0.9460 0.0083 91.48);  /* #EFEDE7  zebra de tabela, hover de linha */
+  --ck-n-200: oklch(0.9127 0.0084 91.49);  /* #E4E2DC  hairline decorativa      1.18:1 */
+  --ck-n-300: oklch(0.8636 0.0127 91.53);  /* #D5D2C9  divisor estrutural       1.37:1 */
+  --ck-n-400: oklch(0.8233 0.0171 91.58);  /* #C9C5B9  borda de card em repouso 1.57:1 */
+  --ck-n-500: oklch(0.6346 0.0216 87.55);  /* #908A7C  borda de input/controle  3.12:1 */
+  --ck-n-600: oklch(0.5246 0.0175 90.34);  /* #6E6A5F  texto auxiliar           4.91:1 */
+
+  /* --- Status (contrastes corrigidos, ver design-system.md §2) ------------ */
+  --ck-success:    oklch(0.4868 0.0847 150.75); /* #386D46  5.24:1 */
+  --ck-success-bg: oklch(0.9464 0.0133 152.60); /* #E7F0E9 */
+  --ck-warning:    oklch(0.4964 0.0752  61.76); /* #815833  5.22:1 */
+  --ck-warning-bg: oklch(0.9406 0.0121  67.68); /* #F1EAE3 */
+  --ck-danger:     oklch(0.4959 0.1110  28.85); /* #97463C  5.22:1 */
+  --ck-danger-bg:  oklch(0.9300 0.0170  31.08); /* #F3E4E1 */
+
+  /* --- Etiquetas do CRM ---------------------------------------------------
+   * Dez pares bg/fg, todos ≥4.6:1. Dessaturadas de propósito: a etiqueta
+   * informa, não grita. Atribuir por hash estável do nome da etiqueta —
+   * nunca deixar o usuário escolher cor livre, senão vira arco-íris.        */
+  --ck-tag-azul-bg:      oklch(0.9427 0.0058 264.53); --ck-tag-azul-fg:      oklch(0.4900 0.0950 260.37);
+  --ck-tag-petroleo-bg:  oklch(0.9486 0.0055 211.04); --ck-tag-petroleo-fg:  oklch(0.5163 0.0628 216.12);
+  --ck-tag-verde-bg:     oklch(0.9505 0.0066 160.07); --ck-tag-verde-fg:     oklch(0.5126 0.0803 160.25);
+  --ck-tag-oliva-bg:     oklch(0.9515 0.0074 132.42); --ck-tag-oliva-fg:     oklch(0.5159 0.0908 133.67);
+  --ck-tag-ambar-bg:     oklch(0.9520 0.0083  91.48); --ck-tag-ambar-fg:     oklch(0.5297 0.0913  84.85);
+  --ck-tag-terracota-bg: oklch(0.9461 0.0068  53.44); --ck-tag-terracota-fg: oklch(0.5291 0.1017  49.18);
+  --ck-tag-rosa-bg:      oklch(0.9442 0.0055   3.34); --ck-tag-rosa-fg:      oklch(0.4960 0.1048   0.52);
+  --ck-tag-vinho-bg:     oklch(0.9420 0.0066   5.63); --ck-tag-vinho-fg:     oklch(0.4895 0.1093  17.45);
+  --ck-tag-roxo-bg:      oklch(0.9438 0.0074 312.30); --ck-tag-roxo-fg:      oklch(0.4786 0.1168 309.69);
+  --ck-tag-ardosia-bg:   oklch(0.9459 0.0029 264.54); --ck-tag-ardosia-fg:   oklch(0.5191 0.0398 248.60);
+
+  /* --- Raio: assinatura vs. uniforme --------------------------------------
+   * A assinatura pertence ao que é singular e deliberado. Ela sai de cena
+   * onde o elemento é repetido e aninhado. Ver design-system.md §3.         */
+  --ck-r-sig:      20px 4px 20px 4px;  /* contêiner: card grande, modal, coluna, painel */
+  --ck-r-sig-md:   16px 4px 16px 4px;  /* botão, input, toast                           */
+  --ck-r-sig-sm:   10px 3px 10px 3px;  /* toggle, chip singular, badge de destaque       */
+  --ck-r-flat:     8px;                /* denso e repetido: card de kanban, linha, menu  */
+  --ck-r-flat-sm:  6px;                /* etiqueta, badge dentro de card, bolha de chat  */
+
+  /* --- Movimento (§4) ----------------------------------------------------- */
+  --ck-dur-fast: 180ms;  /* hover, foco, tap                    */
+  --ck-dur-base: 260ms;  /* abas, modais, transição de tela     */
+  --ck-ease-out: ease-out;
+  --ck-ease-io:  ease-in-out;
+
+  /* --- Densidade (§5) ----------------------------------------------------- */
+  --ck-row-comfortable: 44px;
+  --ck-row-compact:     36px;
+  --ck-row: var(--ck-row-comfortable);
+
+  /* --- Elevação ------------------------------------------------------------
+   * Três degraus. Sombra é para o que flutua de verdade; card em repouso usa
+   * borda, não sombra.                                                       */
+  --ck-elev-1: 0 1px 2px oklch(0.2555 0.0785 260.30 / 0.06);
+  --ck-elev-2: 0 6px 16px -8px oklch(0.2555 0.0785 260.30 / 0.18);
+  --ck-elev-3: 0 18px 40px -18px oklch(0.2555 0.0785 260.30 / 0.30);
+
+  /* --- Padrão gráfico (trama) ---------------------------------------------
+   * Tile 88×88; o ícone entra escalado 1.17771 e transladado -14.897,-14.897
+   * a partir da caixa normalizada 0–100, de modo que o centro de cada círculo
+   * caia no centro do vizinho. Sempre tom sobre tom, sempre sangrando.      */
+  --ck-pattern-tile: 88px;
+  --ck-pattern-opacity: 0.05;
+}
+
+.dark {
+  /* O navy da marca é escuro demais para ser fundo: ele vira a superfície e
+   * o fundo desce um degrau. Assim o card continua sendo "a cor da marca".  */
+  --ck-canvas:     oklch(0.2007 0.0580 260.54); /* #061530 */
+  --ck-surface:    oklch(0.2555 0.0785 260.30); /* #0A2148  = navy da marca */
+  --ck-surface-2:  oklch(0.3000 0.0857 260.24); /* #122C58 */
+  --ck-border:     oklch(0.3544 0.0918 260.74); /* #1E3A6B */
+  --ck-text:       oklch(0.9911 0.0000  89.88); /* #FCFCFC  15.5:1 */
+  --ck-text-muted: oklch(0.7684 0.0369 264.33); /* #A8B4CC   7.6:1 */
+
+  --ck-n-100: oklch(0.3000 0.0857 260.24);
+  --ck-n-200: oklch(0.3260 0.0880 260.50);
+  --ck-n-300: oklch(0.3544 0.0918 260.74);
+  --ck-n-400: oklch(0.3900 0.0940 260.90);
+  --ck-n-500: oklch(0.5400 0.0700 262.00);
+  --ck-n-600: oklch(0.7684 0.0369 264.33);
+
+  --ck-success-bg: oklch(0.2900 0.0500 155.00);
+  --ck-warning-bg: oklch(0.2950 0.0450  62.00);
+  --ck-danger-bg:  oklch(0.2950 0.0600  28.00);
+  --ck-success:    oklch(0.8000 0.1100 155.00);
+  --ck-warning:    oklch(0.8100 0.0950  70.00);
+  --ck-danger:     oklch(0.7900 0.1100  25.00);
+
+  --ck-pattern-opacity: 0.07;
+}
+
+/* ============================================================================
+ * Utilitários
+ * ========================================================================= */
+
+/* Trama tom sobre tom. Aplicar no contêiner, nunca em elemento pequeno.
+ * Requer /brand/clinik-icon.svg em public/. */
+.ck-mesh {
+  position: relative;
+  isolation: isolate;
+}
+.ck-mesh::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: url("/brand/clinik-icon.svg");
+  background-size: var(--ck-pattern-tile) var(--ck-pattern-tile);
+  background-repeat: repeat;
+  opacity: var(--ck-pattern-opacity);
+  pointer-events: none;
+}
+
+/* Números de tabela/moeda. A Jost não tem figuras tabulares por padrão;
+ * sem isto toda coluna financeira fica trêmula. */
+.ck-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+/* Foco visível único do sistema — sempre este, em qualquer controle. */
+.ck-focus:focus-visible,
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ck-nevoa);
+  border-color: var(--ck-navy);
+}
+
+/* Modo compacto: trocado por preferência do usuário, não por breakpoint. */
+[data-density="compact"] { --ck-row: var(--ck-row-compact); }
+
+/* ============================================================================
+ * Movimento — respeita quem pediu para reduzir.
+ * A única animação decorativa aprovada é o pulso dos 4 pontos do ícone;
+ * com reduced-motion ela congela em opacidade cheia (não some).
+ * ========================================================================= */
+@keyframes ck-dot-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.65); }
+  50%      { opacity: 1;    transform: scale(1); }
+}
+.ck-loader circle { animation: ck-dot-pulse 1.2s var(--ck-ease-io) infinite; transform-origin: center; }
+.ck-loader circle:nth-child(1) { animation-delay: 0ms; }
+.ck-loader circle:nth-child(2) { animation-delay: 150ms; }
+.ck-loader circle:nth-child(3) { animation-delay: 300ms; }
+.ck-loader circle:nth-child(4) { animation-delay: 450ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ck-loader circle { opacity: 1; transform: none; }
+}

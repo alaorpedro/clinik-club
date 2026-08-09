@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Clinik Club — Manual da Marca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+html{scroll-behavior:smooth}
+body{margin:0;background:#F5F4F1;color:#0A2148;font-family:'Jost',sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0A2148;text-decoration:none}
+a:hover{color:#5C6E94}
+@keyframes ckPulse{0%,80%,100%{opacity:.25;transform:scale(0.65)}40%{opacity:1;transform:scale(1)}}
+@keyframes ckFill{0%{width:6%}100%{width:84%}}
+@keyframes ckToast{0%,100%{transform:translateX(0);opacity:1}50%{transform:translateX(10px);opacity:0.85}}
+@keyframes ckTabSlide{0%,30%{left:4px;width:calc(33.333% - 5.33px)}40%,65%{left:calc(33.333% + 1.33px);width:calc(33.333% - 5.33px)}75%,100%{left:calc(66.666% - 1.33px);width:calc(33.333% - 5.33px)}}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<mask id="ckgap"><rect width="100" height="100" fill="white"></rect><g fill="black"><circle cx="50" cy="8.25" r="11.6"></circle><circle cx="91.75" cy="50" r="11.6"></circle><circle cx="50" cy="91.75" r="11.6"></circle><circle cx="8.25" cy="50" r="11.6"></circle></g></mask>
+<pattern id="ckMeshDark" width="88" height="88" patternUnits="userSpaceOnUse"><rect width="88" height="88" fill="#0A2148"></rect><g transform="translate(-14.897,-14.897) scale(1.17771) scale(0.19926) translate(0,-466.85)" fill="rgba(255,255,255,0.16)"><path d="M366.56,736.62c-46.97,13.04-83.79,49.88-96.82,96.85,21.84,5.76,39.73,21.23,48.8,41.5,13.86-42.35,47.05-75.57,89.38-89.47-20.24-9.12-35.65-27.04-41.36-48.88Z"></path><path d="M269.76,602.13c12.42,46.95,47.49,83.77,92.22,96.81,5.44-21.83,20.11-39.74,39.36-48.86-40.24-13.9-71.8-47.05-85.02-89.31-8.68,20.24-25.76,35.65-46.56,41.36Z"></path><path d="M135.27,736.61c-5.71,21.83-21.11,39.74-41.32,48.86,42.17,13.88,75.26,46.94,89.18,89.09,9.17-20.18,27.1-35.53,48.94-41.19-13.05-46.93-49.86-83.73-96.79-96.77Z"></path><circle cx="63.45" cy="717.77" r="63.45"></circle><path d="M183.21,560.8c-13.9,42.24-47.05,75.37-89.31,89.25,20.24,9.12,35.65,27.04,41.36,48.88,46.95-13.04,83.77-49.85,96.81-96.81-21.83-5.71-39.74-21.11-48.86-41.32Z"></path><circle cx="438.39" cy="717.76" r="63.45"></circle><circle cx="250.92" cy="530.3" r="63.45"></circle><circle cx="250.92" cy="905.25" r="63.45"></circle></g></pattern>
+<pattern id="ckMeshLight" width="88" height="88" patternUnits="userSpaceOnUse"><rect width="88" height="88" fill="#E3E8F1"></rect><g transform="translate(-14.897,-14.897) scale(1.17771) scale(0.19926) translate(0,-466.85)" fill="rgba(10,33,72,0.16)"><path d="M366.56,736.62c-46.97,13.04-83.79,49.88-96.82,96.85,21.84,5.76,39.73,21.23,48.8,41.5,13.86-42.35,47.05-75.57,89.38-89.47-20.24-9.12-35.65-27.04-41.36-48.88Z"></path><path d="M269.76,602.13c12.42,46.95,47.49,83.77,92.22,96.81,5.44-21.83,20.11-39.74,39.36-48.86-40.24-13.9-71.8-47.05-85.02-89.31-8.68,20.24-25.76,35.65-46.56,41.36Z"></path><path d="M135.27,736.61c-5.71,21.83-21.11,39.74-41.32,48.86,42.17,13.88,75.26,46.94,89.18,89.09,9.17-20.18,27.1-35.53,48.94-41.19-13.05-46.93-49.86-83.73-96.79-96.77Z"></path><circle cx="63.45" cy="717.77" r="63.45"></circle><path d="M183.21,560.8c-13.9,42.24-47.05,75.37-89.31,89.25,20.24,9.12,35.65,27.04,41.36,48.88,46.95-13.04,83.77-49.85,96.81-96.81-21.83-5.71-39.74-21.11-48.86-41.32Z"></path><circle cx="438.39" cy="717.76" r="63.45"></circle><circle cx="250.92" cy="530.3" r="63.45"></circle><circle cx="250.92" cy="905.25" r="63.45"></circle></g></pattern>
+<g id="ckicon" fill="currentColor" transform="scale(0.19926) translate(0,-466.85)"><path d="M366.56,736.62c-46.97,13.04-83.79,49.88-96.82,96.85,21.84,5.76,39.73,21.23,48.8,41.5,13.86-42.35,47.05-75.57,89.38-89.47-20.24-9.12-35.65-27.04-41.36-48.88Z"></path><path d="M269.76,602.13c12.42,46.95,47.49,83.77,92.22,96.81,5.44-21.83,20.11-39.74,39.36-48.86-40.24-13.9-71.8-47.05-85.02-89.31-8.68,20.24-25.76,35.65-46.56,41.36Z"></path><path d="M135.27,736.61c-5.71,21.83-21.11,39.74-41.32,48.86,42.17,13.88,75.26,46.94,89.18,89.09,9.17-20.18,27.1-35.53,48.94-41.19-13.05-46.93-49.86-83.73-96.79-96.77Z"></path><path d="M183.21,560.8c-13.9,42.24-47.05,75.37-89.31,89.25,20.24,9.12,35.65,27.04,41.36,48.88,46.95-13.04,83.77-49.85,96.81-96.81-21.83-5.71-39.74-21.11-48.86-41.32Z"></path><circle cx="63.45" cy="717.77" r="63.45"></circle><circle cx="438.39" cy="717.76" r="63.45"></circle><circle cx="250.92" cy="530.3" r="63.45"></circle><circle cx="250.92" cy="905.25" r="63.45"></circle></g>
+</defs></svg>
+
+<nav style="position:fixed;left:0;top:0;bottom:0;width:236px;background:#F5F4F1;border-right:1px solid #E4E2DC;display:flex;flex-direction:column;padding:36px 0 28px 36px;box-sizing:border-box;z-index:50">
+  <a href="#capa" style="display:block;margin-bottom:44px">
+    <img src="assets/clinik-logo-vetor.svg" alt="Clinik Club" style="width:100%;max-width:190px;display:block">
+  </a>
+  <div style="display:flex;flex-direction:column;gap:2px">
+    <sc-for list="{{ sections }}" as="s" hint-placeholder-count="11">
+      <a href="{{ s.href }}" style="display:flex;align-items:baseline;gap:12px;padding:7px 12px 7px 0;font-size:13px;letter-spacing:0.14em;text-transform:uppercase;font-weight:{{ s.weight }};color:{{ s.color }};border-right:2px solid {{ s.bar }};margin-right:-1px">
+        <span style="font-size:10px;color:#9AA3B8;font-weight:400">{{ s.num }}</span>{{ s.label }}
+      </a>
+    </sc-for>
+  </div>
+  <div style="margin-top:auto;font-size:11px;letter-spacing:0.12em;color:#9AA3B8;text-transform:uppercase">Versão 1.0 · 2026</div>
+</nav>
+
+<main style="margin-left:236px">
+
+  <section id="capa" data-screen-label="Capa" style="min-height:100vh;background:#0A2148;color:#FCFCFC;display:flex;flex-direction:column;justify-content:space-between;padding:48px 72px;box-sizing:border-box;position:relative;overflow:hidden">
+    <svg viewBox="0 0 100 100" style="position:absolute;right:-260px;bottom:-300px;width:900px;height:900px;color:rgba(252,252,252,0.05)"><use href="#ckicon"></use></svg>
+    <div style="display:flex;justify-content:space-between;gap:24px;font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(252,252,252,0.6);position:relative">
+      <span style="white-space:nowrap">Manual da Marca</span><span style="white-space:nowrap">Versão 1.0 — 2026</span>
+    </div>
+    <div style="position:relative">
+      <img src="assets/clinik-logo-negativo.png" alt="Clinik Club" style="width:min(560px,60vw);display:block">
+      <p style="font-size:17px;font-weight:300;letter-spacing:0.02em;color:rgba(252,252,252,0.75);max-width:420px;margin:44px 0 0;line-height:1.7">Diretrizes de identidade visual e verbal. Este documento define como a marca Clinik Club — plataforma de gestão para clínicas — se apresenta, com consistência, elegância e cuidado.</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:24px;align-items:flex-end;font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(252,252,252,0.6);position:relative">
+      <span style="white-space:nowrap">clinik.club</span><span style="white-space:nowrap">Software para clínicas</span>
+    </div>
+  </section>
+
+  <section id="marca" data-screen-label="01 A marca" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">01 — A marca</div>
+    <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:72px;align-items:start">
+      <div>
+        <h2 style="font-family:'Italiana',serif;font-size:52px;font-weight:400;line-height:1.15;margin:0 0 28px">Excelência em cada gestão.</h2>
+        <p style="font-size:16px;font-weight:300;line-height:1.8;margin:0 0 18px;max-width:52ch">O Clinik Club é uma plataforma de gestão para clínicas — CRM, agenda, marketing e relacionamento com pacientes em um só lugar. A identidade traduz esse posicionamento em formas serenas, geometria precisa e um azul profundo institucional.</p>
+        <p style="font-size:16px;font-weight:300;line-height:1.8;margin:0;max-width:52ch">O símbolo nasce de quatro figuras humanas — cabeça e corpo em arco — dispostas em um losango. Elas se voltam umas às outras, formando no vazio central uma estrela de quatro pontas: o encontro entre clínica, equipe e paciente que a plataforma organiza.</p>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:56px;display:flex;flex-direction:column;align-items:center;gap:32px">
+        <svg viewBox="0 0 100 100" style="width:200px;height:200px;color:#0A2148"><use href="#ckicon"></use></svg>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;width:100%;border-top:1px solid #E4E2DC;padding-top:24px;text-align:center">
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6E94">Gestão</div>
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6E94;border-left:1px solid #E4E2DC;border-right:1px solid #E4E2DC">Conexão</div>
+          <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6E94">Cuidado</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="logotipo" data-screen-label="02 Logotipo" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">02 — Logotipo</div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:start">
+      <div>
+        <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;line-height:1.2;margin:0 0 24px">Assinatura principal</h2>
+        <p style="font-size:15px;font-weight:300;line-height:1.8;margin:0 0 16px;max-width:48ch">A assinatura principal combina o símbolo, o lettering exclusivo "Clinik" e o complemento "CLUB" em caixa-alta espaçada. As proporções e alinhamentos são fixos e não devem ser recompostos.</p>
+        <p style="font-size:15px;font-weight:300;line-height:1.8;margin:0;max-width:48ch">O lettering é um desenho tipográfico exclusivo — de alto contraste, com terminais afiados — e deve ser reproduzido sempre a partir dos arquivos oficiais, nunca redigitado.</p>
+        <div style="margin-top:32px;display:flex;flex-direction:column;gap:10px;font-size:13px;font-weight:300;color:#5C6E94">
+          <div style="display:flex;gap:12px"><span style="color:#0A2148;font-weight:500;min-width:110px">Símbolo</span>Losango de pontos e arcos — construção geométrica vetorial</div>
+          <div style="display:flex;gap:12px"><span style="color:#0A2148;font-weight:500;min-width:110px">Lettering</span>Desenho exclusivo, alto contraste</div>
+          <div style="display:flex;gap:12px"><span style="color:#0A2148;font-weight:500;min-width:110px">Complemento</span>"CLUB" — caixa-alta, tracking amplo</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:72px 56px;display:flex;align-items:center;justify-content:center">
+          <img src="assets/clinik-logo-principal.png" alt="Assinatura principal Clinik Club" style="width:100%;max-width:440px;display:block">
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;text-align:center">Assinatura principal — versão positiva</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="versoes" data-screen-label="03 Versões" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">03 — Versões</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 40px">Positivo, negativo e símbolo</h2>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px">
+      <div>
+        <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:56px;display:flex;align-items:center;justify-content:center;height:220px;box-sizing:border-box">
+          <img src="assets/clinik-logo-principal.png" alt="Versão positiva" style="max-width:340px;width:100%">
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-top:12px">Positiva — sobre fundos claros</div>
+      </div>
+      <div>
+        <div style="background:#0A2148;padding:56px;display:flex;align-items:center;justify-content:center;height:220px;box-sizing:border-box">
+          <img src="assets/clinik-logo-negativo.png" alt="Versão negativa" style="max-width:340px;width:100%">
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-top:12px">Negativa — sobre Azul Clinik ou fundos escuros</div>
+      </div>
+      <div>
+        <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:40px;display:flex;align-items:center;justify-content:center;gap:56px;height:200px;box-sizing:border-box">
+          <svg viewBox="0 0 100 100" style="width:110px;height:110px;color:#0A2148"><use href="#ckicon"></use></svg>
+          <svg viewBox="0 0 100 100" style="width:64px;height:64px;color:#0A2148"><use href="#ckicon"></use></svg>
+          <svg viewBox="0 0 100 100" style="width:36px;height:36px;color:#0A2148"><use href="#ckicon"></use></svg>
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-top:12px">Símbolo isolado — avatares, favicons e detalhes gráficos</div>
+      </div>
+      <div>
+        <div style="background:#E3E8F1;padding:40px;display:flex;align-items:center;justify-content:center;height:200px;box-sizing:border-box">
+          <svg viewBox="0 0 100 100" style="width:110px;height:110px;color:#0A2148"><use href="#ckicon"></use></svg>
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-top:12px">Monocromático — sempre em uma única cor da paleta</div>
+      </div>
+    </div>
+    <p style="font-size:14px;font-weight:300;color:#5C6E94;margin:28px 0 0;max-width:70ch;line-height:1.7">Prefira sempre a versão positiva. A negativa é usada quando o fundo é o Azul Clinik ou fotografia escura. O símbolo isolado só substitui a assinatura quando a marca já está identificada no contexto.</p>
+  </section>
+
+  <section id="protecao" data-screen-label="04 Proteção e tamanhos" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">04 — Área de proteção e tamanhos mínimos</div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:72px;align-items:start">
+      <div>
+        <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 24px">Respiro obrigatório</h2>
+        <p style="font-size:15px;font-weight:300;line-height:1.8;margin:0;max-width:46ch">A área de proteção equivale a <strong style="font-weight:500">metade da altura do símbolo (x/2)</strong> em todos os lados. Nenhum elemento gráfico, texto ou margem de corte pode invadir esse espaço.</p>
+        <div style="margin-top:40px;background:#FCFCFC;border:1px solid #E4E2DC;padding:48px;display:flex;justify-content:center">
+          <div style="position:relative;padding:34px;border:1px dashed #9AA3B8">
+            <img src="assets/clinik-logo-principal.png" alt="Área de proteção" style="width:280px;display:block">
+            <div style="position:absolute;top:2px;left:2px;width:28px;height:28px;background:#E3E8F1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#5C6E94">x/2</div>
+            <div style="position:absolute;bottom:2px;right:2px;width:28px;height:28px;background:#E3E8F1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#5C6E94">x/2</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 24px">Tamanhos mínimos</h2>
+        <p style="font-size:15px;font-weight:300;line-height:1.8;margin:0;max-width:46ch">Abaixo do tamanho mínimo, o lettering perde definição. Em digital, a assinatura nunca deve ter menos de <strong style="font-weight:500">70 px de largura</strong>; em impressos, <strong style="font-weight:500">20 mm</strong>. Abaixo disso, use apenas o símbolo.</p>
+        <div style="margin-top:40px;background:#FCFCFC;border:1px solid #E4E2DC;padding:40px;display:flex;flex-direction:column;gap:28px">
+          <div style="display:flex;align-items:flex-end;gap:40px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:10px"><img src="assets/clinik-logo-principal.png" style="width:240px" alt="240px"><span style="font-size:12px;color:#9AA3B8">240 px</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px"><img src="assets/clinik-logo-principal.png" style="width:140px" alt="140px"><span style="font-size:12px;color:#9AA3B8">140 px</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px"><img src="assets/clinik-logo-principal.png" style="width:70px" alt="70px"><span style="font-size:12px;color:#9AA3B8">70 px — mínimo</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start"><svg viewBox="0 0 100 100" style="width:24px;height:24px;color:#0A2148"><use href="#ckicon"></use></svg><span style="font-size:12px;color:#9AA3B8">&lt; 70 px — símbolo</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cores" data-screen-label="05 Cores" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">05 — Cores</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 40px">Paleta institucional</h2>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+      <div style="background:#0A2148;color:#FCFCFC;padding:28px;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px">
+        <div style="font-size:16px;font-weight:500;letter-spacing:0.04em">Azul Clinik</div>
+        <div style="font-size:12px;font-weight:300;opacity:0.75;line-height:1.7">HEX #0A2148<br>RGB 10 · 33 · 72<br>CMYK 86 · 54 · 0 · 72<br>Pantone 282 C (ref.)</div>
+      </div>
+      <div style="background:#5C6E94;color:#FCFCFC;padding:28px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px">
+        <div style="font-size:16px;font-weight:500;letter-spacing:0.04em">Azul Sereno</div>
+        <div style="font-size:12px;font-weight:300;opacity:0.8;line-height:1.7">HEX #5C6E94<br>RGB 92 · 110 · 148</div>
+      </div>
+      <div style="background:#E3E8F1;color:#0A2148;padding:28px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px">
+        <div style="font-size:16px;font-weight:500;letter-spacing:0.04em">Névoa</div>
+        <div style="font-size:12px;font-weight:300;color:#5C6E94;line-height:1.7">HEX #E3E8F1<br>RGB 227 · 232 · 241</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;color:#0A2148;padding:28px;display:flex;flex-direction:column;justify-content:flex-end;gap:4px">
+        <div style="font-size:16px;font-weight:500;letter-spacing:0.04em">Off-white</div>
+        <div style="font-size:12px;font-weight:300;color:#5C6E94;line-height:1.7">HEX #F5F4F1<br>RGB 245 · 244 · 241</div>
+      </div>
+    </div>
+    <div style="margin-top:40px">
+      <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-bottom:14px">Proporção de uso</div>
+      <div style="display:flex;height:44px;width:100%">
+        <div style="flex:55;background:#F5F4F1;border:1px solid #E4E2DC;box-sizing:border-box"></div>
+        <div style="flex:30;background:#0A2148"></div>
+        <div style="flex:10;background:#E3E8F1"></div>
+        <div style="flex:5;background:#5C6E94"></div>
+      </div>
+      <div style="display:flex;font-size:12px;color:#9AA3B8;margin-top:8px">
+        <span style="flex:55">Off-white · 55%</span><span style="flex:30">Azul Clinik · 30%</span><span style="flex:10">Névoa · 10%</span><span style="flex:5">Sereno · 5%</span>
+      </div>
+    </div>
+    <p style="font-size:14px;font-weight:300;color:#5C6E94;margin:28px 0 0;max-width:70ch;line-height:1.7">O Azul Clinik é a cor da marca — use-o com generosidade em capas e peças institucionais. Os tons de apoio criam camadas e fundos; nunca introduza cores fora da paleta.</p>
+  </section>
+
+  <section id="tipografia" data-screen-label="06 Tipografia" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">06 — Tipografia</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 40px">Três vozes tipográficas</h2>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:44px 48px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;align-items:center">
+        <div>
+          <div style="font-size:15px;font-weight:500">Lettering Clinik</div>
+          <div style="font-size:13px;font-weight:300;color:#5C6E94;margin-top:6px;line-height:1.7">Exclusivo da assinatura. Nunca redigitado ou usado em textos.</div>
+        </div>
+        <img src="assets/clinik-lettering-vetor.svg" alt="Lettering Clinik" style="width:300px;justify-self:start">
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:44px 48px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;align-items:center">
+        <div>
+          <div style="font-size:15px;font-weight:500">Italiana</div>
+          <div style="font-size:13px;font-weight:300;color:#5C6E94;margin-top:6px;line-height:1.7">Display de apoio — títulos e frases de destaque. Sempre em peso regular.</div>
+        </div>
+        <div style="font-family:'Italiana',serif;font-size:44px;line-height:1.25">Excelência em cada detalhe.<br><span style="font-size:22px;color:#5C6E94">AaBbCc 0123456789</span></div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:44px 48px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:48px;align-items:center">
+        <div>
+          <div style="font-size:15px;font-weight:500">Jost</div>
+          <div style="font-size:13px;font-weight:300;color:#5C6E94;margin-top:6px;line-height:1.7">Institucional — textos, rótulos, interfaces e sinalização. Pesos 300 a 600.</div>
+        </div>
+        <div style="font-size:18px;line-height:1.8;font-weight:300">Gestão premium, feita para clínicas que valorizam o melhor.<br><span style="font-weight:500">AaBbCc 0123456789</span> <span style="letter-spacing:0.2em;text-transform:uppercase;font-size:14px;color:#5C6E94">— Rótulos em caixa-alta espaçada</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="padrao" data-screen-label="07 Padrão gráfico" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">07 — Padrão gráfico</div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:72px;align-items:start">
+      <div>
+        <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 24px">O símbolo como textura</h2>
+        <p style="font-size:15px;font-weight:300;line-height:1.8;margin:0 0 16px;max-width:46ch">Ampliado e recortado, o símbolo vira um padrão gráfico exclusivo — usado tom sobre tom em capas, cartões e fundos de peças institucionais.</p>
+        <p style="font-size:15px;font-weight:300;line-height:1.8;margin:0;max-width:46ch">Regras: sempre <strong style="font-weight:500">tom sobre tom</strong> (nunca em cor de contraste), sempre <strong style="font-weight:500">sangrando</strong> a borda da peça, e nunca competindo com a assinatura.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+        <div style="height:260px;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 300 260" preserveAspectRatio="xMidYMid slice"><rect width="300" height="260" fill="url(#ckMeshDark)"></rect></svg></div>
+        <div style="height:260px;overflow:hidden"><svg width="100%" height="100%" viewBox="0 0 300 260" preserveAspectRatio="xMidYMid slice"><rect width="300" height="260" fill="url(#ckMeshLight)"></rect></svg></div>
+        <div style="grid-column:1/-1;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8">Padrão tom sobre tom — escuro e claro</div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="voz" data-screen-label="08 Tom de voz" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">08 — Tom de voz</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 40px">Sereno, preciso, acolhedor</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:40px">
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:32px">
+        <div style="font-family:'Italiana',serif;font-size:24px;margin-bottom:12px">Excelência serena</div>
+        <p style="font-size:14px;font-weight:300;line-height:1.8;margin:0;color:#5C6E94">Confiança sem arrogância. Afirmamos qualidade com sobriedade, nunca com superlativos vazios.</p>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:32px">
+        <div style="font-family:'Italiana',serif;font-size:24px;margin-bottom:12px">Clareza acolhedora</div>
+        <p style="font-size:14px;font-weight:300;line-height:1.8;margin:0;color:#5C6E94">Linguagem simples e humana. Falamos com pessoas, não com "pacientes-alvo". Sem jargão médico desnecessário.</p>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;padding:32px">
+        <div style="font-family:'Italiana',serif;font-size:24px;margin-bottom:12px">Precisão</div>
+        <p style="font-size:14px;font-weight:300;line-height:1.8;margin:0;color:#5C6E94">Frases curtas, informação exata. Cada palavra tem função — como cada elemento da identidade.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+      <div style="border:1px solid #E4E2DC;background:#FCFCFC;padding:28px 32px">
+        <div style="font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#386D46;margin-bottom:12px">✓ Assim</div>
+        <p style="font-family:'Italiana',serif;font-size:22px;margin:0;line-height:1.5">"Sua consulta está confirmada para quinta, às 9h. Estamos à sua espera."</p>
+      </div>
+      <div style="border:1px solid #E4E2DC;background:#FCFCFC;padding:28px 32px">
+        <div style="font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#97463C;margin-bottom:12px">✕ Assim não</div>
+        <p style="font-size:16px;font-weight:300;margin:0;line-height:1.6;color:#5C6E94">"ATENÇÃO!!! Agendamento confirmado com SUCESSO! Não perca — a MELHOR clínica da região espera por você!!"</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="incorretos" data-screen-label="09 Usos incorretos" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">09 — Usos incorretos</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 40px">O que nunca fazer</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+      <sc-for list="{{ donts }}" as="d" hint-placeholder-count="0">
+        <div>
+          <div style="background:{{ d.bg }};border:1px solid #E4E2DC;height:170px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative">
+            <sc-if value="{{ d.img }}" hint-placeholder-val="{{ false }}"><img src="{{ d.img }}" alt="{{ d.label }}" style="{{ d.style }}"/></sc-if>
+            <sc-if value="{{ d.text }}" hint-placeholder-val="{{ false }}"><div style="font-family:Georgia,serif;font-size:28px;color:#0A2148;display:flex;align-items:center;margin-right:36px">Clinik <span style="font-size:15px;letter-spacing:0.3em;margin-left:8px">CLUB</span></div></sc-if>
+            <div style="position:absolute;top:10px;right:12px;color:#97463C;font-size:18px">✕</div>
+          </div>
+          <div style="font-size:13px;font-weight:300;color:#5C6E94;margin-top:10px">{{ d.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="componentes" data-screen-label="10 Componentes" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">10 — Componentes de interface</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 12px">Padrão para o aplicativo</h2>
+    <p style="font-size:15px;font-weight:300;line-height:1.8;margin:0 0 40px;max-width:70ch;color:#5C6E94">Elementos de UI construídos com a mesma paleta e tipografia da marca — para manter o produto Clinik Club consistente entre telas e times.</p>
+
+    <div style="background:#0A2148;padding:40px 48px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:40px;align-items:center;margin-bottom:48px">
+      <svg viewBox="0 0 100 100" style="width:88px;height:88px;color:#FCFCFC;flex-shrink:0"><use href="#ckicon"></use></svg>
+      <div>
+        <div style="font-size:15px;font-weight:500;color:#FCFCFC;margin-bottom:8px">Assinatura de curva</div>
+        <p style="font-size:13px;font-weight:300;color:rgba(252,252,252,0.75);line-height:1.8;margin:0;max-width:60ch">Todo componente com superfície — botões, campos, cartões — usa o mesmo raio assimétrico do símbolo: <strong style="color:#FCFCFC;font-weight:500">20px em dois cantos opostos, 4px nos outros dois</strong>. É a curva do losango aplicada à interface.</p>
+      </div>
+    </div>
+
+    <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-bottom:16px">Botões</div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:48px">
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+        <button style="background:#0A2148;color:#FCFCFC;border:none;padding:13px 26px;font-family:'Jost',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.02em;border-radius:16px 4px 16px 4px;cursor:pointer;transition:transform 0.18s ease-out,box-shadow 0.18s ease-out" style-hover="transform:translateY(-2px);box-shadow:0 8px 18px rgba(10,33,72,0.3)">Primário</button>
+        <div style="font-size:12px;color:#9AA3B8">Ação principal</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+        <button style="background:transparent;color:#0A2148;border:1px solid #0A2148;padding:12px 25px;font-family:'Jost',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.02em;border-radius:16px 4px 16px 4px;cursor:pointer;transition:all 0.18s ease-out" style-hover="background:#0A2148;color:#FCFCFC">Secundário</button>
+        <div style="font-size:12px;color:#9AA3B8">Ação alternativa</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+        <button style="background:transparent;color:#0A2148;border:none;padding:13px 4px;font-family:'Jost',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.02em;cursor:pointer;border-bottom:1px solid transparent;transition:border-color 0.18s ease-out" style-hover="border-bottom:1px solid #0A2148">Texto</button>
+        <div style="font-size:12px;color:#9AA3B8">Ação terciária</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;align-items:flex-start;gap:14px">
+        <button disabled="" style="background:#E3E8F1;color:#9AA3B8;border:none;padding:13px 26px;font-family:'Jost',sans-serif;font-size:14px;font-weight:500;letter-spacing:0.02em;border-radius:16px 4px 16px 4px;cursor:not-allowed">Desativado</button>
+        <div style="font-size:12px;color:#9AA3B8">Indisponível</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-bottom:16px">Campos e seleção</div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:48px">
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6E94">Nome do paciente</label>
+        <input type="text" placeholder="Ana Silva" style="border:1px solid #E4E2DC;padding:11px 14px;font-family:'Jost',sans-serif;font-size:14px;color:#0A2148;background:#FCFCFC;border-radius:10px 3px 10px 3px;outline:none;transition:box-shadow 0.18s ease-out,border-color 0.18s ease-out" style-hover="border-color:#9AA3B8" style-focus="border-color:#0A2148;box-shadow:0 0 0 3px #E3E8F1"/>
+        <div style="font-size:11px;color:#9AA3B8">Padrão</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6E94">E-mail</label>
+        <input type="text" value="ana@" style="border:1px solid #97463C;padding:11px 14px;font-family:'Jost',sans-serif;font-size:14px;color:#0A2148;background:#FCFCFC;border-radius:10px 3px 10px 3px;outline:none"/>
+        <div style="font-size:11px;color:#97463C">E-mail inválido</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:12px">
+        <label style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6E94">Notificações por SMS</label>
+        <div style="display:flex;gap:16px;align-items:center">
+          <div style="width:44px;height:24px;background:#0A2148;border-radius:10px 3px 10px 3px;position:relative;cursor:pointer">
+            <div style="position:absolute;top:3px;left:23px;width:18px;height:18px;background:#FCFCFC;border-radius:6px 2px 6px 2px;transition:left 0.18s ease-out"></div>
+          </div>
+          <span style="font-size:12px;color:#5C6E94">Ativado</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-bottom:16px">Navegação e seleção</div>
+    <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:16px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:500">Abas animadas</div>
+      <div style="position:relative;background:#F5F4F1;border-radius:14px 4px 14px 4px;padding:4px;height:40px;box-sizing:border-box;max-width:360px">
+        <div style="position:absolute;top:4px;left:4px;height:32px;width:calc(33.333% - 5.33px);background:#0A2148;border-radius:11px 3px 11px 3px;animation:ckTabSlide 4.5s ease-in-out infinite"></div>
+        <div style="position:relative;display:flex;height:32px;font-size:13px;color:#FCFCFC;z-index:1">
+          <span style="flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap">Agenda</span>
+          <span style="flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:#5C6E94">Pacientes</span>
+          <span style="flex:1;display:flex;align-items:center;justify-content:center;white-space:nowrap;color:#5C6E94">Financeiro</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#9AA3B8">Indicador deslizante — 260ms</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:48px">
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:13px;font-weight:500">Avatares</div>
+        <div style="display:flex;gap:-8px">
+          <div style="width:36px;height:36px;border-radius:50%;background:#0A2148;color:#FCFCFC;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #FCFCFC;margin-right:-10px">AS</div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#5C6E94;color:#FCFCFC;font-size:12px;display:flex;align-items:center;justify-content:center;border:2px solid #FCFCFC;margin-right:-10px">CL</div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#E3E8F1;color:#5C6E94;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #FCFCFC">+8</div>
+        </div>
+        <div style="font-size:11px;color:#9AA3B8">Iniciais — círculo, como os pontos do símbolo</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:13px;font-weight:500">Chips removíveis</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="background:#E3E8F1;color:#0A2148;font-size:12px;padding:6px 10px 6px 14px;border-radius:14px 3px 14px 3px;display:flex;align-items:center;gap:6px">Ortopedia <span style="opacity:0.5">✕</span></span>
+          <span style="background:#E3E8F1;color:#0A2148;font-size:12px;padding:6px 10px 6px 14px;border-radius:14px 3px 14px 3px;display:flex;align-items:center;gap:6px">Convênio <span style="opacity:0.5">✕</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-bottom:16px">Estados e feedback</div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:48px">
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:16px">
+        <div style="font-size:13px;font-weight:500">Status de agenda</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="background:#E7F0E9;color:#386D46;font-size:11px;letter-spacing:0.06em;padding:5px 12px;border-radius:10px 2px 10px 2px">Confirmado</span>
+          <span style="background:#F1EAE3;color:#815833;font-size:11px;letter-spacing:0.06em;padding:5px 12px;border-radius:10px 2px 10px 2px">Pendente</span>
+          <span style="background:#F3E4E1;color:#97463C;font-size:11px;letter-spacing:0.06em;padding:5px 12px;border-radius:10px 2px 10px 2px">Cancelado</span>
+        </div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:12px">
+        <div style="font-size:13px;font-weight:500">Progresso</div>
+        <div style="height:8px;background:#E3E8F1;border-radius:4px;overflow:hidden">
+          <div style="height:100%;background:#0A2148;border-radius:4px;animation:ckFill 3s ease-in-out infinite alternate"></div>
+        </div>
+        <div style="font-size:11px;color:#9AA3B8">Preenchimento — 3s, contínuo</div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center">
+        <svg viewBox="0 0 100 100" style="width:56px;height:56px;color:#0A2148">
+          <path d="M366.56,736.62c-46.97,13.04-83.79,49.88-96.82,96.85,21.84,5.76,39.73,21.23,48.8,41.5,13.86-42.35,47.05-75.57,89.38-89.47-20.24-9.12-35.65-27.04-41.36-48.88Z" transform="scale(0.19926) translate(0,-466.85)" fill="currentColor"></path>
+          <path d="M269.76,602.13c12.42,46.95,47.49,83.77,92.22,96.81,5.44-21.83,20.11-39.74,39.36-48.86-40.24-13.9-71.8-47.05-85.02-89.31-8.68,20.24-25.76,35.65-46.56,41.36Z" transform="scale(0.19926) translate(0,-466.85)" fill="currentColor"></path>
+          <path d="M135.27,736.61c-5.71,21.83-21.11,39.74-41.32,48.86,42.17,13.88,75.26,46.94,89.18,89.09,9.17-20.18,27.1-35.53,48.94-41.19-13.05-46.93-49.86-83.73-96.79-96.77Z" transform="scale(0.19926) translate(0,-466.85)" fill="currentColor"></path>
+          <path d="M183.21,560.8c-13.9,42.24-47.05,75.37-89.31,89.25,20.24,9.12,35.65,27.04,41.36,48.88,46.95-13.04,83.77-49.85,96.81-96.81-21.83-5.71-39.74-21.11-48.86-41.32Z" transform="scale(0.19926) translate(0,-466.85)" fill="currentColor"></path>
+          <circle cx="12.65" cy="50.05" r="12.65" fill="currentColor" style="animation:ckPulse 1.2s ease-in-out infinite;animation-delay:0s;transform-origin:12.65px 50.05px"></circle>
+          <circle cx="87.35" cy="50.04" r="12.65" fill="currentColor" style="animation:ckPulse 1.2s ease-in-out infinite;animation-delay:0.3s;transform-origin:87.35px 50.04px"></circle>
+          <circle cx="50" cy="12.68" r="12.65" fill="currentColor" style="animation:ckPulse 1.2s ease-in-out infinite;animation-delay:0.15s;transform-origin:50px 12.68px"></circle>
+          <circle cx="50" cy="87.29" r="12.65" fill="currentColor" style="animation:ckPulse 1.2s ease-in-out infinite;animation-delay:0.45s;transform-origin:50px 87.29px"></circle>
+        </svg>
+        <div style="font-size:11px;color:#9AA3B8">Carregamento — símbolo com pontos pulsantes</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-bottom:16px">Notificação e movimento</div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+      <div style="background:#0A2148;border-radius:20px 4px 20px 4px;padding:20px 24px;display:flex;align-items:center;gap:14px;animation:ckToast 2.6s ease-in-out infinite">
+        <svg viewBox="0 0 100 100" style="width:26px;height:26px;color:#FCFCFC;flex-shrink:0"><use href="#ckicon"></use></svg>
+        <div>
+          <div style="font-size:13px;color:#FCFCFC;font-weight:500">Consulta confirmada</div>
+          <div style="font-size:11px;color:rgba(252,252,252,0.7);margin-top:2px">Ana Silva · 09:00</div>
+        </div>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px">180ms · ease-out</div>
+        <p style="font-size:12px;color:#5C6E94;line-height:1.7;margin:0">Hover, foco e toques — a resposta imediata da interface.</p>
+      </div>
+      <div style="background:#FCFCFC;border:1px solid #E4E2DC;border-radius:20px 4px 20px 4px;padding:28px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:8px">Sem movimento decorativo</div>
+        <p style="font-size:12px;color:#5C6E94;line-height:1.7;margin:0">Toda animação tem função — orientar, confirmar ou guiar. O losango pulsante é a única animação de espera da marca.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="aplicacoes" data-screen-label="11 Aplicações" style="padding:96px 72px;border-bottom:1px solid #E4E2DC;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">10 — Aplicações</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 40px">A marca em uso</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start">
+      <div>
+        <div style="background:#FCFCFC;border:1px solid #E4E2DC;min-height:170px;width:100%;box-sizing:border-box;display:flex">
+          <div style="background:#0A2148;width:34%;padding:16px 12px;display:flex;flex-direction:column;gap:8px;box-sizing:border-box">
+            <img src="assets/clinik-logo-negativo.png" alt="" style="width:50px">
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">
+              <div style="background:rgba(252,252,252,0.16);border-radius:2px;padding:5px 7px;font-size:9px;color:#FCFCFC">Resumo</div>
+              <div style="font-size:9px;color:rgba(252,252,252,0.6);padding:5px 7px">Pacientes</div>
+              <div style="font-size:9px;color:rgba(252,252,252,0.6);padding:5px 7px">Agenda</div>
+            </div>
+          </div>
+          <div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box;min-width:0">
+            <div style="font-size:10px;font-weight:500;color:#0A2148">Olá, Dra. Marina</div>
+            <div style="display:flex;gap:6px">
+              <div style="flex:1;background:#F5F4F1;border-radius:2px;padding:8px;font-size:8px;color:#5C6E94;box-sizing:border-box">Consultas hoje<br><span style="font-size:14px;color:#0A2148;font-weight:500">12</span></div>
+              <div style="flex:1;background:#F5F4F1;border-radius:2px;padding:8px;font-size:8px;color:#5C6E94;box-sizing:border-box">Pacientes ativos<br><span style="font-size:14px;color:#0A2148;font-weight:500">340</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-top:12px">Dashboard — produto</div>
+      </div>
+      <div>
+        <div style="background:#0A2148;aspect-ratio:0.8;width:100%;box-sizing:border-box;position:relative;overflow:hidden;padding:24px;box-sizing:border-box;display:flex;flex-direction:column;box-shadow:0 12px 32px rgba(10,33,72,0.18)">
+          <svg viewBox="0 0 100 100" style="position:absolute;right:-120px;top:40px;width:340px;height:340px;color:rgba(252,252,252,0.06);pointer-events:none"><use href="#ckicon"></use></svg>
+          <img src="assets/clinik-logo-negativo.png" alt="" style="width:110px;position:relative;z-index:1">
+          <div style="position:relative;z-index:1;margin-top:auto">
+          <div style="font-family:'Italiana',serif;font-size:clamp(17px,1.6vw,26px);color:#FCFCFC;line-height:1.25">Excelência<br>em cada<br>gestão.</div>
+          <div style="width:40px;height:1px;background:rgba(252,252,252,0.4);margin:12px 0"></div>
+          <div style="font-size:11px;font-weight:300;color:rgba(252,252,252,0.75);line-height:1.55">CRM, agenda e marketing<br>para a sua clínica.</div>
+          </div>
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-top:12px">Post — redes sociais (B2B)</div>
+      </div>
+      <div>
+        <div style="background:#FCFCFC;border:1px solid #E4E2DC;aspect-ratio:0.8;width:100%;box-sizing:border-box;padding:28px;display:flex;flex-direction:column">
+          <img src="assets/clinik-logo-principal.png" alt="" style="width:110px">
+          <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:13px;font-weight:500;color:#0A2148">Novo agendamento</div>
+            <div style="background:#E3E8F1;border-radius:2px;padding:10px 12px;font-size:11px;color:#5C6E94;display:flex;justify-content:space-between"><span>Ana Silva · 09:00</span><span>Confirmado</span></div>
+            <div style="background:#F5F4F1;border:1px solid #E4E2DC;border-radius:2px;padding:10px 12px;font-size:11px;color:#5C6E94;display:flex;justify-content:space-between"><span>Carlos Lima · 10:30</span><span>Pendente</span></div>
+          </div>
+        </div>
+        <div style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#9AA3B8;margin-top:12px">Notificação — produto</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="arquivos" data-screen-label="12 Arquivos" style="padding:96px 72px 72px;box-sizing:border-box">
+    <div style="font-size:12px;letter-spacing:0.24em;text-transform:uppercase;color:#9AA3B8;margin-bottom:20px">12 — Arquivos oficiais</div>
+    <h2 style="font-family:'Italiana',serif;font-size:40px;font-weight:400;margin:0 0 32px">Downloads</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;max-width:980px">
+      <sc-for list="{{ files }}" as="f" hint-placeholder-count="6">
+        <a href="{{ f.path }}" download="{{ f.name }}" style="display:flex;flex-direction:column;gap:6px;background:#FCFCFC;border:1px solid #E4E2DC;padding:22px 24px">
+          <span style="font-size:14px;font-weight:500">{{ f.name }}</span>
+          <span style="font-size:12px;font-weight:300;color:#5C6E94">{{ f.desc }} ↓</span>
+        </a>
+      </sc-for>
+    </div>
+    <div style="margin-top:72px;padding-top:28px;border-top:1px solid #E4E2DC;display:flex;justify-content:space-between;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#9AA3B8">
+      <span>Clinik Club — Manual da Marca</span><span>Versão 1.0 · 2026</span>
+    </div>
+  </section>
+
+</main>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { active: 'capa' };
+  componentDidMount() {
+    this.ids = ['capa','marca','logotipo','versoes','protecao','cores','tipografia','padrao','voz','incorretos','componentes','aplicacoes','arquivos'];
+    this.onScroll = () => {
+      let cur = this.ids[0];
+      for (const id of this.ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.35) cur = id;
+      }
+      if (cur !== this.state.active) this.setState({ active: cur });
+    };
+    window.addEventListener('scroll', this.onScroll, { passive: true });
+  }
+  componentWillUnmount() { window.removeEventListener('scroll', this.onScroll); }
+  renderVals() {
+    const secs = [
+      ['capa','Capa'],['marca','A marca'],['logotipo','Logotipo'],['versoes','Versões'],
+      ['protecao','Proteção'],['cores','Cores'],['tipografia','Tipografia'],['padrao','Padrão'],
+      ['voz','Tom de voz'],['incorretos','Usos incorretos'],['componentes','Componentes'],['aplicacoes','Aplicações'],['arquivos','Arquivos']
+    ];
+    const sections = secs.map(([id, label], i) => ({
+      href: '#' + id, label,
+      num: i === 0 ? '—' : String(i).padStart(2, '0'),
+      weight: this.state.active === id ? 500 : 300,
+      color: this.state.active === id ? '#0A2148' : '#5C6E94',
+      bar: this.state.active === id ? '#0A2148' : 'transparent'
+    }));
+    const L = 'assets/clinik-logo-principal.png';
+    const donts = [
+      { img: L, bg: '#FCFCFC', style: { width: 'min(240px,78%)', transform: 'scaleX(1.45)' }, label: 'Não distorcer ou esticar', text: false },
+      { img: L, bg: '#FCFCFC', style: { width: 'min(220px,82%)', transform: 'rotate(-12deg)' }, label: 'Não rotacionar', text: false },
+      { img: L, bg: '#FCFCFC', style: { width: 'min(220px,82%)', filter: 'hue-rotate(150deg) saturate(3) brightness(1.4)' }, label: 'Não alterar as cores', text: false },
+      { img: L, bg: '#FCFCFC', style: { width: 'min(220px,82%)', filter: 'drop-shadow(6px 6px 6px rgba(0,0,0,0.45))' }, label: 'Não aplicar sombras ou efeitos', text: false },
+      { img: L, bg: '#5C6E94', style: { width: 'min(220px,82%)' }, label: 'Não usar sobre fundos de baixo contraste', text: false },
+      { img: L, bg: '#FCFCFC', style: { width: '0px' }, label: 'Não redigitar o lettering em outra fonte', text: true }
+    ];
+    const files = [
+      { path: 'assets/clinik-icon.svg', name: 'clinik-icone.svg', desc: 'Símbolo — vetor SVG' },
+      { path: 'assets/clinik-logo-vetor.svg', name: 'clinik-logo-vetor.svg', desc: 'Assinatura completa — vetor SVG' },
+      { path: 'assets/clinik-lettering-vetor.svg', name: 'clinik-lettering-vetor.svg', desc: 'Tipografia — vetor SVG' },
+      { path: 'assets/clinik-logo-principal.png', name: 'clinik-logo-principal.png', desc: 'Assinatura positiva — PNG alta resolução' },
+      { path: 'assets/clinik-logo-negativo.png', name: 'clinik-logo-negativo.png', desc: 'Assinatura negativa — PNG alta resolução' },
+      { path: 'assets/clinik-icone-navy.png', name: 'clinik-icone-navy.png', desc: 'Símbolo azul — PNG 1200 px' },
+      { path: 'assets/clinik-icone-branco.png', name: 'clinik-icone-branco.png', desc: 'Símbolo branco — PNG 1200 px' },
+      { path: 'uploads/logo-clinikclub.svg', name: 'clinik-master.svg', desc: 'Arquivo master original — SVG' }
+    ];
+    return { sections, donts, files };
+  }
+}
+</script>
+</body>
+</html>
