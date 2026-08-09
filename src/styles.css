@@ -1,6 +1,8 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@import "./styles/fonts.css";
+@import "./styles/clinik-theme.css";
 
 @custom-variant dark (&:is(.dark *));
 

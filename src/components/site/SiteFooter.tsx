@@ -1,7 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import logo from "@/assets/clinik-club-logo.png";
-import icon from "@/assets/clinik-icon.png";
 
 export const APP_VERSION = "1.16";
 
@@ -13,8 +11,7 @@ export function SiteFooter() {
       <div className="container mx-auto px-4 py-12 grid gap-8 md:grid-cols-4">
         <div>
           <Link to={user ? "/app" : "/"} className="flex items-center gap-2" aria-label="Clinik.Club">
-            <img src={icon} alt="" className="h-8 w-8" />
-            <img src={logo} alt="Clinik.Club" className="h-7 w-auto" />
+            <img src="/brand/clinik-logo-vetor.svg" alt="Clinik.Club" className="h-9 w-auto" />
           </Link>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs">
             Funis de vendas interativos para clínicas e profissionais da saúde.

@@ -1,9 +1,12 @@
 /* ============================================================================
  * Clinik.Club — tokens do design system
  *
- * ⚠️  ESTE ARQUIVO AINDA NÃO ESTÁ ATIVO.
- * Nada muda em produção enquanto ele não for importado por src/styles.css.
- * Para ativar:  @import "./styles/clinik-theme.css";  (depois do @theme inline)
+ * ESCOPADO DE PROPÓSITO. As primitivas (--ck-*) ficam em :root e não afetam
+ * nada sozinhas. O mapeamento semântico (--primary, --background, …) só vale
+ * dentro de .theme-clinik.
+ *
+ * Isso garante que o funil público do cliente (/f/:slug) NUNCA seja repintado:
+ * basta não colocar a classe lá. Ligamos superfície por superfície.
  *
  * Fonte: docs/brand/manual-da-marca.html + docs/brand/design-system.md
  * Cores em oklch porque o Tailwind v4 do projeto exige. O hex ao lado é o
@@ -64,20 +67,11 @@
   /* --- Movimento (§4) ----------------------------------------------------- */
   --ck-dur-fast: 180ms;  /* hover, foco, tap                    */
   --ck-dur-base: 260ms;  /* abas, modais, transição de tela     */
-  --ck-ease-out: ease-out;
-  --ck-ease-io:  ease-in-out;
 
   /* --- Densidade (§5) ----------------------------------------------------- */
   --ck-row-comfortable: 44px;
   --ck-row-compact:     36px;
   --ck-row: var(--ck-row-comfortable);
-
-  /* --- Elevação ------------------------------------------------------------
-   * Três degraus. Sombra é para o que flutua de verdade; card em repouso usa
-   * borda, não sombra.                                                       */
-  --ck-elev-1: 0 1px 2px oklch(0.2555 0.0785 260.30 / 0.06);
-  --ck-elev-2: 0 6px 16px -8px oklch(0.2555 0.0785 260.30 / 0.18);
-  --ck-elev-3: 0 18px 40px -18px oklch(0.2555 0.0785 260.30 / 0.30);
 
   /* --- Padrão gráfico (trama) ---------------------------------------------
    * Tile 88×88; o ícone entra escalado 1.17771 e transladado -14.897,-14.897
@@ -87,30 +81,85 @@
   --ck-pattern-opacity: 0.05;
 }
 
-.dark {
-  /* O navy da marca é escuro demais para ser fundo: ele vira a superfície e
-   * o fundo desce um degrau. Assim o card continua sendo "a cor da marca".  */
-  --ck-canvas:     oklch(0.2007 0.0580 260.54); /* #061530 */
-  --ck-surface:    oklch(0.2555 0.0785 260.30); /* #0A2148  = navy da marca */
-  --ck-surface-2:  oklch(0.3000 0.0857 260.24); /* #122C58 */
-  --ck-border:     oklch(0.3544 0.0918 260.74); /* #1E3A6B */
-  --ck-text:       oklch(0.9911 0.0000  89.88); /* #FCFCFC  15.5:1 */
-  --ck-text-muted: oklch(0.7684 0.0369 264.33); /* #A8B4CC   7.6:1 */
+/* ============================================================================
+ * Mapeamento semântico — SÓ dentro de .theme-clinik.
+ * Sem esta classe, a superfície mantém o tema antigo. É o interruptor.
+ * ========================================================================= */
+.theme-clinik {
+  --radius: 0.75rem;
 
-  --ck-n-100: oklch(0.3000 0.0857 260.24);
-  --ck-n-200: oklch(0.3260 0.0880 260.50);
-  --ck-n-300: oklch(0.3544 0.0918 260.74);
-  --ck-n-400: oklch(0.3900 0.0940 260.90);
-  --ck-n-500: oklch(0.5400 0.0700 262.00);
-  --ck-n-600: oklch(0.7684 0.0369 264.33);
+  --background: var(--ck-off);
+  --foreground: var(--ck-navy);
+  --card: var(--ck-surface);
+  --card-foreground: var(--ck-navy);
+  --popover: var(--ck-surface);
+  --popover-foreground: var(--ck-navy);
 
-  --ck-success-bg: oklch(0.2900 0.0500 155.00);
-  --ck-warning-bg: oklch(0.2950 0.0450  62.00);
-  --ck-danger-bg:  oklch(0.2950 0.0600  28.00);
-  --ck-success:    oklch(0.8000 0.1100 155.00);
-  --ck-warning:    oklch(0.8100 0.0950  70.00);
-  --ck-danger:     oklch(0.7900 0.1100  25.00);
+  --primary: var(--ck-navy);
+  --primary-foreground: var(--ck-surface);
+  --secondary: var(--ck-n-100);
+  --secondary-foreground: var(--ck-navy);
+  --muted: var(--ck-n-100);
+  --muted-foreground: var(--ck-n-600);
+  --accent: var(--ck-nevoa);
+  --accent-foreground: var(--ck-sereno-text);
 
+  --destructive: var(--ck-danger);
+  --destructive-foreground: var(--ck-surface);
+
+  --border: var(--ck-n-300);
+  --input: var(--ck-n-500);          /* borda de controle precisa de 3:1 */
+  --ring: var(--ck-navy);
+
+  --brand: var(--ck-navy);
+  --brand-foreground: var(--ck-surface);
+  --highlight: var(--ck-nevoa);
+
+  --gradient-hero: linear-gradient(135deg, var(--ck-off), var(--ck-nevoa));
+  --shadow-card: 0 18px 40px -18px oklch(0.2555 0.0785 260.30 / 0.30);
+  --shadow-soft: 0 6px 16px -8px oklch(0.2555 0.0785 260.30 / 0.18);
+
+  --chart-1: oklch(0.2555 0.0785 260.30); /* #0A2148 */
+  --chart-2: oklch(0.5389 0.0637 264.74); /* #5C6E94 */
+  --chart-3: oklch(0.4987 0.0651 200.89); /* #2E6E72 */
+  --chart-4: oklch(0.4868 0.0847 150.75); /* #386D46 */
+  --chart-5: oklch(0.6248 0.1126  73.59); /* #B07C2E */
+
+  --sidebar: var(--ck-navy);
+  --sidebar-foreground: var(--ck-surface);
+  --sidebar-primary: var(--ck-surface);
+  --sidebar-primary-foreground: var(--ck-navy);
+  --sidebar-accent: oklch(0.3000 0.0857 260.24);
+  --sidebar-accent-foreground: var(--ck-surface);
+  --sidebar-border: oklch(0.3544 0.0918 260.74);
+  --sidebar-ring: var(--ck-nevoa);
+
+  color: var(--ck-navy);
+  font-family: 'Jost', ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Modo escuro da marca. O navy é escuro demais para ser fundo: ele vira a
+ * superfície e o fundo desce um degrau. */
+.dark .theme-clinik,
+.theme-clinik.dark {
+  --background:        oklch(0.2007 0.0580 260.54); /* #061530 canvas */
+  --foreground:        oklch(0.9911 0.0000  89.88);
+  --card:              oklch(0.2555 0.0785 260.30); /* navy = superfície */
+  --card-foreground:   oklch(0.9911 0.0000  89.88);
+  --popover:           oklch(0.2555 0.0785 260.30);
+  --popover-foreground:oklch(0.9911 0.0000  89.88);
+  --primary:           oklch(0.9298 0.0133 262.38);
+  --primary-foreground:oklch(0.2555 0.0785 260.30);
+  --secondary:         oklch(0.3000 0.0857 260.24);
+  --secondary-foreground: oklch(0.9911 0 89.88);
+  --muted:             oklch(0.3000 0.0857 260.24);
+  --muted-foreground:  oklch(0.7684 0.0369 264.33);
+  --accent:            oklch(0.3000 0.0857 260.24);
+  --accent-foreground: oklch(0.9911 0 89.88);
+  --border:            oklch(0.3544 0.0918 260.74);
+  --input:             oklch(0.3544 0.0918 260.74);
+  --ring:              oklch(0.7684 0.0369 264.33);
   --ck-pattern-opacity: 0.07;
 }
 
@@ -118,12 +167,26 @@
  * Utilitários
  * ========================================================================= */
 
-/* Trama tom sobre tom. Aplicar no contêiner, nunca em elemento pequeno.
- * Requer /brand/clinik-icon.svg em public/. */
-.ck-mesh {
-  position: relative;
-  isolation: isolate;
+/* Títulos de display da marca. Só ≥24px — a Italiana não tem outros pesos. */
+.ck-display { font-family: 'Italiana', ui-serif, Georgia, serif; font-weight: 400; letter-spacing: 0; }
+
+/* Rede de proteção contra negrito falso: a Jost vai até 600. Pedir 700+ faz
+ * o browser sintetizar o peso, engordando as hastes e sujando o texto. */
+.theme-clinik :is(.font-bold, .font-extrabold, .font-black) { font-weight: 600; }
+
+/* Rótulo em caixa alta espaçada — o "eyebrow" do manual. */
+.ck-eyebrow {
+  font-size: 10px; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--ck-n-600); font-weight: 500;
 }
+
+/* Raio assinatura, aplicado por escolha e não por padrão. */
+.ck-r-sig    { border-radius: var(--ck-r-sig); }
+.ck-r-sig-md { border-radius: var(--ck-r-sig-md); }
+.ck-r-sig-sm { border-radius: var(--ck-r-sig-sm); }
+
+/* Trama tom sobre tom. Aplicar no contêiner, nunca em elemento pequeno. */
+.ck-mesh { position: relative; isolation: isolate; }
 .ck-mesh::before {
   content: "";
   position: absolute;
@@ -136,17 +199,22 @@
   pointer-events: none;
 }
 
+/* Trama no modo "capa": ampliada e sangrando, não repetida. */
+.ck-mesh-xl { position: relative; isolation: isolate; overflow: hidden; }
+.ck-mesh-xl::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 420px; height: 420px;
+  right: -110px; bottom: -150px;
+  background: url("/brand/clinik-icon.svg") no-repeat center / contain;
+  opacity: var(--ck-pattern-opacity);
+  pointer-events: none;
+}
+
 /* Números de tabela/moeda. A Jost não tem figuras tabulares por padrão;
  * sem isto toda coluna financeira fica trêmula. */
 .ck-num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
-
-/* Foco visível único do sistema — sempre este, em qualquer controle. */
-.ck-focus:focus-visible,
-:where(button, a, input, select, textarea, [tabindex]):focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ck-nevoa);
-  border-color: var(--ck-navy);
-}
 
 /* Modo compacto: trocado por preferência do usuário, não por breakpoint. */
 [data-density="compact"] { --ck-row: var(--ck-row-compact); }
@@ -160,11 +228,14 @@
   0%, 100% { opacity: 0.25; transform: scale(0.65); }
   50%      { opacity: 1;    transform: scale(1); }
 }
-.ck-loader circle { animation: ck-dot-pulse 1.2s var(--ck-ease-io) infinite; transform-origin: center; }
-.ck-loader circle:nth-child(1) { animation-delay: 0ms; }
-.ck-loader circle:nth-child(2) { animation-delay: 150ms; }
-.ck-loader circle:nth-child(3) { animation-delay: 300ms; }
-.ck-loader circle:nth-child(4) { animation-delay: 450ms; }
+.ck-loader circle {
+  animation: ck-dot-pulse 1.2s ease-in-out infinite;
+  transform-origin: center; transform-box: fill-box;
+}
+.ck-loader circle:nth-of-type(1) { animation-delay: 0ms; }
+.ck-loader circle:nth-of-type(2) { animation-delay: 150ms; }
+.ck-loader circle:nth-of-type(3) { animation-delay: 300ms; }
+.ck-loader circle:nth-of-type(4) { animation-delay: 450ms; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

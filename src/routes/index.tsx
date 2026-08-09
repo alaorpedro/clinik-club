@@ -80,7 +80,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-clinik min-h-screen flex flex-col bg-background">
       <SiteHeader />
       <main className="flex-1">
         {/* Hero */}
@@ -94,12 +94,12 @@ function Index() {
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 Feito para clínicas odontológicas <span className="text-foreground/40">—</span> 100% LGPD
               </div>
-              <h1 className="mt-3 text-5xl md:text-6xl font-black tracking-tight leading-[1.05]">
+              <h1 className="mt-3 ck-display text-6xl md:text-7xl tracking-tight leading-[1.02]">
                 Mais sorrisos agendados,{" "}
                 <span className="relative inline-block">
-                  <span className="relative z-10">menos cadeira vazia</span>
-                  <span className="absolute inset-x-0 bottom-1 h-4 bg-highlight -z-0 -skew-x-3" />
-                </span>.
+                  <span className="relative z-10">menos cadeira vazia.</span>
+                  <span className="absolute inset-x-0 bottom-[0.18em] h-[0.09em] bg-primary/25 -z-0" />
+                </span>
               </h1>
               <p className="mt-4 text-lg text-muted-foreground max-w-xl">
                 A <strong className="text-foreground">Clinik.Club</strong> transforma visitantes em <strong className="text-foreground">pacientes agendados</strong> com funis interativos pensados para clareamento, implantes, ortodontia e mais.
@@ -150,7 +150,7 @@ function Index() {
         <section className="container mx-auto px-4 py-20">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Como funciona</p>
-            <h2 className="mt-2 text-4xl md:text-5xl font-black tracking-tight">3 passos para encher sua agenda</h2>
+            <h2 className="mt-2 ck-display text-5xl md:text-6xl tracking-tight">3 passos para encher sua agenda</h2>
           </div>
           <div className="mt-14 grid md:grid-cols-3 gap-6">
             {[
@@ -173,7 +173,7 @@ function Index() {
         <section className="container mx-auto px-4 pb-20">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Templates prontos</p>
-            <h2 className="mt-2 text-4xl md:text-5xl font-black tracking-tight">Funis por especialidade odontológica</h2>
+            <h2 className="mt-2 ck-display text-5xl md:text-6xl tracking-tight">Funis por especialidade odontológica</h2>
             <p className="mt-4 text-muted-foreground">Cada template traz as perguntas certas para qualificar o paciente ideal.</p>
           </div>
           <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -201,7 +201,7 @@ function Index() {
         <section className="bg-secondary/40 py-20">
           <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight">Tudo que sua clínica precisa em <span className="text-primary">um só lugar</span></h2>
+              <h2 className="ck-display text-5xl md:text-6xl tracking-tight">Tudo que sua clínica precisa em <span className="text-primary">um só lugar</span></h2>
               <ul className="mt-8 space-y-4">
                 {[
                   "Builder visual drag-and-drop — sem código",
@@ -219,7 +219,7 @@ function Index() {
               </ul>
             </div>
             <div className="rounded-3xl bg-foreground text-background p-10 shadow-card">
-              <p className="text-5xl font-black">+38%</p>
+              <p className="text-5xl font-light ck-num">+38%</p>
               <p className="mt-2 text-background/70">de aumento médio em agendamentos vs. formulários estáticos de contato.</p>
               <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
                 <div className="rounded-xl bg-background/10 p-4">
@@ -239,7 +239,7 @@ function Index() {
         <section className="container mx-auto px-4 py-20">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Perguntas frequentes</p>
-            <h2 className="mt-2 text-4xl md:text-5xl font-black tracking-tight">Dúvidas comuns de dentistas</h2>
+            <h2 className="mt-2 ck-display text-5xl md:text-6xl tracking-tight">Dúvidas comuns de dentistas</h2>
           </div>
           <div className="mt-12 max-w-3xl mx-auto grid gap-4">
             {[
@@ -274,7 +274,7 @@ function Index() {
         {/* CTA */}
         <section className="container mx-auto px-4 py-20">
           <div className="rounded-3xl bg-primary text-primary-foreground p-12 md:p-16 text-center shadow-card">
-            <h2 className="text-4xl md:text-5xl font-black tracking-tight">Pronto para encher sua agenda?</h2>
+            <h2 className="ck-display text-5xl md:text-6xl tracking-tight">Pronto para encher sua agenda?</h2>
             <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto">Crie sua conta grátis e publique o funil da sua clínica em minutos.</p>
             <Button asChild size="lg" variant="secondary" className="mt-8 rounded-full font-semibold h-12 px-8">
               <Link to="/cadastro">Começar agora</Link>
