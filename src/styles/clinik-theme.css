@@ -224,7 +224,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: url("/brand/clinik-icon.svg");
+  background-image: url("/brand/clinik-mesh.svg");
   background-size: var(--ck-pattern-tile) var(--ck-pattern-tile);
   background-repeat: repeat;
   opacity: var(--ck-pattern-opacity);
@@ -232,6 +232,8 @@
   -webkit-mask-image: radial-gradient(120% 95% at 18% 42%, transparent 38%, #000 88%);
           mask-image: radial-gradient(120% 95% at 18% 42%, transparent 38%, #000 88%);
 }
+/* Sobre superfície escura o tile navy sumiria: usa o tile branco. */
+.ck-mesh.ck-mesh-light::before { background-image: url("/brand/clinik-mesh-light.svg"); }
 
 /* Trama no modo "capa": ampliada e sangrando, não repetida. */
 .ck-mesh-xl { position: relative; isolation: isolate; overflow: hidden; }

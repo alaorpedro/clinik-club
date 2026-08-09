@@ -1,117 +1,117 @@
 import { useEffect, useState } from "react";
-import { Sparkles, Smile, HeartPulse } from "lucide-react";
-import { ToothMark } from "@/components/site/ToothMark";
-import dentistAvatar from "@/assets/dentist-avatar.jpg";
 
 const options = [
-  { label: "Clareamento dental", Icon: Sparkles },
-  { label: "Implante", Icon: ToothMark },
-  { label: "Ortodontia / Aparelho", Icon: Smile },
-  { label: "Limpeza e prevenção", Icon: HeartPulse },
+  "Clareamento dental",
+  "Implante",
+  "Ortodontia / Aparelho",
+  "Limpeza e prevenção",
 ];
 
+/**
+ * Demonstração do produto no hero.
+ * Duas superfícies contando a história inteira: a etapa que o paciente vê e o
+ * lead que chega na recepção. Sem moldura de celular, sem foto de banco de
+ * imagem e sem emoji — a régua é o manual da marca.
+ */
 export function QuizMockup() {
-  const [selected, setSelected] = useState(1);
-  const [progress, setProgress] = useState(40);
-  const [step, setStep] = useState(2);
+  const [selected, setSelected] = useState(2);
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setSelected((s) => (s + 1) % options.length);
-      setProgress((p) => (p >= 80 ? 40 : p + 15));
-      setStep((s) => (s >= 5 ? 2 : s + 1));
-    }, 2200);
+    const t = setInterval(() => setSelected((s) => (s + 1) % options.length), 2600);
     return () => clearInterval(t);
   }, []);
 
   return (
-    <div className="relative mx-auto w-full max-w-sm">
-      {/* Phone frame */}
-      <div className="relative rounded-[2.25rem] border-[8px] border-foreground bg-background shadow-card overflow-hidden">
-        {/* Clinic header bar with dentist avatar */}
-        <div className="flex items-center justify-between px-4 pt-4 pb-3 bg-secondary/50">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <img
-              src={dentistAvatar}
-              alt="Dra. Camila Ribeiro"
-              loading="lazy"
-              width={1024}
-              height={1024}
-              className="h-9 w-9 rounded-full object-cover ring-2 ring-background shrink-0"
-            />
-            <div className="text-[11px] leading-tight min-w-0">
-              <div className="font-semibold truncate">Dra. Camila Ribeiro</div>
-              <div className="text-muted-foreground truncate">CRO-SP 54.321 · responde agora</div>
-            </div>
-          </div>
-          <div className="text-[10px] text-muted-foreground font-medium shrink-0 ml-2">
-            {step}/5
-          </div>
+    <div className="relative mx-auto w-full max-w-md pb-24 lg:pb-28">
+      {/* Etapa do funil, como o paciente vê */}
+      <div className="ck-r-sig relative border border-border bg-card shadow-card">
+        {/* Cabeçalho: a marca é da clínica, não a nossa */}
+        <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+          <span className="ck-r-sig-sm flex h-9 w-9 shrink-0 items-center justify-center bg-primary text-[11px] font-medium text-primary-foreground">
+            CB
+          </span>
+          <span className="min-w-0 text-[13px] font-medium">Clínica Bertola</span>
+          <span className="ck-eyebrow ml-auto shrink-0">Etapa 2 de 5</span>
         </div>
 
-        <div className="h-1 bg-muted mx-4 mt-3 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-primary transition-all duration-700 rounded-full"
-            style={{ width: `${progress}%` }}
-          />
+        {/* Progresso: régua fina, não barra arredondada */}
+        <div className="h-px w-full bg-border">
+          <div className="h-px bg-primary transition-all duration-[260ms] ease-in-out" style={{ width: "40%" }} />
         </div>
 
-        <div className="px-4 pt-4 pb-5">
-          {/* Human greeting bubble */}
-          <div className="flex gap-2 mb-3">
-            <img
-              src={dentistAvatar}
-              alt=""
-              loading="lazy"
-              width={1024}
-              height={1024}
-              className="h-7 w-7 rounded-full object-cover shrink-0 mt-0.5"
-            />
-            <div className="rounded-2xl rounded-tl-sm bg-muted px-3 py-2 text-[12px] leading-snug text-foreground/80">
-              Oi! Em 2 minutos eu monto sua avaliação. Primeiro me conta:
-            </div>
-          </div>
-
-          <h3 className="text-[17px] font-bold tracking-tight leading-snug">
+        <div className="px-6 pb-6 pt-6">
+          <h3 className="ck-display text-[26px] leading-[1.15]">
             Qual tratamento você procura?
           </h3>
 
-          <div className="mt-3 space-y-2">
-            {options.map((opt, i) => {
-              const Icon = opt.Icon;
+          <div className="mt-5 space-y-2">
+            {options.map((label, i) => {
+              const on = i === selected;
               return (
                 <button
-                  key={opt.label}
+                  key={label}
+                  type="button"
                   onClick={() => setSelected(i)}
-                  className={`flex w-full items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-[13px] font-medium transition ${
-                    i === selected
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-foreground/30"
+                  aria-pressed={on}
+                  className={`flex w-full items-center gap-3 border px-4 py-3 text-[13.5px] transition-colors duration-[180ms] ease-out ${
+                    on
+                      ? "border-primary bg-accent font-medium text-foreground"
+                      : "border-border text-muted-foreground hover:border-input"
                   }`}
+                  style={{ borderRadius: "var(--ck-r-flat)" }}
                 >
                   <span
-                    className={`flex h-4 w-4 items-center justify-center rounded-full border-2 shrink-0 ${
-                      i === selected ? "border-primary bg-primary" : "border-border"
+                    className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border transition-colors duration-[180ms] ease-out ${
+                      on ? "border-primary" : "border-input"
                     }`}
                   >
-                    {i === selected && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
-                    )}
+                    {on && <span className="h-[7px] w-[7px] rounded-full bg-primary" />}
                   </span>
-                  <Icon className={`h-4 w-4 shrink-0 ${i === selected ? "text-primary" : "text-muted-foreground"}`} />
-                  <span className="text-left">{opt.label}</span>
+                  <span className="text-left">{label}</span>
                 </button>
               );
             })}
           </div>
 
-          <button className="mt-4 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition">
+          <div className="ck-btn mt-5 w-full bg-primary py-3 text-center text-[13.5px] font-medium text-primary-foreground">
             Continuar
-          </button>
+          </div>
 
-          <p className="mt-3 text-center text-[10px] text-muted-foreground">
-            🔒 Dados protegidos — LGPD
-          </p>
+          <p className="ck-eyebrow mt-4 text-center">Dados protegidos · LGPD</p>
+        </div>
+      </div>
+
+      {/* O outro lado: o lead chegando na recepção */}
+      <div
+        className="ck-r-sig absolute bottom-0 left-2 w-[85%] border border-border bg-card px-5 py-4 shadow-card sm:left-6 lg:-left-10 lg:w-[78%]"
+        aria-hidden
+      >
+        <div className="ck-eyebrow">Novo lead · agora</div>
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="text-[15px] font-medium">Ana Silva</span>
+          <span className="ck-num text-[12.5px] text-muted-foreground">(48) 99631-2044</span>
+        </div>
+        <div className="mt-3 flex items-center gap-2">
+          <span
+            className="px-2 py-[3px] text-[11px] font-medium"
+            style={{
+              borderRadius: "var(--ck-r-flat-sm)",
+              background: "var(--ck-tag-azul-bg)",
+              color: "var(--ck-tag-azul-fg)",
+            }}
+          >
+            Ortodontia
+          </span>
+          <span
+            className="px-2 py-[3px] text-[11px] font-medium"
+            style={{
+              borderRadius: "var(--ck-r-flat-sm)",
+              background: "var(--ck-success-bg)",
+              color: "var(--ck-success)",
+            }}
+          >
+            Qualificado
+          </span>
         </div>
       </div>
     </div>
