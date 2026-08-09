@@ -39,7 +39,7 @@ function ContatoPage() {
   return (
     <div className="theme-clinik min-h-screen flex flex-col bg-background">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-20 max-w-xl">
+      <main className="flex-1 container mx-auto px-6 lg:px-10 py-20 max-w-xl">
         <p className="text-sm font-semibold text-primary uppercase tracking-wide">Contato</p>
         <h1 className="mt-2 ck-display text-6xl tracking-tight">Fale com a gente</h1>
         <p className="mt-4 text-muted-foreground">Dúvidas, demonstrações ou suporte — estamos por aqui.</p>

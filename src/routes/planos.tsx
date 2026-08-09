@@ -87,7 +87,7 @@ function PlanosPage() {
       <PaymentTestModeBanner />
       <SiteHeader />
       <main className="flex-1">
-        <section className="container mx-auto px-4 py-20">
+        <section className="container mx-auto px-6 lg:px-10 py-20">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Planos</p>
             <h1 className="mt-2 ck-display text-6xl tracking-tight">Escolha o plano ideal pra você</h1>

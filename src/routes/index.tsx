@@ -85,7 +85,7 @@ function Index() {
       <main className="flex-1">
         {/* Hero */}
         <section className="ck-mesh relative overflow-hidden">
-          <div className="container mx-auto px-4 py-4 lg:py-6 grid lg:grid-cols-2 gap-8 items-start">
+          <div className="container mx-auto px-6 lg:px-10 py-4 lg:py-6 grid lg:grid-cols-2 gap-8 items-start">
             <div>
               <p className="text-xs font-medium text-muted-foreground">
                 Feito para clínicas de saúde <span className="text-foreground/40">—</span> 100% LGPD
@@ -123,7 +123,7 @@ function Index() {
 
         {/* Confiam na Clinik.Club */}
         <section className="border-y border-border/60 bg-secondary/40 py-8">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-6 lg:px-10">
             <p className="text-center text-xs uppercase tracking-widest text-muted-foreground mb-6">Clínicas que já usam Clinik.Club</p>
             <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-muted-foreground/70 font-semibold">
               {[
@@ -143,7 +143,7 @@ function Index() {
         </section>
 
         {/* Como funciona */}
-        <section className="container mx-auto px-4 py-20">
+        <section className="container mx-auto px-6 lg:px-10 py-20">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Como funciona</p>
             <h2 className="mt-2 ck-display text-5xl md:text-6xl tracking-tight">3 passos para encher sua agenda</h2>
@@ -166,7 +166,7 @@ function Index() {
         </section>
 
         {/* Templates por especialidade */}
-        <section className="container mx-auto px-4 pb-20">
+        <section className="container mx-auto px-6 lg:px-10 pb-20">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Templates prontos</p>
             <h2 className="mt-2 ck-display text-5xl md:text-6xl tracking-tight">Funis por especialidade odontológica</h2>
@@ -195,7 +195,7 @@ function Index() {
 
         {/* Recursos */}
         <section className="bg-secondary/40 py-20">
-          <div className="container mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
+          <div className="container mx-auto px-6 lg:px-10 grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="ck-display text-5xl md:text-6xl tracking-tight">Tudo que sua clínica precisa em <span className="text-primary">um só lugar</span></h2>
               <ul className="mt-8 space-y-4">
@@ -232,7 +232,7 @@ function Index() {
         </section>
 
         {/* FAQ odonto */}
-        <section className="container mx-auto px-4 py-20">
+        <section className="container mx-auto px-6 lg:px-10 py-20">
           <div className="max-w-2xl mx-auto text-center">
             <p className="text-sm font-semibold text-primary uppercase tracking-wide">Perguntas frequentes</p>
             <h2 className="mt-2 ck-display text-5xl md:text-6xl tracking-tight">Dúvidas comuns de dentistas</h2>
@@ -268,7 +268,7 @@ function Index() {
         </section>
 
         {/* CTA */}
-        <section className="container mx-auto px-4 py-20">
+        <section className="container mx-auto px-6 lg:px-10 py-20">
           <div className="ck-r-sig ck-mesh-xl ck-mesh-light bg-primary text-primary-foreground p-12 md:p-16 text-center shadow-card">
             <h2 className="ck-display text-5xl md:text-6xl tracking-tight">Pronto para encher sua agenda?</h2>
             <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto">Crie sua conta grátis e publique o funil da sua clínica em minutos.</p>

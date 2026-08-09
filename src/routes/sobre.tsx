@@ -22,7 +22,7 @@ function SobrePage() {
   return (
     <div className="theme-clinik min-h-screen flex flex-col bg-background">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-20 max-w-3xl">
+      <main className="flex-1 container mx-auto px-6 lg:px-10 py-20 max-w-3xl">
         <p className="text-sm font-semibold text-primary uppercase tracking-wide">Sobre nós</p>
         <h1 className="mt-2 ck-display text-6xl tracking-tight">Pioneira em funis interativos no Brasil</h1>
         <div className="mt-8 space-y-5 text-lg text-foreground/80 leading-relaxed">

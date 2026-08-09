@@ -8,7 +8,7 @@ export function SiteFooter() {
   
   return (
     <footer className="border-t border-border/60 bg-secondary/40 mt-24">
-      <div className="container mx-auto px-4 py-12 grid gap-8 md:grid-cols-4">
+      <div className="container mx-auto px-6 lg:px-10 py-12 grid gap-8 md:grid-cols-4">
         <div>
           <Link to={user ? "/app" : "/"} className="flex items-center gap-2" aria-label="Clinik.Club">
             <img src="/brand/clinik-logo-vetor.svg" alt="Clinik.Club" className="h-9 w-auto" />
