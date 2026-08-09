@@ -216,6 +216,20 @@
 }
 .theme-clinik .ck-card:hover { box-shadow: var(--ck-elev-2, 0 6px 16px -8px oklch(0.2555 0.0785 260.30 / 0.18)); }
 
+/* Campo de formulário da marca: assinatura pequena + o anel de foco único
+ * do sistema (Névoa + borda navy), no lugar do ring azul genérico do shadcn. */
+.theme-clinik .ck-input {
+  border-radius: var(--ck-r-sig-md) !important;
+  transition: border-color var(--ck-dur-fast) ease-out,
+              box-shadow var(--ck-dur-fast) ease-out;
+}
+.theme-clinik .ck-input:focus-visible {
+  outline: none;
+  border-color: var(--ck-navy);
+  box-shadow: 0 0 0 3px var(--ck-nevoa);
+  --tw-ring-shadow: 0 0 0 0 transparent;
+}
+
 /* Trama tom sobre tom. Aplicar no contêiner, nunca em elemento pequeno.
  * A máscara faz a trama sumir no miolo, onde vive o texto, e sobreviver só
  * nas bordas — é o "sempre sangrando" do manual, sem competir com a leitura. */

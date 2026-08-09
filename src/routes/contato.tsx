@@ -37,26 +37,26 @@ function ContatoPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-clinik min-h-screen flex flex-col bg-background">
       <SiteHeader />
       <main className="flex-1 container mx-auto px-4 py-20 max-w-xl">
         <p className="text-sm font-semibold text-primary uppercase tracking-wide">Contato</p>
-        <h1 className="mt-2 text-5xl font-black tracking-tight">Fale com a gente</h1>
+        <h1 className="mt-2 ck-display text-6xl tracking-tight">Fale com a gente</h1>
         <p className="mt-4 text-muted-foreground">Dúvidas, demonstrações ou suporte — estamos por aqui.</p>
         <form onSubmit={onSubmit} className="mt-10 space-y-4">
           <div>
             <label htmlFor="name" className="text-sm font-medium">Nome</label>
-            <Input id="name" required name="name" placeholder="Seu nome" aria-label="Seu nome" />
+            <Input id="name" required name="name" placeholder="Seu nome" aria-label="Seu nome" className="ck-input" />
           </div>
           <div>
             <label htmlFor="email" className="text-sm font-medium">Email</label>
-            <Input id="email" required type="email" name="email" placeholder="Seu email" aria-label="Seu email" />
+            <Input id="email" required type="email" name="email" placeholder="Seu email" aria-label="Seu email" className="ck-input" />
           </div>
           <div>
             <label htmlFor="message" className="text-sm font-medium">Mensagem</label>
-            <Textarea id="message" required name="message" placeholder="Como podemos ajudar?" aria-label="Como podemos ajudar?" rows={5} />
+            <Textarea id="message" required name="message" placeholder="Como podemos ajudar?" aria-label="Como podemos ajudar?" rows={5} className="ck-input" />
           </div>
-          <Button type="submit" disabled={loading} size="lg" className="rounded-full font-semibold w-full">
+          <Button type="submit" disabled={loading} size="lg" className="ck-btn font-semibold w-full">
             {loading ? "Enviando..." : "Enviar mensagem"}
           </Button>
         </form>
