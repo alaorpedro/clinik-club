@@ -29,7 +29,7 @@ export function SiteHeader() {
           ) : (
             <>
               <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigate({ to: "/login" })}>Entrar</Button>
-              <Button size="sm" className="rounded-full font-semibold" onClick={() => navigate({ to: "/cadastro" })}>Inscrever-se</Button>
+              <Button size="sm" className="ck-btn rounded-full font-semibold" onClick={() => navigate({ to: "/cadastro" })}>Inscrever-se</Button>
             </>
           )}
         </div>

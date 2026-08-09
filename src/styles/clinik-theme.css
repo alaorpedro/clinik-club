@@ -68,6 +68,12 @@
   --ck-dur-fast: 180ms;  /* hover, foco, tap                    */
   --ck-dur-base: 260ms;  /* abas, modais, transição de tela     */
 
+  /* --- Elevação ------------------------------------------------------------
+   * Três degraus. Sombra é para o que flutua; card em repouso usa borda.    */
+  --ck-elev-1: 0 1px 2px oklch(0.2555 0.0785 260.30 / 0.06);
+  --ck-elev-2: 0 6px 16px -8px oklch(0.2555 0.0785 260.30 / 0.18);
+  --ck-elev-3: 0 18px 40px -18px oklch(0.2555 0.0785 260.30 / 0.30);
+
   /* --- Densidade (§5) ----------------------------------------------------- */
   --ck-row-comfortable: 44px;
   --ck-row-compact:     36px;
@@ -78,7 +84,7 @@
    * a partir da caixa normalizada 0–100, de modo que o centro de cada círculo
    * caia no centro do vizinho. Sempre tom sobre tom, sempre sangrando.      */
   --ck-pattern-tile: 88px;
-  --ck-pattern-opacity: 0.05;
+  --ck-pattern-opacity: 0.04;
 }
 
 /* ============================================================================
@@ -185,7 +191,33 @@
 .ck-r-sig-md { border-radius: var(--ck-r-sig-md); }
 .ck-r-sig-sm { border-radius: var(--ck-r-sig-sm); }
 
-/* Trama tom sobre tom. Aplicar no contêiner, nunca em elemento pequeno. */
+/* --- Botão da marca -------------------------------------------------------
+ * Raio assinatura + a elevação de 180ms do manual. O !important existe para
+ * vencer o rounded-* que o shadcn injeta no próprio componente Button.      */
+.theme-clinik .ck-btn {
+  border-radius: var(--ck-r-sig-md) !important;
+  transition: transform var(--ck-dur-fast) ease-out,
+              box-shadow var(--ck-dur-fast) ease-out,
+              background-color var(--ck-dur-fast) ease-out,
+              color var(--ck-dur-fast) ease-out;
+}
+.theme-clinik .ck-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px oklch(0.2555 0.0785 260.30 / 0.30);
+}
+.theme-clinik .ck-btn:active { transform: translateY(0); }
+
+/* Cartão da marca: assinatura no contêiner, com realce discreto no hover. */
+.theme-clinik .ck-card {
+  border-radius: var(--ck-r-sig) !important;
+  transition: border-color var(--ck-dur-fast) ease-out,
+              box-shadow var(--ck-dur-fast) ease-out;
+}
+.theme-clinik .ck-card:hover { box-shadow: var(--ck-elev-2, 0 6px 16px -8px oklch(0.2555 0.0785 260.30 / 0.18)); }
+
+/* Trama tom sobre tom. Aplicar no contêiner, nunca em elemento pequeno.
+ * A máscara faz a trama sumir no miolo, onde vive o texto, e sobreviver só
+ * nas bordas — é o "sempre sangrando" do manual, sem competir com a leitura. */
 .ck-mesh { position: relative; isolation: isolate; }
 .ck-mesh::before {
   content: "";
@@ -197,20 +229,30 @@
   background-repeat: repeat;
   opacity: var(--ck-pattern-opacity);
   pointer-events: none;
+  -webkit-mask-image: radial-gradient(120% 95% at 18% 42%, transparent 38%, #000 88%);
+          mask-image: radial-gradient(120% 95% at 18% 42%, transparent 38%, #000 88%);
 }
 
 /* Trama no modo "capa": ampliada e sangrando, não repetida. */
 .ck-mesh-xl { position: relative; isolation: isolate; overflow: hidden; }
-.ck-mesh-xl::before {
+.ck-mesh-xl::before,
+.ck-mesh-xl::after {
   content: "";
   position: absolute;
-  z-index: -1;
-  width: 420px; height: 420px;
-  right: -110px; bottom: -150px;
+  z-index: 0;
   background: url("/brand/clinik-icon.svg") no-repeat center / contain;
   opacity: var(--ck-pattern-opacity);
   pointer-events: none;
 }
+.ck-mesh-xl::before { width: 440px; height: 440px; right: -170px; bottom: -210px; }
+.ck-mesh-xl::after  { width: 250px; height: 250px; right:   30px; bottom:   95px; }
+/* O conteúdo precisa subir acima da trama. */
+.ck-mesh-xl > * { position: relative; z-index: 1; }
+
+/* O ícone é navy: sobre superfície escura ele sumiria. Esta variante o
+ * inverte para branco, mantendo a regra do tom sobre tom. */
+.ck-mesh-light::before,
+.ck-mesh-light::after { filter: brightness(0) invert(1); opacity: 0.06; }
 
 /* Números de tabela/moeda. A Jost não tem figuras tabulares por padrão;
  * sem isto toda coluna financeira fica trêmula. */

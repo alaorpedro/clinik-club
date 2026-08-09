@@ -84,13 +84,10 @@ function Index() {
       <SiteHeader />
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden">
-          {/* Organic dental blobs */}
-          <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl" aria-hidden />
-          <div className="pointer-events-none absolute top-40 -left-32 h-80 w-80 rounded-full bg-accent/30 blur-3xl" aria-hidden />
+        <section className="ck-mesh relative overflow-hidden">
           <div className="container mx-auto px-4 py-4 lg:py-6 grid lg:grid-cols-2 gap-8 items-start">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+              <div className="ck-r-sig-sm inline-flex items-center gap-2 border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 Feito para clínicas odontológicas <span className="text-foreground/40">—</span> 100% LGPD
               </div>
@@ -105,10 +102,10 @@ function Index() {
                 A <strong className="text-foreground">Clinik.Club</strong> transforma visitantes em <strong className="text-foreground">pacientes agendados</strong> com funis interativos pensados para clareamento, implantes, ortodontia e mais.
               </p>
               <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <Button asChild size="lg" className="rounded-full font-semibold h-12 px-6">
+                <Button asChild size="lg" className="ck-btn font-semibold h-12 px-6">
                   <Link to="/cadastro">Inscrever-se</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="rounded-full font-semibold h-12 px-6">
+                <Button asChild size="lg" variant="outline" className="ck-btn font-semibold h-12 px-6">
                   <Link to="/planos">Ver planos</Link>
                 </Button>
               </div>
@@ -158,7 +155,7 @@ function Index() {
               { icon: Zap, title: "2. Publique e divulgue", desc: "Link próprio pronto pra Instagram, WhatsApp e anúncios da clínica." },
               { icon: BarChart3, title: "3. Atenda mais pacientes", desc: "Receba os dados qualificados direto no seu WhatsApp ou agenda." },
             ].map((f) => (
-              <div key={f.title} className="rounded-2xl border border-border bg-card p-7 shadow-soft">
+              <div key={f.title} className="ck-card border border-border bg-card p-7 shadow-soft">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
                   <f.icon className="h-5 w-5" />
                 </div>
@@ -185,7 +182,7 @@ function Index() {
               { icon: Baby, title: "Odontopediatria", desc: "Conversa com pais com linguagem leve e acolhedora." },
               { icon: Stethoscope, title: "Harmonização orofacial", desc: "Filtra leads pelo tipo de procedimento e região tratada." },
             ].map((t) => (
-              <div key={t.title} className="group rounded-2xl border border-border bg-card p-6 shadow-soft hover:shadow-card transition">
+              <div key={t.title} className="ck-card group border border-border bg-card p-6 shadow-soft">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/30 text-primary">
                   <t.icon className="h-5 w-5" />
                 </div>
@@ -218,7 +215,7 @@ function Index() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-3xl bg-foreground text-background p-10 shadow-card">
+            <div className="ck-r-sig ck-mesh-xl ck-mesh-light bg-foreground text-background p-10 shadow-card">
               <p className="text-5xl font-light ck-num">+38%</p>
               <p className="mt-2 text-background/70">de aumento médio em agendamentos vs. formulários estáticos de contato.</p>
               <div className="mt-8 grid grid-cols-2 gap-4 text-sm">
@@ -260,7 +257,7 @@ function Index() {
                 a: "Sim — você cria funis por especialidade ou por profissional e distribui os leads automaticamente.",
               },
             ].map((f) => (
-              <details key={f.q} className="group rounded-2xl border border-border bg-card p-5 shadow-soft">
+              <details key={f.q} className="ck-card group border border-border bg-card p-5 shadow-soft">
                 <summary className="cursor-pointer list-none flex items-center justify-between gap-4 font-semibold">
                   {f.q}
                   <span className="text-primary group-open:rotate-45 transition-transform text-xl leading-none">+</span>
@@ -273,10 +270,10 @@ function Index() {
 
         {/* CTA */}
         <section className="container mx-auto px-4 py-20">
-          <div className="rounded-3xl bg-primary text-primary-foreground p-12 md:p-16 text-center shadow-card">
+          <div className="ck-r-sig ck-mesh-xl ck-mesh-light bg-primary text-primary-foreground p-12 md:p-16 text-center shadow-card">
             <h2 className="ck-display text-5xl md:text-6xl tracking-tight">Pronto para encher sua agenda?</h2>
             <p className="mt-4 text-primary-foreground/80 max-w-xl mx-auto">Crie sua conta grátis e publique o funil da sua clínica em minutos.</p>
-            <Button asChild size="lg" variant="secondary" className="mt-8 rounded-full font-semibold h-12 px-8">
+            <Button asChild size="lg" variant="secondary" className="ck-btn mt-8 font-semibold h-12 px-8">
               <Link to="/cadastro">Começar agora</Link>
             </Button>
           </div>
