@@ -84,6 +84,7 @@
    * a partir da caixa normalizada 0–100, de modo que o centro de cada círculo
    * caia no centro do vizinho. Sempre tom sobre tom, sempre sangrando.      */
   --ck-pattern-tile: 88px;
+  --ck-pattern-tile-xl: 260px;
   --ck-pattern-opacity: 0.04;
 }
 
@@ -235,26 +236,32 @@
 /* Sobre superfície escura o tile navy sumiria: usa o tile branco. */
 .ck-mesh.ck-mesh-light::before { background-image: url("/brand/clinik-mesh-light.svg"); }
 
-/* Trama no modo "capa": ampliada e sangrando, não repetida. */
+/* Trama no modo "capa": a MESMA trama, em escala grande e sangrando pela
+ * borda. Continua sendo tecido — nunca ícones soltos espalhados. */
 .ck-mesh-xl { position: relative; isolation: isolate; overflow: hidden; }
-.ck-mesh-xl::before,
-.ck-mesh-xl::after {
+.ck-mesh-xl::before {
   content: "";
   position: absolute;
+  inset: 0;
   z-index: 0;
-  background: url("/brand/clinik-icon.svg") no-repeat center / contain;
+  background-image: url("/brand/clinik-mesh.svg");
+  background-size: var(--ck-pattern-tile-xl) var(--ck-pattern-tile-xl);
+  background-position: right -60px bottom -40px;
+  background-repeat: repeat;
   opacity: var(--ck-pattern-opacity);
   pointer-events: none;
+  /* forte na borda direita, ausente onde o texto vive */
+  -webkit-mask-image: linear-gradient(to left, #000 0%, transparent 58%);
+          mask-image: linear-gradient(to left, #000 0%, transparent 58%);
 }
-.ck-mesh-xl::before { width: 440px; height: 440px; right: -170px; bottom: -210px; }
-.ck-mesh-xl::after  { width: 250px; height: 250px; right:   30px; bottom:   95px; }
 /* O conteúdo precisa subir acima da trama. */
 .ck-mesh-xl > * { position: relative; z-index: 1; }
 
-/* O ícone é navy: sobre superfície escura ele sumiria. Esta variante o
- * inverte para branco, mantendo a regra do tom sobre tom. */
-.ck-mesh-light::before,
-.ck-mesh-light::after { filter: brightness(0) invert(1); opacity: 0.06; }
+/* Sobre superfície escura o tile navy sumiria: usa o tile branco. */
+.ck-mesh-xl.ck-mesh-light::before {
+  background-image: url("/brand/clinik-mesh-light.svg");
+  opacity: 0.07;
+}
 
 /* Números de tabela/moeda. A Jost não tem figuras tabulares por padrão;
  * sem isto toda coluna financeira fica trêmula. */
