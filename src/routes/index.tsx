@@ -87,10 +87,9 @@ function Index() {
         <section className="ck-mesh relative overflow-hidden">
           <div className="container mx-auto px-4 py-4 lg:py-6 grid lg:grid-cols-2 gap-8 items-start">
             <div>
-              <div className="ck-r-sig-sm inline-flex items-center gap-2 border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Feito para clínicas odontológicas <span className="text-foreground/40">—</span> 100% LGPD
-              </div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Feito para clínicas de saúde <span className="text-foreground/40">—</span> 100% LGPD
+              </p>
               <h1 className="mt-3 ck-display text-6xl md:text-7xl tracking-tight leading-[1.02]">
                 Mais sorrisos agendados,{" "}
                 <span className="relative inline-block">

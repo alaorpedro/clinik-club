@@ -191,6 +191,15 @@
 .ck-r-sig    { border-radius: var(--ck-r-sig); }
 .ck-r-sig-md { border-radius: var(--ck-r-sig-md); }
 .ck-r-sig-sm { border-radius: var(--ck-r-sig-sm); }
+.ck-r-flat    { border-radius: var(--ck-r-flat); }
+.ck-r-flat-sm { border-radius: var(--ck-r-flat-sm); }
+
+/* Itens de navegação (cabeçalho): repetidos lado a lado, então usam raio
+ * uniforme — nunca a assinatura, que é para o singular e deliberado.
+ * O ghost do shadcn traz rounded-md por padrão; isto substitui. */
+.theme-clinik header nav button {
+  border-radius: var(--ck-r-flat) !important;
+}
 
 /* --- Botão da marca -------------------------------------------------------
  * Raio assinatura + a elevação de 180ms do manual. O !important existe para
