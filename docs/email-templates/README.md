@@ -1,14 +1,22 @@
 # Padrao de emails Clinik.Club
 
-Diretriz visual para todos os emails transacionais:
+Diretriz visual para todos os emails transacionais — tokens espelhados de
+`docs/brand/design-system.md` e `src/styles/clinik-theme.css` (ver comentarios com o hex
+canonico ao lado de cada `--ck-*`):
 
 - Idioma: portugues do Brasil.
-- Logo: Clinik.Club no canto superior esquerdo.
-- Fundo: azul clinico claro (`#f3fbff`).
-- Texto principal: quase preto (`#07111f`).
-- Texto secundario: cinza azulado (`#5f6b7a`).
-- CTA principal: azul Clinik (`#0889b2`) com texto branco.
-- Destaques de saude/frescor: verde menta (`#54d6ad`).
+- Logo: lockup Clinik.Club (icone + lettering + "CLUB") no canto superior esquerdo, navy.
+- Fundo da pagina: off-white (`#F5F4F1`).
+- Cartao do email: branco de superficie (`#FCFCFC`), borda `#D5D2C9`.
+- Titulo: Italiana (serif, peso unico 400) — mesma fonte de titulo de secao no site.
+- Corpo, eyebrow e botao: Jost, peso maximo 600 (a fonte nao tem pesos acima disso; pedir
+  mais sintetiza negrito falso no client de email).
+- Texto principal/titulo: Azul Clinik (`#0A2148`).
+- Texto secundario: cinza texto auxiliar (`#6E6A5F`).
+- CTA principal: Azul Clinik (`#0A2148`) com texto branco de superficie.
+- Raio: familia assinatura em tudo (cartao `20px 4px 20px 4px`, botao/codigo OTP
+  `16px 4px 16px 4px` / `10px 3px 10px 3px`) — email e conteudo singular, nunca repetido ou
+  aninhado, entao a assinatura nunca sai de cena (design-system.md §3).
 - Link de suporte padrao: `suporte@clinik.club`.
 - URL publica do logo: `https://clinik.club/email/clinik-club-logo.png`.
 
@@ -52,7 +60,7 @@ O Stripe nao permite controlar o HTML completo dos emails transacionais pelo cod
 Para padronizar os emails de compra, fatura, recibo e falha de pagamento, configurar no painel Stripe:
 
 - Logo: usar o mesmo logo publico ou fazer upload do PNG.
-- Cor da marca: `#0889b2`.
+- Cor da marca: `#0A2148` (Azul Clinik).
 - Nome da marca: `Clinik.Club`.
 - Emails ativos: recibos, faturas, falha de pagamento e notificacoes de assinatura conforme estrategia comercial.
 

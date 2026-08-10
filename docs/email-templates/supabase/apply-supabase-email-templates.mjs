@@ -1,27 +1,34 @@
 const PROJECT_REF = process.env.SUPABASE_PROJECT_REF || "gyemtbjqzqzdqybwgmyp";
 const ACCESS_TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 
+// Tokens espelham src/styles/clinik-theme.css (--ck-navy, --ck-off, --ck-surface, --ck-n-300,
+// --ck-n-600) e as regras de raio de docs/brand/design-system.md §3. Email é conteúdo singular
+// e deliberado — não repete/aninha —, então usa a família de raio assinatura em tudo.
 const BRAND = {
   logoUrl: "https://clinik.club/email/clinik-club-logo.png",
   siteUrl: "https://clinik.club",
   supportEmail: "suporte@clinik.club",
-  primary: "#0889b2",
-  mint: "#54d6ad",
-  background: "#f3fbff",
-  foreground: "#07111f",
-  muted: "#5f6b7a",
-  border: "#dbe8ef",
+  navy: "#0A2148", // --ck-navy — título, CTA, eyebrow
+  surface: "#FCFCFC", // --ck-surface — cartão
+  background: "#F5F4F1", // --ck-off — fundo da página
+  border: "#D5D2C9", // --ck-n-300 — divisor estrutural
+  muted: "#6E6A5F", // --ck-n-600 — texto auxiliar
+  fontDisplay: "'Italiana', Georgia, 'Times New Roman', serif",
+  fontBody: "'Jost', Arial, Helvetica, sans-serif",
+  radiusContainer: "20px 4px 20px 4px", // --ck-r-sig
+  radiusButton: "16px 4px 16px 4px", // --ck-r-sig-md
+  radiusChip: "10px 3px 10px 3px", // --ck-r-sig-sm
 };
 
 function emailLayout({ eyebrow, title, body, ctaLabel, ctaHref, code, note }) {
   const cta = ctaLabel && ctaHref
-    ? `<tr><td style="padding:24px 0 8px 0;"><a href="${ctaHref}" style="display:inline-block;background:${BRAND.primary};color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;line-height:20px;padding:14px 22px;border-radius:999px;">${ctaLabel}</a></td></tr>`
+    ? `<tr><td style="padding:24px 0 8px 0;"><a href="${ctaHref}" style="display:inline-block;background:${BRAND.navy};color:${BRAND.surface};text-decoration:none;font-family:${BRAND.fontBody};font-weight:600;font-size:15px;line-height:20px;padding:14px 22px;border-radius:${BRAND.radiusButton};">${ctaLabel}</a></td></tr>`
     : "";
   const codeBlock = code
-    ? `<tr><td style="padding:18px 0 8px 0;"><div style="display:inline-block;background:#ffffff;border:1px solid ${BRAND.border};border-radius:12px;padding:14px 18px;font-size:28px;letter-spacing:6px;font-weight:800;color:${BRAND.foreground};">${code}</div></td></tr>`
+    ? `<tr><td style="padding:18px 0 8px 0;"><div style="display:inline-block;background:${BRAND.surface};border:1px solid ${BRAND.border};border-radius:${BRAND.radiusChip};padding:14px 18px;font-family:${BRAND.fontBody};font-size:28px;letter-spacing:6px;font-weight:600;font-variant-numeric:tabular-nums;color:${BRAND.navy};">${code}</div></td></tr>`
     : "";
   const noteBlock = note
-    ? `<tr><td style="padding-top:18px;color:${BRAND.muted};font-size:13px;line-height:20px;">${note}</td></tr>`
+    ? `<tr><td style="padding-top:18px;color:${BRAND.muted};font-family:${BRAND.fontBody};font-size:13px;line-height:20px;">${note}</td></tr>`
     : "";
 
   return `<!doctype html>
@@ -30,24 +37,25 @@ function emailLayout({ eyebrow, title, body, ctaLabel, ctaHref, code, note }) {
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>${title}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&family=Jost:wght@400;500;600&display=swap">
   </head>
-  <body style="margin:0;padding:0;background:${BRAND.background};font-family:Inter,Arial,sans-serif;color:${BRAND.foreground};">
+  <body style="margin:0;padding:0;background:${BRAND.background};font-family:${BRAND.fontBody};font-weight:400;color:${BRAND.navy};">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.background};padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border:1px solid ${BRAND.border};border-radius:18px;overflow:hidden;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:${BRAND.surface};border:1px solid ${BRAND.border};border-radius:${BRAND.radiusContainer};overflow:hidden;">
             <tr>
               <td style="padding:28px 32px 12px 32px;">
                 <a href="${BRAND.siteUrl}" style="display:inline-block;text-decoration:none;">
-                  <img src="${BRAND.logoUrl}" width="176" alt="Clinik.Club" style="display:block;border:0;max-width:176px;height:auto;">
+                  <img src="${BRAND.logoUrl}" width="168" alt="Clinik.Club" style="display:block;border:0;max-width:168px;height:auto;">
                 </a>
               </td>
             </tr>
             <tr>
               <td style="padding:12px 32px 32px 32px;">
-                <div style="color:${BRAND.primary};font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">${eyebrow}</div>
-                <h1 style="margin:0 0 14px 0;font-size:28px;line-height:34px;font-weight:900;color:${BRAND.foreground};">${title}</h1>
-                <div style="font-size:16px;line-height:25px;color:${BRAND.muted};">${body}</div>
+                <div style="color:${BRAND.navy};font-family:${BRAND.fontBody};font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;">${eyebrow}</div>
+                <h1 style="margin:0 0 14px 0;font-family:${BRAND.fontDisplay};font-weight:400;font-size:30px;line-height:36px;letter-spacing:0;color:${BRAND.navy};">${title}</h1>
+                <div style="font-family:${BRAND.fontBody};font-size:16px;line-height:25px;color:${BRAND.muted};">${body}</div>
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   ${cta}
                   ${codeBlock}
@@ -56,7 +64,7 @@ function emailLayout({ eyebrow, title, body, ctaLabel, ctaHref, code, note }) {
               </td>
             </tr>
             <tr>
-              <td style="background:#f8fcff;border-top:1px solid ${BRAND.border};padding:20px 32px;color:${BRAND.muted};font-size:12px;line-height:18px;">
+              <td style="background:${BRAND.background};border-top:1px solid ${BRAND.border};padding:20px 32px;color:${BRAND.muted};font-family:${BRAND.fontBody};font-size:12px;line-height:18px;">
                 Clinik.Club<br>
                 Este é um email automático. Se precisar de ajuda, fale com ${BRAND.supportEmail}.
               </td>

@@ -127,22 +127,21 @@ const sections = [
 
 function TermosPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-clinik min-h-screen flex flex-col bg-background">
       <SiteHeader />
       <main className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden border-b border-border/60">
-          <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/10 blur-3xl" aria-hidden />
-          <div className="pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-accent/30 blur-3xl" aria-hidden />
+        <section className="ck-mesh relative overflow-hidden border-b border-border/60">
           <div className="container relative mx-auto px-4 py-16 lg:py-20 max-w-4xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+            <div className="ck-r-sig-sm inline-flex items-center gap-2 border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
               <Scale className="h-3.5 w-3.5 text-primary" />
               Documento legal · Atualizado em 27/05/2026
             </div>
-            <h1 className="mt-4 text-5xl md:text-6xl font-black tracking-tight leading-[1.05]">
-              Termos de <span className="relative inline-block">
+            <h1 className="mt-4 ck-display text-5xl md:text-6xl tracking-tight leading-[1.05]">
+              Termos de{" "}
+              <span className="relative inline-block">
                 <span className="relative z-10">uso</span>
-                <span className="absolute inset-x-0 bottom-1 h-3 bg-highlight -z-0 -skew-x-3" />
+                <span className="absolute inset-x-0 bottom-[0.1em] h-[0.09em] bg-primary/25 -z-0" />
               </span>
             </h1>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
@@ -186,7 +185,7 @@ function TermosPage() {
               ))}
 
               {/* Contact card */}
-              <div className="mt-12 rounded-2xl border border-border bg-card p-6 shadow-soft">
+              <div className="ck-card mt-12 border border-border bg-card p-6 shadow-soft">
                 <div className="flex items-start gap-4">
                   <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
                     <Mail className="h-5 w-5" />
@@ -211,14 +210,16 @@ function TermosPage() {
               <div className="flex flex-wrap gap-3 pt-4 text-sm">
                 <Link
                   to="/privacidade"
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 font-medium hover:border-primary hover:text-primary transition"
+                  style={{ borderRadius: "var(--ck-r-sig-md)" }}
+                  className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 font-medium hover:border-primary hover:text-primary transition-colors duration-[180ms]"
                 >
                   <ShieldCheck className="h-4 w-4" />
                   Ler Política de Privacidade
                 </Link>
                 <Link
                   to="/"
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 font-medium hover:border-primary hover:text-primary transition"
+                  style={{ borderRadius: "var(--ck-r-sig-md)" }}
+                  className="inline-flex items-center gap-2 border border-border bg-card px-4 py-2 font-medium hover:border-primary hover:text-primary transition-colors duration-[180ms]"
                 >
                   <FileText className="h-4 w-4" />
                   Voltar ao início
