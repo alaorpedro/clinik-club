@@ -105,30 +105,30 @@ function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-clinik min-h-screen flex flex-col bg-background">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-16 max-w-md">
-        <h1 className="text-4xl font-black tracking-tight">Entrar</h1>
+      <main className="flex-1 container mx-auto px-6 lg:px-10 py-16 max-w-md">
+        <h1 className="ck-display text-5xl tracking-tight">Entrar</h1>
         <p className="mt-2 text-muted-foreground">
           {nextPath.startsWith("/app")
             ? "Entre para acessar o app. Depois disso, você poderá escolher seu plano."
             : "Acesse sua conta Clinik.Club."}
         </p>
-        <Button type="button" variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google} disabled={googleLoading || loading}>
+        <Button type="button" variant="outline" className="ck-btn mt-8 w-full h-11" onClick={google} disabled={googleLoading || loading}>
           {googleLoading ? "Abrindo Google..." : "Entrar com Google"}
         </Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
-          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" className="mt-1.5" {...ptValidation("email")} /></div>
-          <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" className="mt-1.5" {...ptValidation("senha")} /></div>
-          <Button type="submit" disabled={loading || googleLoading} className="w-full rounded-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
+          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" className="ck-input mt-1.5" {...ptValidation("email")} /></div>
+          <div><Label htmlFor="password">Senha</Label><Input id="password" name="password" type="password" className="ck-input mt-1.5" {...ptValidation("senha")} /></div>
+          <Button type="submit" disabled={loading || googleLoading} className="ck-btn w-full h-11 font-semibold">{loading ? "Entrando..." : "Entrar"}</Button>
         </form>
         {unconfirmedEmail ? (
-          <div className="mt-4 rounded-2xl border border-border bg-muted/30 p-4 text-sm">
+          <div className="ck-r-sig mt-4 border border-border bg-muted/30 p-4 text-sm">
             <p className="text-foreground">
               Seu email <span className="font-semibold">{unconfirmedEmail}</span> ainda não foi confirmado.
             </p>
-            <Button type="button" variant="outline" className="mt-3 w-full rounded-full" onClick={resendConfirmation} disabled={resending}>
+            <Button type="button" variant="outline" className="ck-btn mt-3 w-full" onClick={resendConfirmation} disabled={resending}>
               {resending ? "Reenviando..." : "Reenviar email de confirmação"}
             </Button>
           </div>

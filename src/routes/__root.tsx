@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -132,6 +133,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const path = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
@@ -140,6 +142,15 @@ function RootComponent() {
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
+
+  // Dialogs, dropdowns, selects and toasts render via Radix portals straight
+  // into document.body — outside any page's own wrapper div. A class on the
+  // page div alone never reaches them, so the class that actually carries
+  // the new palette has to live on <body>. The live customer funnel
+  // (/f/:slug) is the one route tree that must never get it.
+  useEffect(() => {
+    document.body.classList.toggle("theme-clinik", !path.startsWith("/f/"));
+  }, [path]);
 
   return (
     <QueryClientProvider client={queryClient}>

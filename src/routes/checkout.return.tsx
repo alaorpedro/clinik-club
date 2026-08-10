@@ -37,14 +37,14 @@ function CheckoutReturn() {
   }, [session_id, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-md w-full rounded-3xl border border-border bg-card p-10 text-center shadow-card">
+    <div className="theme-clinik min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="ck-card max-w-md w-full border border-border bg-card p-10 text-center shadow-card">
         <div className="flex justify-center">
           <div className="h-16 w-16 rounded-full bg-highlight flex items-center justify-center">
             {checking ? <Loader2 className="h-8 w-8 text-foreground animate-spin" /> : <CheckCircle2 className="h-8 w-8 text-foreground" />}
           </div>
         </div>
-        <h1 className="mt-6 text-3xl font-black tracking-tight">
+        <h1 className="mt-6 ck-display text-4xl tracking-tight">
           {checking
             ? "Confirmando pagamento..."
             : session_id
@@ -58,7 +58,7 @@ function CheckoutReturn() {
             <p className="mt-3 text-muted-foreground">
               Não encontramos uma sessão de checkout. Escolha um plano para continuar.
             </p>
-            <Button asChild className="mt-8 w-full rounded-full font-semibold">
+            <Button asChild className="ck-btn mt-8 w-full font-semibold">
               <Link to="/planos">Ver planos</Link>
             </Button>
           </>
@@ -67,14 +67,14 @@ function CheckoutReturn() {
             <p className="mt-3 text-muted-foreground">
               Crie sua senha para acessar o painel. Use o email <span className="font-semibold text-foreground">{needsAccount}</span> usado no pagamento.
             </p>
-            <Button asChild className="mt-8 w-full rounded-full font-semibold">
+            <Button asChild className="ck-btn mt-8 w-full font-semibold">
               <Link to="/cadastro" search={{ email: needsAccount, next: "/app" } as never}>Criar conta e acessar</Link>
             </Button>
           </>
         ) : (
           <>
             <p className="mt-3 text-muted-foreground">Sua assinatura está ativa. Em segundos seu plano será atualizado.</p>
-            <Button asChild className="mt-8 w-full rounded-full font-semibold">
+            <Button asChild className="ck-btn mt-8 w-full font-semibold">
               <Link to="/app">Ir para o painel</Link>
             </Button>
           </>

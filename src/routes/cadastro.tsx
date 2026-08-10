@@ -117,38 +117,38 @@ function CadastroPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="theme-clinik min-h-screen flex flex-col bg-background">
       <SiteHeader />
-      <main className="flex-1 container mx-auto px-4 py-16 max-w-md">
-        <h1 className="text-4xl font-black tracking-tight">Criar conta</h1>
+      <main className="flex-1 container mx-auto px-6 lg:px-10 py-16 max-w-md">
+        <h1 className="ck-display text-5xl tracking-tight">Criar conta</h1>
         {pendingEmail ? (
-          <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-5 text-sm">
+          <div className="ck-r-sig mt-8 border border-primary/20 bg-primary/5 p-5 text-sm">
             <h2 className="font-bold text-base">Confirme seu email</h2>
             <p className="mt-1 text-muted-foreground">
               Enviamos um link de confirmação para <span className="font-semibold text-foreground">{pendingEmail}</span>. Clique no link para ativar sua conta.
             </p>
             <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <Button type="button" variant="outline" className="rounded-full" onClick={resendConfirmation} disabled={resending}>
+              <Button type="button" variant="outline" className="ck-btn" onClick={resendConfirmation} disabled={resending}>
                 {resending ? "Reenviando..." : "Reenviar email"}
               </Button>
-              <Button type="button" className="rounded-full" onClick={() => navigate({ to: "/login", search: { next: nextPath } as never })}>
+              <Button type="button" className="ck-btn" onClick={() => navigate({ to: "/login", search: { next: nextPath } as never })}>
                 Ir para login
               </Button>
             </div>
           </div>
         ) : (
         <>
-        <Button variant="outline" className="mt-8 w-full rounded-full h-11" onClick={google}>Cadastrar com Google</Button>
+        <Button variant="outline" className="ck-btn mt-8 w-full h-11" onClick={google}>Cadastrar com Google</Button>
         <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground"><div className="flex-1 h-px bg-border" />ou<div className="flex-1 h-px bg-border" /></div>
         <form onSubmit={onSubmit} className="space-y-4">
-          <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" required className="mt-1.5" {...ptValidation("nome")} /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="mt-1.5" defaultValue={prefEmail} readOnly={!!prefEmail} {...ptValidation("email")} /></div>
+          <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" required className="ck-input mt-1.5" {...ptValidation("nome")} /></div>
+          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required className="ck-input mt-1.5" defaultValue={prefEmail} readOnly={!!prefEmail} {...ptValidation("email")} /></div>
           <div>
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" name="password" type="password" minLength={8} required className="mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} {...ptValidation("senha")} />
+            <Input id="password" name="password" type="password" minLength={8} required className="ck-input mt-1.5" value={password} onChange={(e) => setPassword(e.target.value)} {...ptValidation("senha")} />
             <PasswordStrength password={password} />
           </div>
-          <Button type="submit" disabled={loading} className="w-full rounded-full h-11 font-semibold">{loading ? "Criando..." : "Criar conta"}</Button>
+          <Button type="submit" disabled={loading} className="ck-btn w-full h-11 font-semibold">{loading ? "Criando..." : "Criar conta"}</Button>
         </form>
         <p className="mt-6 text-sm text-center text-muted-foreground">
           Já tem conta? <Link to="/login" className="text-primary font-medium">Entrar</Link>

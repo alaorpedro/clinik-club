@@ -126,7 +126,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
 
   return (
     <div id="checkout">
-      <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-xs">
+      <div className="ck-r-sig-sm mb-3 flex items-center justify-between gap-2 border border-border bg-muted/30 px-3 py-2 text-xs">
         {paymentMethod === "card" ? (
           <>
             <span className="text-muted-foreground">
@@ -156,7 +156,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
         )}
       </div>
       {paymentMethod === "boleto" ? (
-        <div className="rounded-lg border border-border bg-background p-6">
+        <div className="ck-r-sig border border-border bg-background p-6">
           <h3 className="text-lg font-semibold text-foreground">Gerar boleto mensal</h3>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
             O boleto abre em uma página segura e também será enviado por email. O plano só ativa depois da compensação do pagamento.
@@ -167,7 +167,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
               <input
                 value={boletoBilling.name}
                 onChange={(event) => updateBoletoBilling("name", event.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                className="ck-input mt-1 h-10 w-full px-3 text-sm"
                 autoComplete="name"
                 required
               />
@@ -177,7 +177,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
               <input
                 value={boletoBilling.taxId}
                 onChange={(event) => updateBoletoBilling("taxId", event.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                className="ck-input mt-1 h-10 w-full px-3 text-sm"
                 inputMode="numeric"
                 placeholder="123.456.789-09"
                 required
@@ -188,7 +188,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
               <input
                 value={boletoBilling.postalCode}
                 onChange={(event) => updateBoletoBilling("postalCode", event.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                className="ck-input mt-1 h-10 w-full px-3 text-sm"
                 inputMode="numeric"
                 autoComplete="postal-code"
                 required
@@ -200,7 +200,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
               <input
                 value={boletoBilling.addressLine1}
                 onChange={(event) => updateBoletoBilling("addressLine1", event.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                className="ck-input mt-1 h-10 w-full px-3 text-sm"
                 autoComplete="street-address"
                 placeholder="Rua, número e complemento"
                 required
@@ -211,7 +211,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
               <input
                 value={boletoBilling.city}
                 onChange={(event) => updateBoletoBilling("city", event.target.value)}
-                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+                className="ck-input mt-1 h-10 w-full px-3 text-sm"
                 autoComplete="address-level2"
                 required
               />
@@ -221,7 +221,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
               <input
                 value={boletoBilling.state}
                 onChange={(event) => updateBoletoBilling("state", event.target.value.toUpperCase().slice(0, 2))}
-                className="mt-1 h-10 w-full rounded-lg border border-input bg-background px-3 text-sm uppercase outline-none ring-ring focus:ring-2"
+                className="ck-input mt-1 h-10 w-full px-3 text-sm uppercase"
                 autoComplete="address-level1"
                 maxLength={2}
                 placeholder="SP"
@@ -233,7 +233,7 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
             type="button"
             onClick={handleStartBoleto}
             disabled={boletoLoading}
-            className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="ck-btn mt-5 inline-flex h-10 items-center justify-center bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-60"
           >
             {boletoLoading ? "Gerando boleto…" : "Gerar boleto"}
           </button>
