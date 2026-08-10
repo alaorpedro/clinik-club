@@ -23,6 +23,23 @@ async function assertCardOwnership(supabase: any, userId: string, cardId: string
   }
 }
 
+// Best-effort: a falha em gravar um evento de timeline nunca pode derrubar a ação
+// principal (mover card, atribuir, etiquetar) — timeline é suplementar.
+async function logEvent(
+  supabase: any,
+  cardId: string,
+  type: string,
+  payload: Record<string, unknown>,
+) {
+  try {
+    await supabase.from("crm_events").insert({ lead_card_id: cardId, type, payload });
+  } catch (err) {
+    console.error("[crm] falha ao gravar evento de timeline", err);
+  }
+}
+
+const STAGE_COLORS = ["blue", "amber", "violet", "cyan", "emerald", "rose", "slate"];
+
 async function assertCrmAccess(supabase: any, userId: string) {
   if (await isAdminUser(userId)) return;
 
@@ -219,6 +236,138 @@ export const deletePipeline = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const createStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { pipelineId: string; name: string; color?: string }) => {
+    const name = d?.name?.trim();
+    if (!d?.pipelineId || !name) throw new Error("Dados inválidos");
+    if (name.length > 60) throw new Error("Nome muito longo");
+    const color = STAGE_COLORS.includes(d.color ?? "") ? d.color! : "slate";
+    return { pipelineId: d.pipelineId, name, color };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data: pipeline } = await supabase
+      .from("crm_pipelines")
+      .select("id")
+      .eq("id", data.pipelineId)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!pipeline) throw new Error("Pipeline não encontrado");
+
+    const { count } = await supabase
+      .from("crm_stages")
+      .select("id", { count: "exact", head: true })
+      .eq("pipeline_id", data.pipelineId);
+    const { data: stage, error } = await supabase
+      .from("crm_stages")
+      .insert({
+        pipeline_id: data.pipelineId,
+        name: data.name,
+        color: data.color,
+        order: count ?? 0,
+      })
+      .select("id")
+      .single();
+    if (error || !stage) throw new Error(error?.message ?? "Falha ao criar etapa");
+    return { stageId: stage.id as string };
+  });
+
+export const renameStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { stageId: string; name: string; color?: string }) => {
+    const name = d?.name?.trim();
+    if (!d?.stageId || !name) throw new Error("Dados inválidos");
+    if (name.length > 60) throw new Error("Nome muito longo");
+    if (d.color && !STAGE_COLORS.includes(d.color)) throw new Error("Cor inválida");
+    return { stageId: d.stageId, name, color: d.color };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    // Confere que a etapa pertence a um pipeline do próprio dono antes de escrever.
+    const { data: stage } = await supabase
+      .from("crm_stages")
+      .select("id, pipeline_id, crm_pipelines!inner(owner_id)")
+      .eq("id", data.stageId)
+      .maybeSingle();
+    if (!stage || (stage as any).crm_pipelines.owner_id !== userId)
+      throw new Error("Etapa não encontrada");
+
+    const patch = data.color ? { name: data.name, color: data.color } : { name: data.name };
+    const { error } = await supabase.from("crm_stages").update(patch).eq("id", data.stageId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const reorderStages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { pipelineId: string; orderedStageIds: string[] }) => {
+    if (!d?.pipelineId || !Array.isArray(d?.orderedStageIds) || !d.orderedStageIds.length) {
+      throw new Error("Dados inválidos");
+    }
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data: pipeline } = await supabase
+      .from("crm_pipelines")
+      .select("id")
+      .eq("id", data.pipelineId)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!pipeline) throw new Error("Pipeline não encontrado");
+
+    // Sequencial de propósito — são poucas etapas por pipeline, e assim cada
+    // update já sai filtrado pelo pipeline_id certo, sem risco de mexer em
+    // etapa de outro pipeline por engano.
+    for (let i = 0; i < data.orderedStageIds.length; i++) {
+      const { error } = await supabase
+        .from("crm_stages")
+        .update({ order: i })
+        .eq("id", data.orderedStageIds[i])
+        .eq("pipeline_id", data.pipelineId);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const deleteStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { stageId: string }) => {
+    if (!d?.stageId) throw new Error("Dados inválidos");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data: stage } = await supabase
+      .from("crm_stages")
+      .select("id, pipeline_id, crm_pipelines!inner(owner_id)")
+      .eq("id", data.stageId)
+      .maybeSingle();
+    if (!stage || (stage as any).crm_pipelines.owner_id !== userId)
+      throw new Error("Etapa não encontrada");
+
+    const { count: stageCount } = await supabase
+      .from("crm_stages")
+      .select("id", { count: "exact", head: true })
+      .eq("pipeline_id", (stage as any).pipeline_id);
+    if ((stageCount ?? 0) <= 1) throw new Error("O pipeline precisa de pelo menos uma etapa");
+
+    const { count: cardCount } = await supabase
+      .from("crm_lead_cards")
+      .select("id", { count: "exact", head: true })
+      .eq("stage_id", data.stageId);
+    if ((cardCount ?? 0) > 0) throw new Error("Mova os cards desta etapa antes de excluí-la");
+
+    const { error } = await supabase.from("crm_stages").delete().eq("id", data.stageId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getBoard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { pipelineId?: string }) => d ?? {})
@@ -246,7 +395,7 @@ export const getBoard = createServerFn({ method: "GET" })
       supabase
         .from("crm_lead_cards")
         .select(
-          "id, stage_id, position, status, assignee_id, moved_at, lead_id, leads!inner(id, name, email, phone, created_at)",
+          "id, stage_id, position, status, assignee_id, moved_at, lead_id, tags, leads!inner(id, name, email, phone, created_at)",
         )
         .eq("pipeline_id", pipelineId)
         .eq("status", "active")
@@ -267,6 +416,7 @@ export const getBoard = createServerFn({ method: "GET" })
         position: c.position,
         assigneeId: c.assignee_id,
         movedAt: c.moved_at,
+        tags: c.tags ?? [],
         lead: {
           id: c.leads.id,
           name: c.leads.name,
@@ -288,6 +438,11 @@ export const moveCard = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertCrmAccess(supabase, userId);
     await assertCardOwnership(supabase, userId, data.cardId);
+    const { data: before } = await supabase
+      .from("crm_lead_cards")
+      .select("stage_id")
+      .eq("id", data.cardId)
+      .maybeSingle();
     const { error } = await supabase
       .from("crm_lead_cards")
       .update({
@@ -298,6 +453,12 @@ export const moveCard = createServerFn({ method: "POST" })
       .eq("id", data.cardId)
       .eq("owner_id", userId);
     if (error) throw new Error(error.message);
+    if (before && before.stage_id !== data.stageId) {
+      await logEvent(supabase, data.cardId, "stage_changed", {
+        fromStageId: before.stage_id,
+        toStageId: data.stageId,
+      });
+    }
     return { ok: true };
   });
 
@@ -339,7 +500,7 @@ export const getCardDetail = createServerFn({ method: "GET" })
     const { data: card } = await supabase
       .from("crm_lead_cards")
       .select(
-        "id, stage_id, position, status, assignee_id, lead_id, leads!inner(id, name, email, phone, created_at, answers, utm, funnel_id)",
+        "id, stage_id, position, status, assignee_id, lead_id, tags, leads!inner(id, name, email, phone, created_at, answers, utm, funnel_id)",
       )
       .eq("id", data.cardId)
       .eq("owner_id", userId)
@@ -376,4 +537,90 @@ export const addNote = createServerFn({ method: "POST" })
       .insert({ lead_card_id: data.cardId, author_id: userId, body: data.body.trim() });
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const updateCardTags = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { cardId: string; tags: string[] }) => {
+    if (!d?.cardId || !Array.isArray(d?.tags)) throw new Error("Dados inválidos");
+    const tags = [...new Set(d.tags.map((t) => t.trim()).filter(Boolean))];
+    if (tags.length > 10) throw new Error("No máximo 10 etiquetas por card");
+    if (tags.some((t) => t.length > 30)) throw new Error("Etiqueta muito longa");
+    return { cardId: d.cardId, tags };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    await assertCardOwnership(supabase, userId, data.cardId);
+    // `tags` é coluna nova (migração direta, fora do fluxo do Lovable) — ainda
+    // não existe em types.ts gerado, daí o cast. Ver CLAUDE.md "Pegadinha types.ts".
+    const { error } = await supabase
+      .from("crm_lead_cards")
+      .update({ tags: data.tags } as any)
+      .eq("id", data.cardId)
+      .eq("owner_id", userId);
+    if (error) throw new Error(error.message);
+    await logEvent(supabase, data.cardId, "tags_changed", { tags: data.tags });
+    return { ok: true };
+  });
+
+export const assignCard = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { cardId: string; assigneeId: string | null }) => {
+    if (!d?.cardId) throw new Error("Dados inválidos");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    await assertCardOwnership(supabase, userId, data.cardId);
+    if (data.assigneeId && data.assigneeId !== userId) {
+      const { data: member } = await supabase
+        .from("crm_members")
+        .select("id")
+        .eq("owner_id", userId)
+        .eq("user_id", data.assigneeId)
+        .maybeSingle();
+      if (!member) throw new Error("Esse atendente não faz parte da sua equipe");
+    }
+    const { error } = await supabase
+      .from("crm_lead_cards")
+      .update({ assignee_id: data.assigneeId })
+      .eq("id", data.cardId)
+      .eq("owner_id", userId);
+    if (error) throw new Error(error.message);
+    await logEvent(supabase, data.cardId, "assigned", { assigneeId: data.assigneeId });
+    return { ok: true };
+  });
+
+export const listMembers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId, claims } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data: members } = await supabase
+      .from("crm_members")
+      .select("user_id, role")
+      .eq("owner_id", userId);
+
+    // crm_members ainda não tem fluxo de convite (Fase 2) — hoje é sempre vazio
+    // na prática. Resolver email por auth.admin, não por uma tabela de perfil
+    // (a única "profiles" que existe é perfil de clínica, não de usuário).
+    const memberEmails = await Promise.all(
+      (members ?? []).map(async (m: any) => {
+        const { data } = await supabaseAdmin.auth.admin.getUserById(m.user_id);
+        return data.user?.email ?? "—";
+      }),
+    );
+
+    return {
+      members: [
+        { userId, email: (claims as any)?.email ?? "Você", role: "owner" as const },
+        ...(members ?? []).map((m: any, i: number) => ({
+          userId: m.user_id,
+          email: memberEmails[i],
+          role: m.role as string,
+        })),
+      ],
+    };
   });

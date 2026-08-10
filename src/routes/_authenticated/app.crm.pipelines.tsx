@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   DndContext,
+  DragOverlay,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
+  type DragStartEvent,
   type DragEndEvent,
   useDraggable,
   useDroppable,
@@ -21,6 +23,7 @@ import {
   ChevronDown,
   Pencil,
   Trash2,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -31,7 +34,10 @@ import {
   createPipeline,
   renamePipeline,
   deletePipeline,
+  listMembers,
 } from "@/lib/crm.functions";
+import { tagColorClass } from "@/lib/crm-tag-color";
+import { CardDetailDialog } from "@/components/crm/CardDetailDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -84,6 +90,7 @@ type Card = {
   position: number;
   assigneeId: string | null;
   movedAt: string;
+  tags: string[];
   lead: {
     id: string;
     name: string | null;
@@ -116,12 +123,20 @@ function PipelinesPage() {
   const renamePipelineFn = useServerFn(renamePipeline);
   const deletePipelineFn = useServerFn(deletePipeline);
 
+  const fetchMembers = useServerFn(listMembers);
+
   const [activePipelineId, setActivePipelineId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [renameOpen, setRenameOpen] = useState(false);
   const [renameName, setRenameName] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [tagFilter, setTagFilter] = useState("all");
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const justDraggedRef = useRef(false);
 
   const boardKey = ["crm", "board", activePipelineId] as const;
 
@@ -203,6 +218,35 @@ function PipelinesPage() {
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível excluir o pipeline."),
   });
 
+  const { data: membersData } = useQuery({
+    queryKey: ["crm", "members"],
+    queryFn: () => fetchMembers(),
+  });
+  const members = membersData?.members ?? [];
+
+  const allTags = useMemo(() => {
+    const set = new Set<string>();
+    (data?.cards ?? []).forEach((c: Card) => c.tags?.forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [data]);
+
+  const filteredCards = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return (data?.cards ?? []).filter((c: Card) => {
+      if (q) {
+        const hay =
+          `${c.lead.name ?? ""} ${c.lead.email ?? ""} ${c.lead.phone ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (tagFilter !== "all" && !c.tags?.includes(tagFilter)) return false;
+      if (assigneeFilter !== "all") {
+        if (assigneeFilter === "none" ? c.assigneeId : c.assigneeId !== assigneeFilter)
+          return false;
+      }
+      return true;
+    });
+  }, [data, search, tagFilter, assigneeFilter]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
@@ -211,14 +255,30 @@ function PipelinesPage() {
   const byStage = useMemo(() => {
     const map = new Map<string, Card[]>();
     (data?.stages ?? []).forEach((s: Stage) => map.set(s.id, []));
-    (data?.cards ?? []).forEach((c: Card) => {
+    filteredCards.forEach((c: Card) => {
       if (!map.has(c.stageId)) map.set(c.stageId, []);
       map.get(c.stageId)!.push(c);
     });
     return map;
-  }, [data]);
+  }, [data, filteredCards]);
+
+  const activeCard = activeId ? (data?.cards ?? []).find((c: Card) => c.id === activeId) : null;
+
+  function handleDragStart(e: DragStartEvent) {
+    justDraggedRef.current = true;
+    setActiveId(String(e.active.id));
+  }
+
+  function handleCardClick(cardId: string) {
+    if (justDraggedRef.current) return;
+    setSelectedCardId(cardId);
+  }
 
   function handleDragEnd(e: DragEndEvent) {
+    setActiveId(null);
+    setTimeout(() => {
+      justDraggedRef.current = false;
+    }, 150);
     const { active, over } = e;
     if (!over) return;
     const cardId = String(active.id);
@@ -298,6 +358,59 @@ function PipelinesPage() {
             <Plus className="h-4 w-4" /> Novo pipeline
           </Button>
         </div>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar por nome, email ou telefone..."
+            className="ck-input h-9 w-64 pl-8"
+          />
+        </div>
+        <Select value={tagFilter} onValueChange={setTagFilter}>
+          <SelectTrigger className="ck-input h-9 w-40">
+            <SelectValue placeholder="Etiqueta" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas as etiquetas</SelectItem>
+            {allTags.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+          <SelectTrigger className="ck-input h-9 w-44">
+            <SelectValue placeholder="Atendente" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os atendentes</SelectItem>
+            <SelectItem value="none">Sem atendente</SelectItem>
+            {members.map((m) => (
+              <SelectItem key={m.userId} value={m.userId}>
+                {m.email}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(search || tagFilter !== "all" || assigneeFilter !== "all") && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => {
+              setSearch("");
+              setTagFilter("all");
+              setAssigneeFilter("all");
+            }}
+          >
+            Limpar filtros
+          </Button>
+        )}
       </div>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -391,21 +504,44 @@ function PipelinesPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
           <div className="flex gap-4 min-w-full">
             {(data?.stages ?? []).map((stage: Stage) => (
-              <StageColumn key={stage.id} stage={stage} cards={byStage.get(stage.id) ?? []} />
+              <StageColumn
+                key={stage.id}
+                stage={stage}
+                cards={byStage.get(stage.id) ?? []}
+                isDropTarget={!!activeId && activeCard?.stageId !== stage.id}
+                onCardClick={handleCardClick}
+              />
             ))}
             <div className="w-1 shrink-0" /> {/* Extra space at the end of scroll */}
           </div>
         </div>
+        <DragOverlay>{activeCard && <CardItem card={activeCard} overlay />}</DragOverlay>
       </DndContext>
+
+      <CardDetailDialog
+        cardId={selectedCardId}
+        stages={data?.stages ?? []}
+        onOpenChange={(open) => !open && setSelectedCardId(null)}
+      />
     </div>
   );
 }
 
-function StageColumn({ stage, cards }: { stage: Stage; cards: Card[] }) {
+function StageColumn({
+  stage,
+  cards,
+  isDropTarget,
+  onCardClick,
+}: {
+  stage: Stage;
+  cards: Card[];
+  isDropTarget: boolean;
+  onCardClick: (cardId: string) => void;
+}) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   return (
     <div
@@ -424,9 +560,17 @@ function StageColumn({ stage, cards }: { stage: Stage; cards: Card[] }) {
       </div>
       <div className="space-y-2 min-h-[60px]">
         {cards.map((card) => (
-          <CardItem key={card.id} card={card} />
+          <CardItem key={card.id} card={card} onClick={() => onCardClick(card.id)} />
         ))}
-        {cards.length === 0 && (
+        {/* Placeholder de destino: aparece só na coluna que vai receber o card
+         * solto, sempre no fim da lista — a posição real que moveCard usa. */}
+        {isDropTarget && (
+          <div
+            style={{ borderRadius: "var(--ck-r-flat)" }}
+            className={`border-2 border-dashed h-14 transition-colors ${isOver ? "border-primary bg-primary/5" : "border-border/60"}`}
+          />
+        )}
+        {cards.length === 0 && !isDropTarget && (
           <div className="text-center text-xs text-muted-foreground py-8 border border-dashed border-border rounded-xl px-3">
             <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-muted">
               <UserIcon className="h-4 w-4 opacity-50" />
@@ -440,25 +584,37 @@ function StageColumn({ stage, cards }: { stage: Stage; cards: Card[] }) {
   );
 }
 
-function CardItem({ card }: { card: Card }) {
+function CardItem({
+  card,
+  onClick,
+  overlay,
+}: {
+  card: Card;
+  onClick?: () => void;
+  overlay?: boolean;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
   });
-  const style = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
-    : undefined;
+  const style =
+    transform && !overlay
+      ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
+      : undefined;
   return (
     <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
+      ref={overlay ? undefined : setNodeRef}
+      {...(overlay ? {} : listeners)}
+      {...(overlay ? {} : attributes)}
+      onClick={overlay ? undefined : onClick}
       style={{ ...style, borderRadius: "var(--ck-r-flat)" }}
-      className={`border border-border bg-background p-3 shadow-sm hover:shadow transition cursor-grab active:cursor-grabbing ${
-        isDragging ? "opacity-50" : ""
+      className={`border border-border bg-background p-3 shadow-sm transition ${
+        overlay
+          ? "shadow-lg scale-105 cursor-grabbing"
+          : `hover:shadow cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40" : ""}`
       }`}
     >
       <div className="flex items-center gap-2">
-        <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+        <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
           {(card.lead.name ?? card.lead.email ?? "?").charAt(0).toUpperCase()}
         </div>
         <div className="min-w-0">
@@ -480,6 +636,19 @@ function CardItem({ card }: { card: Card }) {
               <Phone className="h-3 w-3 shrink-0" /> {card.lead.phone}
             </div>
           )}
+        </div>
+      )}
+      {card.tags?.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {card.tags.map((t) => (
+            <span
+              key={t}
+              style={{ borderRadius: "var(--ck-r-flat-sm)" }}
+              className={`px-1.5 py-0.5 text-[10px] font-medium ${tagColorClass(t)}`}
+            >
+              {t}
+            </span>
+          ))}
         </div>
       )}
     </div>
