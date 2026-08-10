@@ -227,10 +227,10 @@ function SettingsPage() {
       </div>
 
       <p className="ck-eyebrow mb-3">Etapas</p>
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-start gap-4">
+      <div className="mb-8 max-w-xl">
         {pipelines.length > 0 && (
           <Select value={activePipeline?.id} onValueChange={(id) => setActivePipelineId(id)}>
-            <SelectTrigger className="ck-input h-9 w-48 shrink-0">
+            <SelectTrigger className="ck-input h-9 w-48 mb-3">
               <SelectValue placeholder="Pipeline" />
             </SelectTrigger>
             <SelectContent>
@@ -248,7 +248,7 @@ function SettingsPage() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="ck-r-sig border border-border bg-card p-4 max-w-xl flex-1">
+          <div className="ck-r-sig border border-border bg-card p-4">
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
               <SortableContext
                 items={stages.map((s) => s.id)}
