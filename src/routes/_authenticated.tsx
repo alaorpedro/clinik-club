@@ -41,9 +41,10 @@ function AppLayout() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  // Piloto do tema novo: só a área /app/admin/* vira navy por enquanto.
-  // Funis, CRM, cupons e conta continuam exatamente como estão.
-  const navy = path.startsWith("/app/admin");
+  // Tema novo em toda a área logada (/app/*). O funil público do cliente
+  // (/f/:slug) é uma árvore de rotas totalmente separada — nunca passa
+  // por este arquivo, então nunca é afetado por esta troca.
+  const navy = true;
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -182,14 +183,13 @@ function AppLayout() {
 
       {/* Header Mobile */}
       <header className="md:hidden flex items-center justify-between border-b border-border bg-background px-4 h-14 sticky top-0 z-[60]">
-        <Link 
+        <Link
           to="/app"
           onClick={() => setMobileMenuOpen(false)}
-          className="flex items-center gap-2" 
+          className="flex items-center gap-2"
           aria-label="Clinik.Club"
         >
-          <img src={icon} alt="" className="h-7 w-7" />
-          <img src={logo} alt="Clinik.Club" className="h-6 w-auto" />
+          <img src="/brand/clinik-logo-vetor.svg" alt="Clinik.Club" className="h-7 w-auto" />
         </Link>
         <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="h-9 w-9">
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

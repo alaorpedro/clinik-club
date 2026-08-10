@@ -99,36 +99,36 @@ function ContaPage() {
 
   return (
     <div className="max-w-xl">
-      <h1 className="text-3xl font-black tracking-tight">Minha conta</h1>
+      <h1 className="ck-display text-4xl tracking-tight">Minha conta</h1>
       <p className="text-muted-foreground mt-1">Gerencie seu perfil e assinatura.</p>
       {profile && (
-        <form onSubmit={save} className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6">
-          <div><Label>Email</Label><Input value={email} disabled className="mt-1.5" /></div>
-          <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" defaultValue={profile.name ?? ""} className="mt-1.5" /></div>
-          <Button type="submit" disabled={saving} className="rounded-full font-semibold">{saving ? "Salvando..." : "Salvar"}</Button>
+        <form onSubmit={save} className="ck-card mt-8 space-y-4 border border-border bg-card p-6">
+          <div><Label>Email</Label><Input value={email} disabled className="ck-input mt-1.5" /></div>
+          <div><Label htmlFor="name">Nome</Label><Input id="name" name="name" defaultValue={profile.name ?? ""} className="ck-input mt-1.5" /></div>
+          <Button type="submit" disabled={saving} className="ck-btn font-semibold">{saving ? "Salvando..." : "Salvar"}</Button>
         </form>
       )}
-      <div className="mt-8 rounded-2xl border border-border bg-card p-6">
+      <div className="ck-card mt-8 border border-border bg-card p-6">
         <h2 className="font-bold">Plano atual</h2>
         <p className="mt-1 text-sm text-muted-foreground">Você está no plano <strong className="text-foreground capitalize">{planLabel}</strong>.</p>
         <div className="mt-4 flex flex-wrap gap-2">
           {isAdmin ? (
-            <Button variant="outline" className="rounded-full" disabled>
+            <Button variant="outline" className="ck-btn" disabled>
               Acesso admin liberado
             </Button>
           ) : hasPaidPlan ? (
-            <Button variant="outline" className="rounded-full" onClick={openPortal} disabled={openingPortal}>
+            <Button variant="outline" className="ck-btn" onClick={openPortal} disabled={openingPortal}>
               {openingPortal ? "Abrindo..." : "Gerenciar assinatura"}
             </Button>
           ) : (
-            <Button asChild className="rounded-full font-semibold">
+            <Button asChild className="ck-btn font-semibold">
               <a href="/planos">Ver planos</a>
             </Button>
           )}
         </div>
       </div>
       <BillingSection defaultEmail={email} defaultName={profile?.name ?? ""} />
-      <div className="mt-8 rounded-2xl border border-destructive/30 bg-card p-6">
+      <div className="ck-card mt-8 border border-destructive/30 bg-card p-6">
         <h2 className="font-bold text-destructive">Excluir minha conta</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Esta ação cancela assinaturas ativas e remove sua conta e seus dados do sistema.
@@ -136,7 +136,7 @@ function ContaPage() {
         <Button
           type="button"
           variant="destructive"
-          className="mt-4 rounded-full font-semibold"
+          className="ck-btn mt-4 font-semibold"
           onClick={() => setDeleteOpen(true)}
         >
           Excluir minha conta
@@ -231,7 +231,7 @@ function BillingSection({ defaultEmail, defaultName }: { defaultEmail: string; d
   }
 
   return (
-    <form onSubmit={saveBilling} className="mt-8 space-y-4 rounded-2xl border border-border bg-card p-6">
+    <form onSubmit={saveBilling} className="ck-card mt-8 space-y-4 border border-border bg-card p-6">
       <div>
         <h2 className="font-bold">Dados de faturamento</h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -244,35 +244,35 @@ function BillingSection({ defaultEmail, defaultName }: { defaultEmail: string; d
         <>
           <div>
             <Label htmlFor="billing-legal-name">Razão social / Nome</Label>
-            <Input id="billing-legal-name" value={legalName} onChange={(e) => setLegalName(e.target.value)} className="mt-1.5" />
+            <Input id="billing-legal-name" value={legalName} onChange={(e) => setLegalName(e.target.value)} className="ck-input mt-1.5" />
           </div>
           <div>
             <Label htmlFor="billing-tax-id">CNPJ / CPF</Label>
-            <Input id="billing-tax-id" value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="00.000.000/0000-00" className="mt-1.5" />
+            <Input id="billing-tax-id" value={taxId} onChange={(e) => setTaxId(e.target.value)} placeholder="00.000.000/0000-00" className="ck-input mt-1.5" />
           </div>
           <div>
             <Label htmlFor="billing-address">Endereço</Label>
-            <Input id="billing-address" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} placeholder="Rua, número, complemento" className="mt-1.5" />
+            <Input id="billing-address" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} placeholder="Rua, número, complemento" className="ck-input mt-1.5" />
           </div>
           <div className="grid grid-cols-[1fr_80px_120px] gap-3">
             <div>
               <Label htmlFor="billing-city">Cidade</Label>
-              <Input id="billing-city" value={city} onChange={(e) => setCity(e.target.value)} className="mt-1.5" />
+              <Input id="billing-city" value={city} onChange={(e) => setCity(e.target.value)} className="ck-input mt-1.5" />
             </div>
             <div>
               <Label htmlFor="billing-uf">UF</Label>
-              <Input id="billing-uf" value={uf} onChange={(e) => setUf(e.target.value)} placeholder="PR" className="mt-1.5" />
+              <Input id="billing-uf" value={uf} onChange={(e) => setUf(e.target.value)} placeholder="PR" className="ck-input mt-1.5" />
             </div>
             <div>
               <Label htmlFor="billing-cep">CEP</Label>
-              <Input id="billing-cep" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="00000-000" className="mt-1.5" />
+              <Input id="billing-cep" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="00000-000" className="ck-input mt-1.5" />
             </div>
           </div>
           <div>
             <Label htmlFor="billing-email">E-mail para envio da NF</Label>
-            <Input id="billing-email" value={nfEmail} onChange={(e) => setNfEmail(e.target.value)} className="mt-1.5" />
+            <Input id="billing-email" value={nfEmail} onChange={(e) => setNfEmail(e.target.value)} className="ck-input mt-1.5" />
           </div>
-          <Button type="submit" disabled={savingBilling} className="rounded-full font-semibold">
+          <Button type="submit" disabled={savingBilling} className="ck-btn font-semibold">
             {savingBilling ? "Salvando..." : "Salvar dados de faturamento"}
           </Button>
         </>

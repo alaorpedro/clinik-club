@@ -99,14 +99,14 @@ function CouponsPage() {
     <div>
       <div className="mb-8 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+          <h1 className="ck-display text-4xl tracking-tight flex items-center gap-2">
             <Tag className="h-7 w-7 text-primary" /> Cupons de desconto
           </h1>
           <p className="text-muted-foreground mt-1">
             Crie e gerencie códigos promocionais aplicáveis no checkout. Ambiente: <strong>{env}</strong>.
           </p>
         </div>
-        <Button onClick={() => setOpen(true)} className="rounded-full font-semibold">
+        <Button onClick={() => setOpen(true)} className="ck-btn font-semibold">
           <Plus className="h-4 w-4" /> Novo cupom
         </Button>
       </div>
@@ -116,7 +116,7 @@ function CouponsPage() {
       ) : couponsQuery.error ? (
         <div className="text-sm text-destructive">Erro: {(couponsQuery.error as Error).message}</div>
       ) : (
-        <Card>
+        <Card className="ck-card">
           <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -148,7 +148,7 @@ function CouponsPage() {
                       <TableCell className="tabular-nums">{c.max_redemptions ?? "∞"}</TableCell>
                       <TableCell>{fmtUnix(c.expires_at)}</TableCell>
                       <TableCell>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${c.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-[var(--ck-r-flat-sm)] font-semibold ${c.active ? "bg-[var(--ck-success-bg)] text-[var(--ck-success)]" : "bg-muted text-muted-foreground"}`}>
                           {c.active ? "Ativo" : "Inativo"}
                         </span>
                       </TableCell>
@@ -260,7 +260,7 @@ function CreateCouponDialog({
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="BLACKFRIDAY"
-              className="mt-1.5 font-mono uppercase"
+              className="ck-input mt-1.5 font-mono uppercase"
               required
             />
             <p className="mt-1 text-xs text-muted-foreground">A-Z, 0-9, _ e -. O cliente digitará esse código no checkout.</p>
@@ -281,12 +281,12 @@ function CreateCouponDialog({
               {discountType === "percent" ? (
                 <>
                   <Label htmlFor="pct">Percentual *</Label>
-                  <Input id="pct" type="number" min={1} max={100} value={percentOff} onChange={(e) => setPercentOff(e.target.value)} className="mt-1.5" required />
+                  <Input id="pct" type="number" min={1} max={100} value={percentOff} onChange={(e) => setPercentOff(e.target.value)} className="ck-input mt-1.5" required />
                 </>
               ) : (
                 <>
                   <Label htmlFor="amt">Valor em R$ *</Label>
-                  <Input id="amt" type="number" min={0.5} step={0.01} value={amountOff} onChange={(e) => setAmountOff(e.target.value)} className="mt-1.5" required />
+                  <Input id="amt" type="number" min={0.5} step={0.01} value={amountOff} onChange={(e) => setAmountOff(e.target.value)} className="ck-input mt-1.5" required />
                 </>
               )}
             </div>
@@ -307,7 +307,7 @@ function CreateCouponDialog({
             {duration === "repeating" && (
               <div>
                 <Label htmlFor="months">Meses *</Label>
-                <Input id="months" type="number" min={1} value={durationMonths} onChange={(e) => setDurationMonths(e.target.value)} className="mt-1.5" required />
+                <Input id="months" type="number" min={1} value={durationMonths} onChange={(e) => setDurationMonths(e.target.value)} className="ck-input mt-1.5" required />
               </div>
             )}
           </div>
@@ -315,17 +315,17 @@ function CreateCouponDialog({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="max">Limite de usos</Label>
-              <Input id="max" type="number" min={1} value={maxRedemptions} onChange={(e) => setMaxRedemptions(e.target.value)} placeholder="Ilimitado" className="mt-1.5" />
+              <Input id="max" type="number" min={1} value={maxRedemptions} onChange={(e) => setMaxRedemptions(e.target.value)} placeholder="Ilimitado" className="ck-input mt-1.5" />
             </div>
             <div>
               <Label htmlFor="exp">Expira em</Label>
-              <Input id="exp" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="mt-1.5" />
+              <Input id="exp" type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="ck-input mt-1.5" />
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancelar</Button>
-            <Button type="submit" disabled={saving} className="font-semibold">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving} className="ck-btn">Cancelar</Button>
+            <Button type="submit" disabled={saving} className="ck-btn font-semibold">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Criar cupom"}
             </Button>
           </DialogFooter>

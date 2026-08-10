@@ -69,7 +69,8 @@ function CrmLayout() {
               <Link
                 key={l.to}
                 to={l.to}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-bold transition whitespace-nowrap cursor-pointer hover:scale-[1.02] active:scale-95 ${
+                style={{ borderRadius: "var(--ck-r-flat)" }}
+                className={`flex items-center gap-2.5 px-3 py-2 text-sm font-medium transition-colors duration-[180ms] ease-out whitespace-nowrap cursor-pointer ${
                   active ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground/70 hover:bg-secondary"
                 }`}
               >

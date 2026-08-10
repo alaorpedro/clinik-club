@@ -32,23 +32,23 @@ function UpgradePage() {
         <ArrowLeft className="h-4 w-4" /> Voltar ao Painel
       </Link>
 
-      <div className="rounded-3xl border border-border bg-card overflow-hidden grid md:grid-cols-2">
-        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-8 md:p-12 border-b md:border-b-0 md:border-r border-border">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+      <div className="ck-r-sig border border-border bg-card overflow-hidden grid md:grid-cols-2">
+        <div className="bg-primary/5 p-8 md:p-12 border-b md:border-b-0 md:border-r border-border">
+          <div className="inline-flex items-center gap-2 rounded-[var(--ck-r-flat-sm)] bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5" /> Módulo adicional
           </div>
-          <h1 className="mt-4 text-4xl md:text-5xl font-black tracking-tight">CRM Clinik.Club</h1>
+          <h1 className="mt-4 ck-display text-4xl md:text-5xl tracking-tight">CRM Clinik.Club</h1>
           <p className="mt-3 text-muted-foreground max-w-xl">
             Organize seus leads em pipeline, distribua para atendentes e acompanhe a conversão até a venda.
             Tudo integrado aos seus funis.
           </p>
           <div className="mt-6 flex items-baseline gap-2">
-            <span className="text-5xl font-black tracking-tight">R$ 97</span>
+            <span className="ck-num text-5xl font-light tracking-tight">R$ 97</span>
             <span className="text-muted-foreground">/mês</span>
           </div>
           <Button
             size="lg"
-            className="mt-6 rounded-full px-8"
+            className="ck-btn mt-6 px-8"
             onClick={() => setOpen(true)}
           >
             Ativar CRM agora

@@ -107,11 +107,11 @@ function LeadsPage() {
             <Link to="/app/funis/$id/editar" params={{ id }}><ArrowLeft className="h-4 w-4 mr-1" />Voltar ao editor</Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-black tracking-tight">Leads</h1>
+            <h1 className="ck-display text-3xl tracking-tight">Leads</h1>
             <p className="text-xs text-muted-foreground">{funnelName}</p>
           </div>
         </div>
-        <Button onClick={openSheetsOrSetup} variant="outline" size="sm" className="rounded-full">
+        <Button onClick={openSheetsOrSetup} variant="outline" size="sm" className="ck-btn">
           {sheetsUrl ? (
             <>
               <ExternalLink className="h-4 w-4 mr-1" />Abrir planilha
@@ -130,7 +130,7 @@ function LeadsPage() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Buscar por nome, e-mail, telefone ou resposta..."
-            className="flex-1 h-10 px-4 rounded-full border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="ck-input flex-1 h-10 px-4 border border-border bg-background text-sm"
           />
           <span className="text-xs text-muted-foreground whitespace-nowrap">{filtered?.length ?? 0} de {leads.length}</span>
         </div>
@@ -139,7 +139,7 @@ function LeadsPage() {
       {leads === null ? (
         <p className="text-muted-foreground">Carregando...</p>
       ) : leads.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center">
+        <div className="ck-r-sig border-2 border-dashed border-border p-12 text-center">
           <p className="font-semibold">Nenhum lead ainda</p>
           <p className="text-sm text-muted-foreground mt-1">Publique seu funil e compartilhe o link para capturar leads.</p>
         </div>
@@ -150,7 +150,7 @@ function LeadsPage() {
             const isOpen = !!open[l.id];
             const preview = entries.slice(0, 2);
             return (
-              <div key={l.id} className="rounded-2xl border border-border bg-background overflow-hidden">
+              <div key={l.id} className="ck-card border border-border bg-background overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setOpen((o) => ({ ...o, [l.id]: !o[l.id] }))}
@@ -163,9 +163,9 @@ function LeadsPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold truncate">{l.name || "Sem nome"}</span>
                       {l.status === "partial" ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Incompleto</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-warning-bg)] text-[var(--ck-warning)]">Incompleto</span>
                       ) : (
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-100 text-green-800">Completo</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-success-bg)] text-[var(--ck-success)]">Completo</span>
                       )}
                       <span className="text-xs text-muted-foreground inline-flex items-center gap-1"><Calendar className="h-3 w-3" />{relTime(l.created_at)}</span>
                     </div>
@@ -177,7 +177,7 @@ function LeadsPage() {
                     {!isOpen && preview.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {preview.map((e) => (
-                          <span key={e.key} className="inline-flex items-center gap-1 max-w-full text-[11px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
+                          <span key={e.key} className="inline-flex items-center gap-1 max-w-full text-[11px] px-2 py-0.5 rounded-[var(--ck-r-flat-sm)] bg-secondary text-secondary-foreground">
                             <span className="font-medium truncate max-w-[160px]">{e.label}:</span>
                             <span className="truncate max-w-[200px]">{formatAnswer(e.value)}</span>
                           </span>
@@ -212,7 +212,7 @@ function LeadsPage() {
             );
           })}
           {filtered && filtered.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhum lead encontrado para "{q}".</div>
+            <div className="ck-r-sig border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Nenhum lead encontrado para "{q}".</div>
           )}
         </div>
       )}

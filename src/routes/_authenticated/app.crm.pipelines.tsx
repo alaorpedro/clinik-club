@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/app/crm/pipelines")({
     <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">
       <h2 className="font-bold text-destructive">Não foi possível carregar o pipeline</h2>
       <p className="mt-1 text-muted-foreground">{error?.message ?? "Erro inesperado."}</p>
-      <Button size="sm" variant="outline" className="mt-4 rounded-full" onClick={() => reset()}>
+      <Button size="sm" variant="outline" className="ck-btn mt-4" onClick={() => reset()}>
         Tentar novamente
       </Button>
     </div>
@@ -30,14 +30,16 @@ type Card = {
 };
 type Stage = { id: string; name: string; color: string; order: number };
 
+// Paleta de etiquetas da marca (docs/brand/design-system.md §2) — dessaturada,
+// todos os pares com contraste >=4.6:1.
 const STAGE_COLOR: Record<string, string> = {
-  blue: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20",
-  amber: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
-  violet: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/20",
-  cyan: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/20",
-  emerald: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20",
-  rose: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/20",
-  slate: "bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20",
+  blue: "bg-[var(--ck-tag-azul-bg)] text-[var(--ck-tag-azul-fg)] border-transparent",
+  amber: "bg-[var(--ck-tag-ambar-bg)] text-[var(--ck-tag-ambar-fg)] border-transparent",
+  violet: "bg-[var(--ck-tag-roxo-bg)] text-[var(--ck-tag-roxo-fg)] border-transparent",
+  cyan: "bg-[var(--ck-tag-petroleo-bg)] text-[var(--ck-tag-petroleo-fg)] border-transparent",
+  emerald: "bg-[var(--ck-tag-verde-bg)] text-[var(--ck-tag-verde-fg)] border-transparent",
+  rose: "bg-[var(--ck-tag-rosa-bg)] text-[var(--ck-tag-rosa-fg)] border-transparent",
+  slate: "bg-[var(--ck-tag-ardosia-bg)] text-[var(--ck-tag-ardosia-fg)] border-transparent",
 };
 
 function PipelinesPage() {
@@ -112,10 +114,10 @@ function PipelinesPage() {
     <div>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">Pipeline</h1>
+          <h1 className="ck-display text-3xl md:text-4xl tracking-tight text-foreground">Pipeline</h1>
           <p className="text-muted-foreground mt-1 text-sm">Arraste os cards entre as etapas para atualizar o status.</p>
         </div>
-        <Button variant="outline" size="sm" disabled className="rounded-full self-start sm:self-auto">
+        <Button variant="outline" size="sm" disabled className="ck-btn self-start sm:self-auto">
           <Plus className="h-4 w-4" /> Novo pipeline
         </Button>
       </div>
@@ -139,11 +141,11 @@ function StageColumn({ stage, cards }: { stage: Stage; cards: Card[] }) {
   return (
     <div
       ref={setNodeRef}
-      className={`w-72 shrink-0 rounded-2xl border border-border bg-secondary/40 p-3 transition ${isOver ? "ring-2 ring-primary/40" : ""}`}
+      className={`ck-r-sig w-72 shrink-0 border border-border bg-secondary/40 p-3 transition ${isOver ? "ring-2 ring-primary/40" : ""}`}
     >
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold ${STAGE_COLOR[stage.color] ?? STAGE_COLOR.slate}`}>
+          <span className={`inline-flex items-center rounded-[var(--ck-r-flat-sm)] border px-2 py-0.5 text-xs font-semibold ${STAGE_COLOR[stage.color] ?? STAGE_COLOR.slate}`}>
             {stage.name}
           </span>
           <span className="text-xs font-medium text-muted-foreground">{cards.length}</span>
@@ -173,10 +175,10 @@ function CardItem({ card }: { card: Card }) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...listeners}
       {...attributes}
-      className={`rounded-xl border border-border bg-background p-3 shadow-sm hover:shadow transition cursor-grab active:cursor-grabbing ${
+      style={{ ...style, borderRadius: "var(--ck-r-flat)" }}
+      className={`border border-border bg-background p-3 shadow-sm hover:shadow transition cursor-grab active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
       }`}
     >

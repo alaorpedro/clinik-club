@@ -30,7 +30,7 @@ function LeadsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-black tracking-tight">Leads</h1>
+        <h1 className="ck-display text-4xl tracking-tight">Leads</h1>
         <p className="text-muted-foreground mt-1 text-sm">Todos os leads capturados pelos seus funis.</p>
       </div>
 
@@ -40,7 +40,7 @@ function LeadsPage() {
           placeholder="Buscar por nome, email, telefone…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="pl-9 rounded-full"
+          className="ck-input pl-9"
         />
       </div>
 
@@ -49,11 +49,11 @@ function LeadsPage() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : leads.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-border p-12 text-center text-sm text-muted-foreground">
+        <div className="ck-r-sig border-2 border-dashed border-border p-12 text-center text-sm text-muted-foreground">
           Nenhum lead encontrado.
         </div>
       ) : (
-        <div className="rounded-2xl border border-border bg-background overflow-x-auto">
+        <div className="ck-r-sig border border-border bg-background overflow-x-auto">
           <table className="w-full text-sm min-w-[600px] md:min-w-0">
             <thead className="bg-secondary/60 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               <tr>
