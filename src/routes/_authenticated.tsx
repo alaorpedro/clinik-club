@@ -41,6 +41,9 @@ function AppLayout() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  // Piloto do tema novo: só a área /app/admin/* vira navy por enquanto.
+  // Funis, CRM, cupons e conta continuam exatamente como estão.
+  const navy = path.startsWith("/app/admin");
   const [isAdmin, setIsAdmin] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -95,22 +98,36 @@ function AppLayout() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-secondary/30 relative isolate">
+    <div className={`${navy ? "theme-clinik" : ""} min-h-screen flex flex-col md:flex-row bg-secondary/30 relative isolate`}>
       {/* Sidebar Desktop */}
-      <aside className={`hidden md:flex flex-col border-r border-border bg-background p-4 h-screen sticky top-0 z-[50] transition-[width] duration-200 ${sidebarCollapsed ? "w-20" : "w-64"}`}>
+      <aside
+        className={`hidden md:flex flex-col p-4 h-screen sticky top-0 z-[50] transition-[width] duration-200 border-r ${
+          navy ? "bg-sidebar border-sidebar-border" : "bg-background border-border"
+        } ${sidebarCollapsed ? "w-20" : "w-64"}`}
+      >
         <div className="mb-8 flex items-center gap-2">
           <Link
             to="/app"
             className={`flex min-w-0 flex-1 items-center gap-2 hover:opacity-80 transition-opacity ${sidebarCollapsed ? "justify-center" : ""}`}
             aria-label="Clinik.Club"
           >
-            <img src={icon} alt="" className="h-8 w-8 shrink-0" />
-            {!sidebarCollapsed && <img src={logo} alt="Clinik.Club" className="h-7 w-auto min-w-0" />}
+            {navy ? (
+              sidebarCollapsed ? (
+                <img src="/brand/clinik-icon.svg" alt="" className="h-8 w-8 shrink-0 brightness-0 invert" />
+              ) : (
+                <img src="/brand/clinik-logo-vetor.svg" alt="Clinik.Club" className="h-8 w-auto min-w-0 brightness-0 invert" />
+              )
+            ) : (
+              <>
+                <img src={icon} alt="" className="h-8 w-8 shrink-0" />
+                {!sidebarCollapsed && <img src={logo} alt="Clinik.Club" className="h-7 w-auto min-w-0" />}
+              </>
+            )}
           </Link>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 shrink-0"
+            className={`h-8 w-8 shrink-0 ${navy ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : ""}`}
             onClick={toggleSidebar}
             title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
             aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
@@ -126,10 +143,15 @@ function AppLayout() {
                 key={l.to}
                 to={l.to as any}
                 title={sidebarCollapsed ? l.label : undefined}
-                className={`w-full flex items-center rounded-lg text-sm font-bold transition cursor-pointer hover:scale-[1.02] active:scale-95 ${sidebarCollapsed ? "justify-center px-0 py-3" : "justify-between px-3 py-2.5"} ${active ? "bg-primary text-primary-foreground shadow-md" : "text-foreground/70 hover:bg-secondary"}`}
+                style={navy ? { borderRadius: "var(--ck-r-flat)" } : undefined}
+                className={
+                  navy
+                    ? `w-full flex items-center text-sm font-medium transition-colors duration-[180ms] ease-out ${sidebarCollapsed ? "justify-center px-0 py-3" : "justify-between px-3 py-2.5"} ${active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
+                    : `w-full flex items-center rounded-lg text-sm font-bold transition cursor-pointer hover:scale-[1.02] active:scale-95 ${sidebarCollapsed ? "justify-center px-0 py-3" : "justify-between px-3 py-2.5"} ${active ? "bg-primary text-primary-foreground shadow-md" : "text-foreground/70 hover:bg-secondary"}`
+                }
               >
                 <div className="flex items-center gap-3">
-                  <l.icon className={`h-4 w-4 ${active ? "text-primary-foreground" : "text-primary"}`} />
+                  <l.icon className={`h-4 w-4 ${navy ? (active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/50") : active ? "text-primary-foreground" : "text-primary"}`} />
                   {!sidebarCollapsed && l.label}
                 </div>
                 {active && !sidebarCollapsed && <ChevronRight className="h-3.5 w-3.5 opacity-70" />}
@@ -137,16 +159,22 @@ function AppLayout() {
             );
           })}
         </nav>
-        <div className="border-t border-border pt-4">
-          {!sidebarCollapsed && <div className="px-3 py-2 text-[10px] font-medium text-muted-foreground truncate uppercase tracking-wider">{user.email}</div>}
+        <div className={`border-t pt-4 ${navy ? "border-sidebar-border" : "border-border"}`}>
+          {!sidebarCollapsed && (
+            <div className={`px-3 py-2 text-[10px] font-medium truncate uppercase tracking-wider ${navy ? "text-sidebar-foreground/50" : "text-muted-foreground"}`}>
+              {user.email}
+            </div>
+          )}
           <Button
             variant="ghost"
             size="sm"
             onClick={logout}
             title={sidebarCollapsed ? "Sair" : undefined}
-            className={`w-full gap-2 cursor-pointer font-bold text-foreground/70 hover:bg-destructive/10 hover:text-destructive transition-colors ${sidebarCollapsed ? "justify-center px-0" : "justify-start"}`}
+            className={`w-full gap-2 cursor-pointer font-bold transition-colors ${sidebarCollapsed ? "justify-center px-0" : "justify-start"} ${
+              navy ? "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white" : "text-foreground/70 hover:bg-destructive/10 hover:text-destructive"
+            }`}
           >
-            <LogOut className="h-4 w-4 text-destructive" />{!sidebarCollapsed && "Sair"}
+            <LogOut className={`h-4 w-4 ${navy ? "text-sidebar-foreground/70" : "text-destructive"}`} />{!sidebarCollapsed && "Sair"}
           </Button>
         </div>
       </aside>

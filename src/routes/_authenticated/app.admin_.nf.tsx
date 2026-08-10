@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/app/admin_/nf")({
     <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">
       <h2 className="font-bold text-destructive">Erro ao carregar pagamentos</h2>
       <p className="mt-1 text-muted-foreground">{error?.message ?? "Tente novamente."}</p>
-      <Button size="sm" variant="outline" className="mt-4 rounded-full" onClick={() => reset()}>
+      <Button size="sm" variant="outline" className="ck-btn mt-4" onClick={() => reset()}>
         Tentar novamente
       </Button>
     </div>
@@ -166,7 +166,7 @@ function AdminNfPage() {
       </div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+          <h1 className="ck-display text-4xl tracking-tight flex items-center gap-2">
             <ReceiptText className="h-7 w-7 text-primary" /> Notas fiscais
           </h1>
           <p className="text-muted-foreground mt-1">Pagamentos confirmados no Stripe e controle manual de emissão de NF.</p>
@@ -178,12 +178,12 @@ function AdminNfPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Stat icon={CheckCircle2} label="Pagamentos confirmados" value={String(stats.confirmed)} accent="text-primary" />
-        <Stat icon={FileClock} label="NF pendente" value={String(stats.pending)} accent={stats.pending > 0 ? "text-yellow-700" : "text-muted-foreground"} />
+        <Stat icon={FileClock} label="NF pendente" value={String(stats.pending)} accent={stats.pending > 0 ? "text-[var(--ck-warning)]" : "text-muted-foreground"} />
         <Stat icon={FileCheck2} label="NF emitida" value={String(stats.issued)} accent="text-primary" />
         <Stat icon={ReceiptText} label="Total pago (R$)" value={fmtMoney(stats.total, "BRL")} />
       </div>
 
-      <Card className="mb-6">
+      <Card className="ck-card mb-6">
         <CardContent className="p-4 flex flex-col md:flex-row gap-3 md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -206,7 +206,7 @@ function AdminNfPage() {
                 variant={filter === f.k ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilter(f.k as typeof filter)}
-                className="rounded-full"
+                className="ck-btn"
               >
                 {f.l}
               </Button>
@@ -220,7 +220,7 @@ function AdminNfPage() {
       ) : paymentsQuery.error ? (
         <div className="text-sm text-destructive">Erro: {(paymentsQuery.error as Error).message}</div>
       ) : (
-        <Card>
+        <Card className="ck-card">
           <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -254,7 +254,7 @@ function AdminNfPage() {
                           {p.billing.tax_id ? (
                             <span className="text-xs font-medium tabular-nums">{p.billing.tax_id}</span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-[10px] font-semibold">
+                            <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-warning-bg)] text-[var(--ck-warning)] px-2 py-0.5 text-[10px] font-semibold">
                               <AlertTriangle className="h-3 w-3" /> sem CNPJ
                             </span>
                           )}
@@ -291,11 +291,11 @@ function AdminNfPage() {
                       </TableCell>
                       <TableCell>
                         {p.refunded ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive px-2 py-0.5 text-xs font-semibold">
+                          <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-danger-bg)] text-[var(--ck-danger)] px-2 py-0.5 text-xs font-semibold">
                             <Undo2 className="h-3 w-3" /> Reembolsado
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold">
+                          <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-success-bg)] text-[var(--ck-success)] px-2 py-0.5 text-xs font-semibold">
                             <CheckCircle2 className="h-3 w-3" /> Pago
                           </span>
                         )}
@@ -305,7 +305,7 @@ function AdminNfPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${p.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-[var(--ck-r-flat-sm)] ${p.environment === "live" ? "bg-primary/10 text-primary" : "bg-[var(--ck-warning-bg)] text-[var(--ck-warning)]"}`}>
                           {p.environment}
                         </span>
                       </TableCell>
@@ -429,8 +429,8 @@ function BillingDialog({
           <Field label="Observações" value={notes} onChange={setNotes} placeholder="Opcional" />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={saving}>Cancelar</Button>
-          <Button onClick={handleSave} disabled={saving || !payment.stripe_customer_id}>
+          <Button variant="outline" onClick={onClose} disabled={saving} className="ck-btn">Cancelar</Button>
+          <Button onClick={handleSave} disabled={saving || !payment.stripe_customer_id} className="ck-btn">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar"}
           </Button>
         </DialogFooter>
@@ -453,14 +453,14 @@ function Field({
   return (
     <div className="grid gap-1.5">
       <Label className="text-xs">{label}</Label>
-      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="ck-input" />
     </div>
   );
 }
 
 function Stat({ icon: Icon, label, value, accent }: { icon: typeof CheckCircle2; label: string; value: string; accent?: string }) {
   return (
-    <Card>
+    <Card className="ck-card">
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Icon className={`h-4 w-4 ${accent ?? ""}`} /> {label}

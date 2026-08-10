@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authenticated/app/admin_/pagamentos")({
     <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-6 text-sm">
       <h2 className="font-bold text-destructive">Erro ao carregar pagamentos</h2>
       <p className="mt-1 text-muted-foreground">{error?.message ?? "Tente novamente."}</p>
-      <Button size="sm" variant="outline" className="mt-4 rounded-full" onClick={() => reset()}>
+      <Button size="sm" variant="outline" className="ck-btn mt-4" onClick={() => reset()}>
         Tentar novamente
       </Button>
     </div>
@@ -54,20 +54,24 @@ function daysUntil(iso: string | null): number | null {
 const ISSUE_STATUSES = ["past_due", "unpaid", "incomplete", "incomplete_expired"];
 
 function StatusPill({ status }: { status: string }) {
+  const succ = "bg-[var(--ck-success-bg)] text-[var(--ck-success)]";
+  const warn = "bg-[var(--ck-warning-bg)] text-[var(--ck-warning)]";
+  const dang = "bg-[var(--ck-danger-bg)] text-[var(--ck-danger)]";
+  const neutral = "bg-muted text-muted-foreground";
   const map: Record<string, { cls: string; label: string; icon: typeof CheckCircle2 }> = {
-    active:   { cls: "bg-primary/10 text-primary",       label: "Ativo",       icon: CheckCircle2 },
-    trialing: { cls: "bg-blue-100 text-blue-800",        label: "Em teste",    icon: Clock },
-    past_due: { cls: "bg-yellow-100 text-yellow-800",    label: "Em atraso",   icon: AlertTriangle },
-    unpaid:   { cls: "bg-destructive/10 text-destructive", label: "Não pago",  icon: XCircle },
-    incomplete: { cls: "bg-yellow-100 text-yellow-800",  label: "Incompleto",  icon: AlertTriangle },
-    incomplete_expired: { cls: "bg-muted text-muted-foreground", label: "Expirado", icon: XCircle },
-    canceled: { cls: "bg-muted text-muted-foreground",   label: "Cancelado",   icon: XCircle },
-    paused:   { cls: "bg-muted text-muted-foreground",   label: "Pausado",     icon: Clock },
+    active:   { cls: succ,    label: "Ativo",       icon: CheckCircle2 },
+    trialing: { cls: succ,    label: "Em teste",    icon: Clock },
+    past_due: { cls: warn,    label: "Em atraso",   icon: AlertTriangle },
+    unpaid:   { cls: dang,    label: "Não pago",    icon: XCircle },
+    incomplete: { cls: warn,  label: "Incompleto",  icon: AlertTriangle },
+    incomplete_expired: { cls: neutral, label: "Expirado", icon: XCircle },
+    canceled: { cls: neutral, label: "Cancelado",   icon: XCircle },
+    paused:   { cls: neutral, label: "Pausado",     icon: Clock },
   };
-  const m = map[status] ?? { cls: "bg-muted text-muted-foreground", label: status, icon: AlertTriangle };
+  const m = map[status] ?? { cls: neutral, label: status, icon: AlertTriangle };
   const Icon = m.icon;
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${m.cls}`}>
+    <span className={`inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] px-2 py-0.5 text-xs font-semibold ${m.cls}`}>
       <Icon className="h-3 w-3" /> {m.label}
     </span>
   );
@@ -184,13 +188,13 @@ function AdminPaymentsPage() {
       </div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+          <h1 className="ck-display text-4xl tracking-tight flex items-center gap-2">
             <CreditCard className="h-7 w-7 text-primary" /> Pagamentos
           </h1>
           <p className="text-muted-foreground mt-1">Assinaturas, falhas de cobrança e ações rápidas.</p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm" className="rounded-full">
+          <Button asChild variant="outline" size="sm" className="ck-btn">
             <Link to="/app/admin/nf">Notas fiscais</Link>
           </Button>
           <Button variant="outline" size="sm" onClick={() => paymentsQuery.refetch()} disabled={paymentsQuery.isFetching}>
@@ -202,11 +206,11 @@ function AdminPaymentsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Stat icon={CheckCircle2} label="Ativos" value={String(stats.active)} accent="text-primary" />
         <Stat icon={AlertTriangle} label="Com problema" value={String(stats.issues)} accent={stats.issues > 0 ? "text-destructive" : "text-muted-foreground"} />
-        <Stat icon={Clock} label="Vencem em 7d" value={String(stats.expiring)} accent={stats.expiring > 0 ? "text-yellow-700" : "text-muted-foreground"} />
+        <Stat icon={Clock} label="Vencem em 7d" value={String(stats.expiring)} accent={stats.expiring > 0 ? "text-[var(--ck-warning)]" : "text-muted-foreground"} />
         <Stat icon={CreditCard} label="Último ciclo (R$)" value={fmtMoney(stats.mrr, "BRL")} />
       </div>
 
-      <Card className="mb-6">
+      <Card className="ck-card mb-6">
         <CardContent className="p-4 flex flex-col md:flex-row gap-3 md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -230,7 +234,7 @@ function AdminPaymentsPage() {
                 variant={filter === f.k ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilter(f.k as typeof filter)}
-                className="rounded-full"
+                className="ck-btn"
               >
                 {f.l}
               </Button>
@@ -244,7 +248,7 @@ function AdminPaymentsPage() {
       ) : paymentsQuery.error ? (
         <div className="text-sm text-destructive">Erro: {(paymentsQuery.error as Error).message}</div>
       ) : (
-        <Card>
+        <Card className="ck-card">
           <CardContent className="p-0 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -280,13 +284,13 @@ function AdminPaymentsPage() {
                       <TableCell>
                         <StatusPill status={p.status} />
                         {p.cancel_at_period_end && (
-                          <div className="text-[10px] text-yellow-700 mt-0.5">Cancelará ao fim</div>
+                          <div className="text-[10px] text-[var(--ck-warning)] mt-0.5">Cancelará ao fim</div>
                         )}
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">{fmtDate(p.current_period_end)}</div>
                         {dleft !== null && (
-                          <div className={`text-xs ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-yellow-700" : "text-muted-foreground"}`}>
+                          <div className={`text-xs ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-[var(--ck-warning)]" : "text-muted-foreground"}`}>
                             {dleft < 0 ? `há ${-dleft}d` : dleft === 0 ? "hoje" : `em ${dleft}d`}
                           </div>
                         )}
@@ -294,7 +298,7 @@ function AdminPaymentsPage() {
                       <TableCell>
                         {inv ? (
                           <div>
-                            <div className="text-sm font-medium">{fmtMoney(inv.amount_due || inv.amount_paid, inv.currency)}</div>
+                            <div className="text-sm font-medium ck-num">{fmtMoney(inv.amount_due || inv.amount_paid, inv.currency)}</div>
                             <div className="text-xs text-muted-foreground">
                               {inv.status} · {fmtDate(inv.created)}
                               {inv.attempt_count > 0 && ` · ${inv.attempt_count} tentativa(s)`}
@@ -303,7 +307,7 @@ function AdminPaymentsPage() {
                         ) : <span className="text-xs text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${p.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-[var(--ck-r-flat-sm)] ${p.environment === "live" ? "bg-primary/10 text-primary" : "bg-[var(--ck-warning-bg)] text-[var(--ck-warning)]"}`}>
                           {p.environment}
                         </span>
                       </TableCell>
@@ -345,7 +349,7 @@ function AdminPaymentsPage() {
 
 function Stat({ icon: Icon, label, value, accent }: { icon: typeof CheckCircle2; label: string; value: string; accent?: string }) {
   return (
-    <Card>
+    <Card className="ck-card">
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Icon className={`h-4 w-4 ${accent ?? ""}`} /> {label}

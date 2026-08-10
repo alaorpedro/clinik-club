@@ -76,7 +76,7 @@ function StatusBadge({ row }: { row: AdminCustomerRow }) {
   const s = row.subscription;
   if (!s) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-xs font-medium">
+      <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-muted text-muted-foreground px-2 py-0.5 text-xs font-medium">
         <XCircle className="h-3 w-3" /> Sem plano
       </span>
     );
@@ -85,20 +85,20 @@ function StatusBadge({ row }: { row: AdminCustomerRow }) {
   const warning = ["past_due", "unpaid", "incomplete"].includes(s.status);
   if (active) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-xs font-semibold">
+      <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-success-bg)] text-[var(--ck-success)] px-2 py-0.5 text-xs font-semibold">
         <CheckCircle2 className="h-3 w-3" /> {s.status === "trialing" ? "Em teste" : "Ativo"}
       </span>
     );
   }
   if (warning) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-semibold">
+      <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-warning-bg)] text-[var(--ck-warning)] px-2 py-0.5 text-xs font-semibold">
         <AlertCircle className="h-3 w-3" /> {s.status}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive px-2 py-0.5 text-xs font-semibold">
+    <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-[var(--ck-danger-bg)] text-[var(--ck-danger)] px-2 py-0.5 text-xs font-semibold">
       <XCircle className="h-3 w-3" /> {s.status}
     </span>
   );
@@ -233,7 +233,7 @@ function AdminPage() {
     <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+          <h1 className="ck-display text-4xl tracking-tight flex items-center gap-2">
             <ShieldCheck className="h-7 w-7 text-primary" /> Administração
           </h1>
           <p className="text-muted-foreground mt-1">Clientes, planos, funis, leads e sinais de uso.</p>
@@ -243,10 +243,10 @@ function AdminPage() {
         </Button>
       </div>
       <div className="mb-6 flex flex-wrap gap-2">
-        <Button asChild size="sm" variant="default" className="rounded-full">
+        <Button asChild size="sm" variant="default" className="ck-btn">
           <Link to="/app/admin/pagamentos"><CreditCard className="h-4 w-4 mr-1.5" /> Pagamentos & assinaturas</Link>
         </Button>
-        <Button asChild size="sm" variant="outline" className="rounded-full">
+        <Button asChild size="sm" variant="outline" className="ck-btn">
           <Link to="/app/admin/nf"><ReceiptText className="h-4 w-4 mr-1.5" /> Notas fiscais</Link>
         </Button>
       </div>
@@ -254,7 +254,7 @@ function AdminPage() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
         <StatCard icon={Users} label="Total" value={stats.total} />
         <StatCard icon={CheckCircle2} label="Ativos" value={stats.active} accent="text-primary" />
-        <StatCard icon={AlertCircle} label="Problemas" value={stats.issues} accent="text-yellow-700" />
+        <StatCard icon={AlertCircle} label="Problemas" value={stats.issues} accent="text-[var(--ck-warning)]" />
         <StatCard icon={XCircle} label="Sem plano" value={stats.none} accent="text-muted-foreground" />
         <StatCard icon={CreditCard} label="Vence em 7d" value={stats.expiringSoon} accent="text-destructive" />
       </div>
@@ -262,11 +262,11 @@ function AdminPage() {
         <StatCard icon={BarChart3} label="Funis ativos" value={stats.activeFunnels} hint={`${stats.totalFunnels} no total`} accent="text-primary" />
         <StatCard icon={Activity} label="Leads totais" value={stats.totalLeads} hint={`${stats.completedLeads} completos`} />
         <StatCard icon={CheckCircle2} label="Completos" value={stats.completedLeads} accent="text-primary" />
-        <StatCard icon={AlertCircle} label="Parciais" value={stats.partialLeads} accent="text-yellow-700" />
+        <StatCard icon={AlertCircle} label="Parciais" value={stats.partialLeads} accent="text-[var(--ck-warning)]" />
         <StatCard icon={FileSpreadsheet} label="Planilhas" value={stats.connectedSheets} hint="funis conectados" />
       </div>
 
-      <Card className="mb-6">
+      <Card className="ck-card mb-6">
         <CardContent className="p-4 flex flex-col md:flex-row gap-3 md:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -289,7 +289,7 @@ function AdminPage() {
                 variant={filter === f.k ? "default" : "outline"}
                 size="sm"
                 onClick={() => setFilter(f.k as typeof filter)}
-                className="rounded-full"
+                className="ck-btn"
               >
                 {f.l}
               </Button>
@@ -303,7 +303,7 @@ function AdminPage() {
       ) : customersQuery.error ? (
         <div className="text-sm text-destructive">Erro ao carregar: {(customersQuery.error as Error).message}</div>
       ) : filtered.length === 0 ? (
-        <Card>
+        <Card className="ck-card">
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
             Nenhum cliente encontrado.
           </CardContent>
@@ -401,7 +401,7 @@ function CustomerCard({
   const title = customer.name ?? customer.clinic_name ?? customer.email ?? "Cliente sem nome";
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="ck-card overflow-hidden">
       <CardContent className="p-0">
         <div className="grid gap-4 p-4 lg:grid-cols-[minmax(240px,1.35fr)_minmax(360px,2fr)_auto] lg:items-start">
           <div className="min-w-0">
@@ -420,17 +420,17 @@ function CustomerCard({
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {customer.is_admin && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                <span className="inline-flex items-center gap-1 rounded-[var(--ck-r-flat-sm)] bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
                   <ShieldCheck className="h-3 w-3" /> Admin
                 </span>
               )}
               <StatusBadge row={customer} />
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{plan}</span>
+              <span className="rounded-[var(--ck-r-flat-sm)] bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{plan}</span>
               {customer.is_admin && (
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">CRM liberado</span>
+                <span className="rounded-[var(--ck-r-flat-sm)] bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">CRM liberado</span>
               )}
               {customer.subscription && (
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${customer.subscription.environment === "live" ? "bg-primary/10 text-primary" : "bg-yellow-100 text-yellow-800"}`}>
+                <span className={`rounded-[var(--ck-r-flat-sm)] px-2 py-0.5 text-xs font-medium ${customer.subscription.environment === "live" ? "bg-primary/10 text-primary" : "bg-[var(--ck-warning-bg)] text-[var(--ck-warning)]"}`}>
                   {customer.subscription.environment}
                 </span>
               )}
@@ -452,7 +452,7 @@ function CustomerCard({
                 <div>
                   Vencimento: <span className="font-medium text-foreground">{fmtDate(customer.subscription.current_period_end)}</span>
                   {dleft !== null && (
-                    <span className={`ml-1 ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-yellow-700" : ""}`}>
+                    <span className={`ml-1 ${dleft < 0 ? "text-destructive" : dleft <= 7 ? "text-[var(--ck-warning)]" : ""}`}>
                       ({dleft < 0 ? `${-dleft}d vencido` : dleft === 0 ? "hoje" : `${dleft}d`})
                     </span>
                   )}
@@ -460,7 +460,7 @@ function CustomerCard({
               )}
             </div>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm" className="rounded-full" onClick={onToggle}>
+              <Button variant="outline" size="sm" className="ck-btn" onClick={onToggle}>
                 <ChevronDown className={`mr-1 h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
                 {expanded ? "Ocultar" : "Detalhes"}
               </Button>
@@ -515,7 +515,7 @@ function CustomerCard({
                           <div className="text-xs text-muted-foreground">/{funnel.slug ?? "sem-slug"} · criado em {fmtDate(funnel.created_at)}</div>
                         </TableCell>
                         <TableCell>
-                          <span className={`rounded-full px-2 py-0.5 text-xs ${funnel.status === "published" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          <span className={`rounded-[var(--ck-r-flat-sm)] px-2 py-0.5 text-xs ${funnel.status === "published" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                             {funnel.status === "published" ? "Publicado" : funnel.status ?? "Rascunho"}
                           </span>
                         </TableCell>
@@ -524,7 +524,7 @@ function CustomerCard({
                         <TableCell className="text-right tabular-nums">{funnel.partial_leads_count}</TableCell>
                         <TableCell className="text-sm">{fmtDateTime(funnel.last_lead_at)}</TableCell>
                         <TableCell>
-                          <span className={`rounded-full px-2 py-0.5 text-xs ${funnel.sheets_connected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          <span className={`rounded-[var(--ck-r-flat-sm)] px-2 py-0.5 text-xs ${funnel.sheets_connected ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
                             {funnel.sheets_connected ? "Conectada" : "Não conectada"}
                           </span>
                         </TableCell>
@@ -543,7 +543,7 @@ function CustomerCard({
 
 function StatCard({ icon: Icon, label, value, hint, accent }: { icon: typeof Users; label: string; value: number; hint?: string; accent?: string }) {
   return (
-    <Card>
+    <Card className="ck-card">
       <CardContent className="p-4">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Icon className={`h-4 w-4 ${accent ?? ""}`} />
