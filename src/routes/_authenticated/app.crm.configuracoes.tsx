@@ -10,7 +10,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2, Loader2 } from "lucide-react";
+import { GripVertical, Plus, Trash2, Loader2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import {
   ensureDefaultPipeline,
@@ -20,6 +20,10 @@ import {
   renameStage,
   reorderStages,
   deleteStage,
+  listMembers,
+  inviteMember,
+  updateMemberRole,
+  removeMember,
 } from "@/lib/crm.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,12 +79,18 @@ function SettingsPage() {
   const renameStageFn = useServerFn(renameStage);
   const reorderStagesFn = useServerFn(reorderStages);
   const deleteStageFn = useServerFn(deleteStage);
+  const fetchMembers = useServerFn(listMembers);
+  const inviteMemberFn = useServerFn(inviteMember);
+  const updateMemberRoleFn = useServerFn(updateMemberRole);
+  const removeMemberFn = useServerFn(removeMember);
 
   const [activePipelineId, setActivePipelineId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createColor, setCreateColor] = useState("blue");
   const [deleteTarget, setDeleteTarget] = useState<Stage | null>(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"admin" | "agent">("agent");
 
   const boardKey = ["crm", "board", activePipelineId] as const;
 
@@ -159,6 +169,40 @@ function SettingsPage() {
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível excluir a etapa."),
   });
 
+  const { data: membersData } = useQuery({
+    queryKey: ["crm", "members"],
+    queryFn: () => fetchMembers(),
+  });
+  const members = membersData?.members ?? [];
+
+  const inviteMut = useMutation({
+    mutationFn: (vars: { email: string; role: "admin" | "agent" }) =>
+      inviteMemberFn({ data: vars }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm", "members"] });
+      setInviteEmail("");
+      setInviteRole("agent");
+      toast.success("Atendente adicionado à equipe.");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível convidar."),
+  });
+
+  const roleMut = useMutation({
+    mutationFn: (vars: { memberId: string; role: "admin" | "agent" }) =>
+      updateMemberRoleFn({ data: vars }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["crm", "members"] }),
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível atualizar o papel."),
+  });
+
+  const removeMut = useMutation({
+    mutationFn: (memberId: string) => removeMemberFn({ data: { memberId } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm", "members"] });
+      toast.success("Atendente removido.");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível remover."),
+  });
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   function handleDragEnd(e: DragEndEvent) {
@@ -176,11 +220,17 @@ function SettingsPage() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="ck-display text-4xl tracking-tight">Configurações</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Etapas do pipeline selecionado.</p>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Etapas do pipeline e equipe de atendimento.
+          </p>
         </div>
+      </div>
+
+      <p className="ck-eyebrow mb-3">Etapas</p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-start gap-4">
         {pipelines.length > 0 && (
           <Select value={activePipeline?.id} onValueChange={(id) => setActivePipelineId(id)}>
-            <SelectTrigger className="ck-input h-9 w-48">
+            <SelectTrigger className="ck-input h-9 w-48 shrink-0">
               <SelectValue placeholder="Pipeline" />
             </SelectTrigger>
             <SelectContent>
@@ -192,43 +242,120 @@ function SettingsPage() {
             </SelectContent>
           </Select>
         )}
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="ck-r-sig border border-border bg-card p-4 max-w-xl flex-1">
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <SortableContext
+                items={stages.map((s) => s.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {stages.map((stage) => (
+                    <StageRow
+                      key={stage.id}
+                      stage={stage}
+                      onRename={(name) => renameMut.mutate({ stageId: stage.id, name })}
+                      onColor={(color) =>
+                        renameMut.mutate({ stageId: stage.id, name: stage.name, color })
+                      }
+                      onDelete={() => setDeleteTarget(stage)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="ck-btn mt-4 w-full"
+              disabled={!activePipeline}
+              onClick={() => setCreateOpen(true)}
+            >
+              <Plus className="h-4 w-4" /> Nova etapa
+            </Button>
+          </div>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="ck-r-sig border border-border bg-card p-4 max-w-xl">
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <SortableContext items={stages.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
-                {stages.map((stage) => (
-                  <StageRow
-                    key={stage.id}
-                    stage={stage}
-                    onRename={(name) => renameMut.mutate({ stageId: stage.id, name })}
-                    onColor={(color) =>
-                      renameMut.mutate({ stageId: stage.id, name: stage.name, color })
+      <p className="ck-eyebrow mb-3">Equipe</p>
+      <div className="ck-r-sig border border-border bg-card p-4 max-w-xl">
+        <div className="space-y-2">
+          {members.map((m) => (
+            <div
+              key={m.memberId ?? m.userId}
+              className="ck-r-flat flex items-center gap-2 border border-border bg-background p-2"
+            >
+              <div className="min-w-0 flex-1 text-sm truncate">{m.email}</div>
+              {m.role === "owner" ? (
+                <span className="text-xs text-muted-foreground px-2">Dono da conta</span>
+              ) : (
+                <>
+                  <Select
+                    value={m.role}
+                    onValueChange={(role) =>
+                      roleMut.mutate({ memberId: m.memberId!, role: role as "admin" | "agent" })
                     }
-                    onDelete={() => setDeleteTarget(stage)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+                  >
+                    <SelectTrigger className="ck-input h-8 w-32 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="agent">Atendente</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeMut.mutate(m.memberId!)}
+                    aria-label="Remover atendente"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
 
+        <div className="mt-4 flex flex-col sm:flex-row gap-2">
+          <Input
+            value={inviteEmail}
+            onChange={(e) => setInviteEmail(e.target.value)}
+            placeholder="email@daclinica.com"
+            className="ck-input h-9 flex-1"
+          />
+          <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as "admin" | "agent")}>
+            <SelectTrigger className="ck-input h-9 w-36 shrink-0">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="agent">Atendente</SelectItem>
+              <SelectItem value="admin">Administrador</SelectItem>
+            </SelectContent>
+          </Select>
           <Button
             variant="outline"
             size="sm"
-            className="ck-btn mt-4 w-full"
-            disabled={!activePipeline}
-            onClick={() => setCreateOpen(true)}
+            className="ck-btn shrink-0"
+            disabled={!inviteEmail.trim() || inviteMut.isPending}
+            onClick={() => inviteMut.mutate({ email: inviteEmail.trim(), role: inviteRole })}
           >
-            <Plus className="h-4 w-4" /> Nova etapa
+            <UserPlus className="h-4 w-4" /> {inviteMut.isPending ? "Adicionando..." : "Adicionar"}
           </Button>
         </div>
-      )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          A pessoa precisa já ter uma conta na Clinik.Club — convite por email chega numa próxima
+          versão.
+        </p>
+      </div>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>

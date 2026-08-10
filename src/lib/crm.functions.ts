@@ -600,12 +600,11 @@ export const listMembers = createServerFn({ method: "GET" })
     await assertCrmAccess(supabase, userId);
     const { data: members } = await supabase
       .from("crm_members")
-      .select("user_id, role")
+      .select("id, user_id, role")
       .eq("owner_id", userId);
 
-    // crm_members ainda não tem fluxo de convite (Fase 2) — hoje é sempre vazio
-    // na prática. Resolver email por auth.admin, não por uma tabela de perfil
-    // (a única "profiles" que existe é perfil de clínica, não de usuário).
+    // Resolver email por auth.admin, não por uma tabela de perfil — a única
+    // "profiles" que existe é perfil de clínica, não de identidade de usuário.
     const memberEmails = await Promise.all(
       (members ?? []).map(async (m: any) => {
         const { data } = await supabaseAdmin.auth.admin.getUserById(m.user_id);
@@ -615,12 +614,85 @@ export const listMembers = createServerFn({ method: "GET" })
 
     return {
       members: [
-        { userId, email: (claims as any)?.email ?? "Você", role: "owner" as const },
+        { memberId: null, userId, email: (claims as any)?.email ?? "Você", role: "owner" as const },
         ...(members ?? []).map((m: any, i: number) => ({
+          memberId: m.id as string,
           userId: m.user_id,
           email: memberEmails[i],
           role: m.role as string,
         })),
       ],
     };
+  });
+
+export const inviteMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { email: string; role: "admin" | "agent" }) => {
+    const email = d?.email?.trim().toLowerCase();
+    if (!email || !email.includes("@")) throw new Error("Email inválido");
+    if (d.role !== "admin" && d.role !== "agent") throw new Error("Papel inválido");
+    return { email, role: d.role };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+
+    const { data: foundId, error: lookupError } = await supabaseAdmin.rpc(
+      "get_user_id_by_email" as never,
+      { lookup_email: data.email } as never,
+    );
+    if (lookupError) throw new Error("Não foi possível buscar esse email agora. Tente de novo.");
+    if (!foundId) {
+      throw new Error(
+        "Não encontramos uma conta com esse email. Peça pra essa pessoa criar uma conta na Clinik.Club primeiro.",
+      );
+    }
+    if (foundId === userId) throw new Error("Você já tem acesso total — não precisa se convidar.");
+
+    const { error } = await supabase
+      .from("crm_members")
+      .insert({ owner_id: userId, user_id: foundId, role: data.role });
+    if (error) {
+      if ((error as any).code === "23505")
+        throw new Error("Essa pessoa já faz parte da sua equipe.");
+      throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const updateMemberRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { memberId: string; role: "admin" | "agent" }) => {
+    if (!d?.memberId) throw new Error("Dados inválidos");
+    if (d.role !== "admin" && d.role !== "agent") throw new Error("Papel inválido");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { error } = await supabase
+      .from("crm_members")
+      .update({ role: data.role })
+      .eq("id", data.memberId)
+      .eq("owner_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const removeMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { memberId: string }) => {
+    if (!d?.memberId) throw new Error("Dados inválidos");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { error } = await supabase
+      .from("crm_members")
+      .delete()
+      .eq("id", data.memberId)
+      .eq("owner_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
