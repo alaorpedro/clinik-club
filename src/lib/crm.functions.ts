@@ -35,7 +35,9 @@ async function assertCrmAccess(supabase: any, userId: string) {
     const matchesCrm = s.price_id === "crm_addon_monthly" || s.product_id === "crm_addon";
     if (!matchesCrm) return false;
     const endOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
-    return (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk);
+    return (
+      (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk)
+    );
   });
   if (!ok) throw new Error("CRM add-on inativo");
 }
@@ -66,7 +68,9 @@ export const hasCrmAccess = createServerFn({ method: "GET" })
       const matchesCrm = s.price_id === "crm_addon_monthly" || s.product_id === "crm_addon";
       if (!matchesCrm) return false;
       const endOk = !s.current_period_end || new Date(s.current_period_end) > new Date();
-      return (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk);
+      return (
+        (["active", "trialing"].includes(s.status) && endOk) || (s.status === "canceled" && endOk)
+      );
     });
     return { hasAccess: isActive, env };
   });
@@ -112,6 +116,109 @@ export const ensureDefaultPipeline = createServerFn({ method: "POST" })
     return { pipelineId: pipeline.id as string };
   });
 
+export const listPipelines = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data } = await supabase
+      .from("crm_pipelines")
+      .select("id, name, is_default, created_at")
+      .eq("owner_id", userId)
+      .order("is_default", { ascending: false })
+      .order("created_at", { ascending: true });
+    return { pipelines: data ?? [] };
+  });
+
+export const createPipeline = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { name: string }) => {
+    const name = d?.name?.trim();
+    if (!name) throw new Error("Dê um nome para o pipeline");
+    if (name.length > 80) throw new Error("Nome muito longo");
+    return { name };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data: pipeline, error } = await supabase
+      .from("crm_pipelines")
+      .insert({ owner_id: userId, name: data.name, is_default: false })
+      .select("id")
+      .single();
+    if (error || !pipeline) throw new Error(error?.message ?? "Falha ao criar pipeline");
+
+    const stagesPayload = DEFAULT_STAGES.map((s, i) => ({
+      pipeline_id: pipeline.id,
+      name: s.name,
+      color: s.color,
+      order: i,
+    }));
+    const { error: stagesError } = await supabase.from("crm_stages").insert(stagesPayload);
+    if (stagesError) throw new Error(stagesError.message);
+    return { pipelineId: pipeline.id as string };
+  });
+
+export const renamePipeline = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { pipelineId: string; name: string }) => {
+    const name = d?.name?.trim();
+    if (!d?.pipelineId || !name) throw new Error("Dados inválidos");
+    if (name.length > 80) throw new Error("Nome muito longo");
+    return { pipelineId: d.pipelineId, name };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { error } = await supabase
+      .from("crm_pipelines")
+      .update({ name: data.name })
+      .eq("id", data.pipelineId)
+      .eq("owner_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deletePipeline = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { pipelineId: string }) => {
+    if (!d?.pipelineId) throw new Error("Dados inválidos");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data: pipeline } = await supabase
+      .from("crm_pipelines")
+      .select("id, is_default")
+      .eq("id", data.pipelineId)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!pipeline) throw new Error("Pipeline não encontrado");
+    if (pipeline.is_default) throw new Error("O pipeline principal não pode ser excluído");
+
+    const { count } = await supabase
+      .from("crm_lead_cards")
+      .select("id", { count: "exact", head: true })
+      .eq("pipeline_id", data.pipelineId);
+    if ((count ?? 0) > 0)
+      throw new Error("Mova os cards para outro pipeline antes de excluir este");
+
+    // Apaga etapas antes do pipeline — não depende de ON DELETE CASCADE existir.
+    const { error: stagesError } = await supabase
+      .from("crm_stages")
+      .delete()
+      .eq("pipeline_id", data.pipelineId);
+    if (stagesError) throw new Error(stagesError.message);
+    const { error } = await supabase
+      .from("crm_pipelines")
+      .delete()
+      .eq("id", data.pipelineId)
+      .eq("owner_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getBoard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { pipelineId?: string }) => d ?? {})
@@ -138,7 +245,9 @@ export const getBoard = createServerFn({ method: "GET" })
         .order("order", { ascending: true }),
       supabase
         .from("crm_lead_cards")
-        .select("id, stage_id, position, status, assignee_id, moved_at, lead_id, leads!inner(id, name, email, phone, created_at)")
+        .select(
+          "id, stage_id, position, status, assignee_id, moved_at, lead_id, leads!inner(id, name, email, phone, created_at)",
+        )
         .eq("pipeline_id", pipelineId)
         .eq("status", "active")
         .order("position", { ascending: true }),
@@ -146,7 +255,12 @@ export const getBoard = createServerFn({ method: "GET" })
 
     return {
       pipelineId,
-      stages: (stages ?? []).map((s: any) => ({ id: s.id, name: s.name, color: s.color, order: s.order })),
+      stages: (stages ?? []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        color: s.color,
+        order: s.order,
+      })),
       cards: (cards ?? []).map((c: any) => ({
         id: c.id,
         stageId: c.stage_id,
@@ -176,7 +290,11 @@ export const moveCard = createServerFn({ method: "POST" })
     await assertCardOwnership(supabase, userId, data.cardId);
     const { error } = await supabase
       .from("crm_lead_cards")
-      .update({ stage_id: data.stageId, position: data.position, moved_at: new Date().toISOString() })
+      .update({
+        stage_id: data.stageId,
+        position: data.position,
+        moved_at: new Date().toISOString(),
+      })
       .eq("id", data.cardId)
       .eq("owner_id", userId);
     if (error) throw new Error(error.message);
@@ -188,7 +306,10 @@ export const listLeads = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await assertCrmAccess(supabase, userId);
-    const { data: funnels } = await supabase.from("funnels").select("id, name").eq("owner_id", userId);
+    const { data: funnels } = await supabase
+      .from("funnels")
+      .select("id, name")
+      .eq("owner_id", userId);
     const funnelIds = (funnels ?? []).map((f: any) => f.id);
     if (!funnelIds.length) return { leads: [] };
     const { data: leads } = await supabase
@@ -217,14 +338,24 @@ export const getCardDetail = createServerFn({ method: "GET" })
     await assertCrmAccess(supabase, userId);
     const { data: card } = await supabase
       .from("crm_lead_cards")
-      .select("id, stage_id, position, status, assignee_id, lead_id, leads!inner(id, name, email, phone, created_at, answers, utm, funnel_id)")
+      .select(
+        "id, stage_id, position, status, assignee_id, lead_id, leads!inner(id, name, email, phone, created_at, answers, utm, funnel_id)",
+      )
       .eq("id", data.cardId)
       .eq("owner_id", userId)
       .maybeSingle();
     if (!card) throw new Error("Card não encontrado");
     const [{ data: notes }, { data: events }] = await Promise.all([
-      supabase.from("crm_notes").select("id, body, author_id, created_at").eq("lead_card_id", data.cardId).order("created_at", { ascending: false }),
-      supabase.from("crm_events").select("id, type, payload, created_at").eq("lead_card_id", data.cardId).order("created_at", { ascending: false }),
+      supabase
+        .from("crm_notes")
+        .select("id, body, author_id, created_at")
+        .eq("lead_card_id", data.cardId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("crm_events")
+        .select("id, type, payload, created_at")
+        .eq("lead_card_id", data.cardId)
+        .order("created_at", { ascending: false }),
     ]);
     return { card, notes: notes ?? [], events: events ?? [] };
   });

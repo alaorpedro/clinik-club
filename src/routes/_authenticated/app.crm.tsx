@@ -1,4 +1,11 @@
-import { createFileRoute, Outlet, Link, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  Link,
+  useRouterState,
+  Navigate,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, LayoutGrid, ListChecks, BarChart3, Settings as SettingsIcon } from "lucide-react";
@@ -35,7 +42,7 @@ function CrmLayout() {
   if (isCrmPath && !data?.hasAccess && !isUpgradePage) {
     return <Navigate to="/app/crm/upgrade" replace />;
   }
-  
+
   if (isCrmPath && data?.hasAccess && isUpgradePage) {
     return <Navigate to="/app/crm/pipelines" replace />;
   }
@@ -48,15 +55,12 @@ function CrmLayout() {
     );
   }
 
-
   const links = [
     { to: "/app/crm/pipelines", label: "Pipeline", icon: LayoutGrid },
     { to: "/app/crm/leads", label: "Leads", icon: ListChecks },
     { to: "/app/crm/relatorios", label: "Relatórios", icon: BarChart3 },
     { to: "/app/crm/configuracoes", label: "Configurações", icon: SettingsIcon },
   ] as const;
-
-
 
   return (
     <div className="flex flex-col min-h-full">
@@ -71,7 +75,9 @@ function CrmLayout() {
               key={l.to}
               to={l.to}
               className={`flex items-center gap-2 px-3 py-3 text-sm font-medium whitespace-nowrap cursor-pointer border-b-2 -mb-px transition-colors duration-[180ms] ease-out ${
-                active ? "border-primary text-primary" : "border-transparent text-foreground/60 hover:text-foreground hover:border-border"
+                active
+                  ? "border-primary text-primary"
+                  : "border-transparent text-foreground/60 hover:text-foreground hover:border-border"
               }`}
             >
               <l.icon className="h-4 w-4" />

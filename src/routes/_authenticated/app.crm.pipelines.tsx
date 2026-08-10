@@ -1,11 +1,69 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
-import { Loader2, Mail, Phone, User as UserIcon, Plus } from "lucide-react";
-import { ensureDefaultPipeline, getBoard, moveCard } from "@/lib/crm.functions";
+import { useMemo, useState } from "react";
+import {
+  DndContext,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
+import {
+  Loader2,
+  Mail,
+  Phone,
+  User as UserIcon,
+  Plus,
+  ChevronDown,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  ensureDefaultPipeline,
+  getBoard,
+  moveCard,
+  listPipelines,
+  createPipeline,
+  renamePipeline,
+  deletePipeline,
+} from "@/lib/crm.functions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/app/crm/pipelines")({
   component: PipelinesPage,
@@ -26,7 +84,13 @@ type Card = {
   position: number;
   assigneeId: string | null;
   movedAt: string;
-  lead: { id: string; name: string | null; email: string | null; phone: string | null; createdAt: string };
+  lead: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    createdAt: string;
+  };
 };
 type Stage = { id: string; name: string; color: string; order: number };
 
@@ -47,33 +111,96 @@ function PipelinesPage() {
   const ensure = useServerFn(ensureDefaultPipeline);
   const fetchBoard = useServerFn(getBoard);
   const move = useServerFn(moveCard);
+  const fetchPipelines = useServerFn(listPipelines);
+  const createPipelineFn = useServerFn(createPipeline);
+  const renamePipelineFn = useServerFn(renamePipeline);
+  const deletePipelineFn = useServerFn(deletePipeline);
+
+  const [activePipelineId, setActivePipelineId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameName, setRenameName] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const boardKey = ["crm", "board", activePipelineId] as const;
 
   const { data, isLoading } = useQuery({
-    queryKey: ["crm", "board"],
+    queryKey: boardKey,
     queryFn: async () => {
       // Ensure default pipeline exists, then fetch board in single render cycle.
-      try { await ensure(); } catch { /* non-fatal */ }
-      return fetchBoard({ data: {} });
+      try {
+        await ensure();
+      } catch {
+        /* non-fatal */
+      }
+      return fetchBoard({ data: { pipelineId: activePipelineId ?? undefined } });
     },
   });
 
+  const { data: pipelinesData } = useQuery({
+    queryKey: ["crm", "pipelines"],
+    queryFn: () => fetchPipelines(),
+  });
+  const pipelines = pipelinesData?.pipelines ?? [];
+  const activePipeline =
+    pipelines.find((p) => p.id === (activePipelineId ?? data?.pipelineId)) ?? pipelines[0];
+
   const moveMut = useMutation({
-    mutationFn: (vars: { cardId: string; stageId: string; position: number }) => move({ data: vars }),
+    mutationFn: (vars: { cardId: string; stageId: string; position: number }) =>
+      move({ data: vars }),
     onMutate: async (vars) => {
-      await qc.cancelQueries({ queryKey: ["crm", "board"] });
-      const prev = qc.getQueryData<{ stages: Stage[]; cards: Card[]; pipelineId: string | null }>(["crm", "board"]);
+      await qc.cancelQueries({ queryKey: boardKey });
+      const prev = qc.getQueryData<{ stages: Stage[]; cards: Card[]; pipelineId: string | null }>(
+        boardKey,
+      );
       if (prev) {
-        qc.setQueryData(["crm", "board"], {
+        qc.setQueryData(boardKey, {
           ...prev,
-          cards: prev.cards.map((c) => (c.id === vars.cardId ? { ...c, stageId: vars.stageId, position: vars.position } : c)),
+          cards: prev.cards.map((c) =>
+            c.id === vars.cardId ? { ...c, stageId: vars.stageId, position: vars.position } : c,
+          ),
         });
       }
       return { prev };
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.prev) qc.setQueryData(["crm", "board"], ctx.prev);
+      if (ctx?.prev) qc.setQueryData(boardKey, ctx.prev);
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ["crm", "board"] }),
+    onSettled: () => qc.invalidateQueries({ queryKey: boardKey }),
+  });
+
+  const createMut = useMutation({
+    mutationFn: (name: string) => createPipelineFn({ data: { name } }),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: ["crm", "pipelines"] });
+      setActivePipelineId(result.pipelineId);
+      setCreateOpen(false);
+      setCreateName("");
+      toast.success("Pipeline criado.");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível criar o pipeline."),
+  });
+
+  const renameMut = useMutation({
+    mutationFn: (vars: { pipelineId: string; name: string }) => renamePipelineFn({ data: vars }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm", "pipelines"] });
+      setRenameOpen(false);
+      toast.success("Pipeline renomeado.");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível renomear o pipeline."),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: (pipelineId: string) => deletePipelineFn({ data: { pipelineId } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["crm", "pipelines"] });
+      setActivePipelineId(null);
+      setDeleteOpen(false);
+      toast.success("Pipeline excluído.");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível excluir o pipeline."),
   });
 
   const sensors = useSensors(
@@ -98,7 +225,7 @@ function PipelinesPage() {
     const newStageId = String(over.id);
     const card = (data?.cards ?? []).find((c: Card) => c.id === cardId);
     if (!card || card.stageId === newStageId) return;
-    const position = (byStage.get(newStageId)?.length ?? 0);
+    const position = byStage.get(newStageId)?.length ?? 0;
     moveMut.mutate({ cardId, stageId: newStageId, position });
   }
 
@@ -114,13 +241,155 @@ function PipelinesPage() {
     <div>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="ck-display text-3xl md:text-4xl tracking-tight text-foreground">Pipeline</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Arraste os cards entre as etapas para atualizar o status.</p>
+          <h1 className="ck-display text-3xl md:text-4xl tracking-tight text-foreground">
+            Pipeline
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Arraste os cards entre as etapas para atualizar o status.
+          </p>
         </div>
-        <Button variant="outline" size="sm" disabled className="ck-btn self-start sm:self-auto">
-          <Plus className="h-4 w-4" /> Novo pipeline
-        </Button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {pipelines.length > 0 && (
+            <>
+              <Select value={activePipeline?.id} onValueChange={(id) => setActivePipelineId(id)}>
+                <SelectTrigger className="ck-input h-9 w-48">
+                  <SelectValue placeholder="Pipeline" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pipelines.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="ck-btn h-9 w-9 shrink-0">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setRenameName(activePipeline?.name ?? "");
+                      setRenameOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" /> Renomear
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={!!activePipeline?.is_default}
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" /> Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="ck-btn"
+            onClick={() => setCreateOpen(true)}
+          >
+            <Plus className="h-4 w-4" /> Novo pipeline
+          </Button>
+        </div>
       </div>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo pipeline</DialogTitle>
+          </DialogHeader>
+          <Input
+            autoFocus
+            className="ck-input"
+            placeholder="Ex.: Implantes, Ortodontia..."
+            value={createName}
+            onChange={(e) => setCreateName(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" && createName.trim() && createMut.mutate(createName.trim())
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            Já vem com as etapas padrão (Novos Leads, Em Atendimento, Agendou...) — dá pra ajustar
+            depois.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" className="ck-btn" onClick={() => setCreateOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              className="ck-btn"
+              disabled={!createName.trim() || createMut.isPending}
+              onClick={() => createMut.mutate(createName.trim())}
+            >
+              {createMut.isPending ? "Criando..." : "Criar pipeline"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Renomear pipeline</DialogTitle>
+          </DialogHeader>
+          <Input
+            autoFocus
+            className="ck-input"
+            value={renameName}
+            onChange={(e) => setRenameName(e.target.value)}
+            onKeyDown={(e) =>
+              e.key === "Enter" &&
+              renameName.trim() &&
+              activePipeline &&
+              renameMut.mutate({ pipelineId: activePipeline.id, name: renameName.trim() })
+            }
+          />
+          <DialogFooter>
+            <Button variant="outline" className="ck-btn" onClick={() => setRenameOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              className="ck-btn"
+              disabled={!renameName.trim() || renameMut.isPending}
+              onClick={() =>
+                activePipeline &&
+                renameMut.mutate({ pipelineId: activePipeline.id, name: renameName.trim() })
+              }
+            >
+              {renameMut.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir "{activePipeline?.name}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Só é possível excluir um pipeline sem cards. Mova os leads para outro pipeline antes,
+              se houver algum aqui. Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="ck-btn">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="ck-btn bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMut.isPending}
+              onClick={() => activePipeline && deleteMut.mutate(activePipeline.id)}
+            >
+              {deleteMut.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 md:mx-0 md:px-0 scrollbar-hide">
@@ -145,7 +414,9 @@ function StageColumn({ stage, cards }: { stage: Stage; cards: Card[] }) {
     >
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center rounded-[var(--ck-r-flat-sm)] border px-2 py-0.5 text-xs font-semibold ${STAGE_COLOR[stage.color] ?? STAGE_COLOR.slate}`}>
+          <span
+            className={`inline-flex items-center rounded-[var(--ck-r-flat-sm)] border px-2 py-0.5 text-xs font-semibold ${STAGE_COLOR[stage.color] ?? STAGE_COLOR.slate}`}
+          >
             {stage.name}
           </span>
           <span className="text-xs font-medium text-muted-foreground">{cards.length}</span>
@@ -170,8 +441,12 @@ function StageColumn({ stage, cards }: { stage: Stage; cards: Card[] }) {
 }
 
 function CardItem({ card }: { card: Card }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: card.id });
-  const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 } : undefined;
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: card.id,
+  });
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
+    : undefined;
   return (
     <div
       ref={setNodeRef}
