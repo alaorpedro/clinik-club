@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_profiles: {
+        Row: {
+          address_line: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          legal_name: string | null
+          notes: string | null
+          postal_code: string | null
+          state: string | null
+          stripe_customer_id: string | null
+          tax_id: string | null
+          updated_at: string
+          updated_by: string | null
+          user_id: string | null
+        }
+        Insert: {
+          address_line?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          stripe_customer_id?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          address_line?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          legal_name?: string | null
+          notes?: string | null
+          postal_code?: string | null
+          state?: string | null
+          stripe_customer_id?: string | null
+          tax_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       crm_events: {
         Row: {
           created_at: string
@@ -485,6 +536,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_nf_status: {
+        Row: {
+          created_at: string
+          environment: string
+          nf_issued: boolean
+          nf_issued_at: string | null
+          nf_issued_by: string | null
+          payment_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          environment?: string
+          nf_issued?: boolean
+          nf_issued_at?: string | null
+          nf_issued_by?: string | null
+          payment_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          environment?: string
+          nf_issued?: boolean
+          nf_issued_at?: string | null
+          nf_issued_by?: string | null
+          payment_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       processed_webhook_events: {
         Row: {
