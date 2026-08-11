@@ -243,6 +243,10 @@ export const createCheckoutSession = createServerFn({ method: "POST" })
         ui_mode: "embedded_page",
         return_url: sanitizeReturnUrl(data.returnUrl) ?? "https://clinik.club/checkout/return",
         payment_method_types: ["card"],
+        // Cupom de 100% deixa o total em zero — sem isso o Stripe sempre exige
+        // cartão, mesmo quando não vai cobrar nada agora nem no futuro (cupom
+        // "forever"). Só vale pra assinatura; pagamento avulso sempre cobra.
+        ...(isRecurring && { payment_method_collection: "if_required" as const }),
         ...(discountResult && "discounts" in discountResult ? { discounts: discountResult.discounts } : { allow_promotion_codes: true }),
         wallet_options: { link: { display: "never" } },
         ...(customerId && { customer: customerId }),
