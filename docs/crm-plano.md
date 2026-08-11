@@ -34,21 +34,42 @@ Arquitetura já decidida e no ar: **dentro do app** (`/app/crm/*`), mesmo Supaba
 sessão de auth, gate por assinatura ativa do add-on — igual para conta nova ou conta que
 já comprou funil, sem distinção de código (`hasCrmAccess()` em `crm.functions.ts`).
 
-O que já existe e funciona:
-- **Pipeline/kanban** (`app.crm.pipelines.tsx`, 211 linhas) — funcional.
-- **Leads** (`app.crm.leads.tsx`, 85 linhas) — funcional.
-- **Upgrade/paywall** (`app.crm.upgrade.tsx`) — checkout embutido do Stripe.
-- Schema: `crm_pipelines`, `crm_stages` (nome, cor, ordem), `crm_lead_cards`
-  (pipeline, etapa, posição, assignee, status), `crm_members` (papel por usuário),
-  `crm_notes` (nota por card), `crm_events` (payload jsonb — timeline do card).
+**Fases 1 e 2 completas e publicadas em produção (11/08/2026).** O que existe e funciona:
+- **Pipeline/kanban** — múltiplos pipelines (criar/renomear/excluir), busca + filtro por
+  etiqueta/atendente, tags coloridas por hash, atribuição de atendente, timeline por
+  card (`crm_events`), drag com `DragOverlay` + placeholder de destino.
+- **Configurações** — editor de etapas (criar/renomear/recolor/reordenar/excluir, por
+  pipeline) e equipe (adicionar/remover atendente, trocar papel — só para quem **já
+  tem conta** na Clinik.Club, sem convite por email ainda).
+- **Import de contatos** — wizard CSV (upload → mapeamento auto-sugerido → preview →
+  importar), até 500 linhas, direto pro pipeline/etapa escolhidos.
+- **Leads** — funcional (não mexido nesta rodada).
+- **Upgrade/paywall** — checkout embutido do Stripe.
+- **Notificações (toast)** — restilizadas com os tokens da marca (antes era o verde
+  genérico do sonner).
+- Schema: `crm_pipelines`, `crm_stages`, `crm_lead_cards` (+ coluna `tags text[]`),
+  `crm_members`, `crm_notes`, `crm_events` (agora com policy de INSERT — não tinha).
+
+**Pegadinhas aprendidas nesta rodada** (ler antes de mexer de novo no pipeline/import):
+- Existe um trigger `trg_leads_create_crm_card` (Postgres) que cria um card
+  automaticamente no pipeline padrão sempre que um lead é inserido — é o que faz lead
+  de funil aparecer sozinho no CRM. Qualquer código que insira em `crm_lead_cards` logo
+  depois de inserir um `lead` precisa usar `upsert` com `onConflict: "lead_id,pipeline_id"`,
+  não `insert` puro, senão colide quando o destino é o pipeline padrão.
+- Import de contatos precisa de um `funnel_id` (NOT NULL em `leads`) — cada dono ganha um
+  funil técnico oculto (`crm-import-<userId>`, status draft, nunca publicável). Ele é
+  **excluído manualmente** da contagem de cota de funis (`getPlanUsage` e
+  `createFunnelChecked` em `funnels.functions.ts`, via `crmImportFunnelSlug()`) e da
+  lista "Meus funis" (`app.index.tsx`) — se criar qualquer outro mecanismo parecido,
+  replicar esses dois filtros ou vai travar cliente Starter de criar o funil de verdade.
 
 O que existe só como placeholder ("Em construção"/"Em breve"):
-- `app.crm.relatorios.tsx` (25 linhas)
-- `app.crm.configuracoes.tsx` (25 linhas)
+- `app.crm.relatorios.tsx`
 
 O que **não existe ainda**: nenhuma rota de atendimento/inbox. `evolution.server.ts`
 (114 linhas) só sabe criar grupo e mandar mensagem *para* um grupo — não lê nem
-armazena conversa 1:1, que é o que o inbox precisa.
+armazena conversa 1:1, que é o que o inbox precisa. Fase 3 (3a, mockado) é o próximo
+passo natural — ver seção abaixo.
 
 ---
 

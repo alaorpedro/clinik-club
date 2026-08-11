@@ -1,23 +1,44 @@
-import { createFileRoute, Outlet, redirect, useNavigate, useRouterState, Link } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useNavigate,
+  useRouterState,
+  Link,
+} from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { LayoutGrid, User, LogOut, Loader2, Users, ShieldCheck, Tag, Menu, X, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  LayoutGrid,
+  User,
+  LogOut,
+  Loader2,
+  Users,
+  ShieldCheck,
+  Tag,
+  Menu,
+  X,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
 
-
-
 async function getCurrentUserWithFallback() {
   if (typeof window === "undefined") return undefined;
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     if (session?.user) return session.user;
   } catch (err) {
     console.error("Auth check failed:", err);
   }
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user ?? null;
 }
 
@@ -26,16 +47,14 @@ export const Route = createFileRoute("/_authenticated")({
     const user = await getCurrentUserWithFallback();
     if (user === undefined) return;
     if (!user) {
-      throw redirect({ 
-        to: "/login", 
-        search: { next: location.pathname } as any
+      throw redirect({
+        to: "/login",
+        search: { next: location.pathname } as any,
       });
     }
   },
   component: AppLayout,
 });
-
-
 
 function AppLayout() {
   const { user, loading } = useAuth();
@@ -51,7 +70,6 @@ function AppLayout() {
     if (typeof window === "undefined") return false;
     return window.localStorage.getItem("clinik-sidebar-collapsed") === "true";
   });
-
 
   useEffect(() => {
     if (!user) return;
@@ -70,7 +88,12 @@ function AppLayout() {
     };
   }, [user]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
   if (!user) return null;
 
   async function logout() {
@@ -99,14 +122,16 @@ function AppLayout() {
   ];
 
   return (
-    <div className={`${navy ? "theme-clinik" : ""} min-h-screen flex flex-col md:flex-row bg-secondary/30 relative isolate`}>
+    <div
+      className={`${navy ? "theme-clinik" : ""} min-h-screen flex flex-col md:flex-row bg-secondary/30 relative isolate`}
+    >
       {/* Sidebar Desktop */}
       <aside
-        className={`hidden md:flex flex-col p-4 h-screen sticky top-0 z-[50] transition-[width] duration-200 border-r ${
+        className={`hidden md:flex flex-col p-4 h-screen sticky top-0 z-[50] transition-[width] duration-200 border-r relative ${
           navy ? "bg-sidebar border-sidebar-border" : "bg-background border-border"
         } ${sidebarCollapsed ? "w-20" : "w-64"}`}
       >
-        <div className="mb-8 flex items-center gap-2">
+        <div className="mb-8 flex items-center">
           <Link
             to="/app"
             className={`flex min-w-0 flex-1 items-center gap-2 hover:opacity-80 transition-opacity ${sidebarCollapsed ? "justify-center" : ""}`}
@@ -114,28 +139,48 @@ function AppLayout() {
           >
             {navy ? (
               sidebarCollapsed ? (
-                <img src="/brand/clinik-icon.svg" alt="" className="h-8 w-8 shrink-0 brightness-0 invert" />
+                <img
+                  src="/brand/clinik-icon.svg"
+                  alt=""
+                  className="h-8 w-8 shrink-0 brightness-0 invert"
+                />
               ) : (
-                <img src="/brand/clinik-logo-vetor.svg" alt="Clinik.Club" className="h-8 w-auto min-w-0 brightness-0 invert" />
+                <img
+                  src="/brand/clinik-logo-vetor.svg"
+                  alt="Clinik.Club"
+                  className="h-8 w-auto min-w-0 brightness-0 invert"
+                />
               )
             ) : (
               <>
                 <img src={icon} alt="" className="h-8 w-8 shrink-0" />
-                {!sidebarCollapsed && <img src={logo} alt="Clinik.Club" className="h-7 w-auto min-w-0" />}
+                {!sidebarCollapsed && (
+                  <img src={logo} alt="Clinik.Club" className="h-7 w-auto min-w-0" />
+                )}
               </>
             )}
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className={`h-8 w-8 shrink-0 ${navy ? "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" : ""}`}
-            onClick={toggleSidebar}
-            title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-            aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </Button>
         </div>
+        {/* Discreto de propósito — o logo é quem tem que chamar atenção aqui, não
+         * o controle de recolher. Fica encaixado bem na borda (metade dentro,
+         * metade fora do sidebar), igual VSCode/Notion/Linear. */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          title={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+          aria-label={sidebarCollapsed ? "Expandir menu" : "Recolher menu"}
+          className={`absolute -right-3 top-5 z-10 flex h-6 w-6 items-center justify-center rounded-full border shadow-sm transition-colors cursor-pointer ${
+            navy
+              ? "bg-sidebar border-sidebar-border text-sidebar-foreground/40 hover:text-sidebar-foreground hover:border-sidebar-accent"
+              : "bg-background border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {sidebarCollapsed ? (
+            <ChevronRight className="h-3.5 w-3.5" />
+          ) : (
+            <ChevronLeft className="h-3.5 w-3.5" />
+          )}
+        </button>
         <nav className="flex-1 space-y-1">
           {links.map((l) => {
             const active = path === l.to || (l.to !== "/app" && path.startsWith(l.to));
@@ -152,7 +197,9 @@ function AppLayout() {
                 }
               >
                 <div className="flex items-center gap-3">
-                  <l.icon className={`h-4 w-4 ${navy ? (active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/50") : active ? "text-primary-foreground" : "text-primary"}`} />
+                  <l.icon
+                    className={`h-4 w-4 ${navy ? (active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/50") : active ? "text-primary-foreground" : "text-primary"}`}
+                  />
                   {!sidebarCollapsed && l.label}
                 </div>
                 {active && !sidebarCollapsed && <ChevronRight className="h-3.5 w-3.5 opacity-70" />}
@@ -162,7 +209,9 @@ function AppLayout() {
         </nav>
         <div className={`border-t pt-4 ${navy ? "border-sidebar-border" : "border-border"}`}>
           {!sidebarCollapsed && (
-            <div className={`px-3 py-2 text-[10px] font-medium truncate uppercase tracking-wider ${navy ? "text-sidebar-foreground/50" : "text-muted-foreground"}`}>
+            <div
+              className={`px-3 py-2 text-[10px] font-medium truncate uppercase tracking-wider ${navy ? "text-sidebar-foreground/50" : "text-muted-foreground"}`}
+            >
               {user.email}
             </div>
           )}
@@ -172,14 +221,18 @@ function AppLayout() {
             onClick={logout}
             title={sidebarCollapsed ? "Sair" : undefined}
             className={`w-full gap-2 cursor-pointer font-bold transition-colors ${sidebarCollapsed ? "justify-center px-0" : "justify-start"} ${
-              navy ? "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white" : "text-foreground/70 hover:bg-destructive/10 hover:text-destructive"
+              navy
+                ? "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white"
+                : "text-foreground/70 hover:bg-destructive/10 hover:text-destructive"
             }`}
           >
-            <LogOut className={`h-4 w-4 ${navy ? "text-sidebar-foreground/70" : "text-destructive"}`} />{!sidebarCollapsed && "Sair"}
+            <LogOut
+              className={`h-4 w-4 ${navy ? "text-sidebar-foreground/70" : "text-destructive"}`}
+            />
+            {!sidebarCollapsed && "Sair"}
           </Button>
         </div>
       </aside>
-
 
       {/* Header Mobile */}
       <header className="md:hidden flex items-center justify-between border-b border-border bg-background px-4 h-14 sticky top-0 z-[60]">
@@ -191,11 +244,15 @@ function AppLayout() {
         >
           <img src="/brand/clinik-logo-vetor.svg" alt="Clinik.Club" className="h-7 w-auto" />
         </Link>
-        <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="h-9 w-9">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="h-9 w-9"
+        >
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </header>
-
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
@@ -210,15 +267,25 @@ function AppLayout() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold transition ${active ? "bg-primary text-primary-foreground" : "text-foreground/70 bg-secondary/50"}`}
                 >
-                  <l.icon className="h-5 w-5" />{l.label}
+                  <l.icon className="h-5 w-5" />
+                  {l.label}
                 </Link>
               );
             })}
-
           </nav>
           <div className="border-t border-border pt-6 mt-auto">
-            <div className="px-4 py-2 text-xs font-medium text-muted-foreground truncate uppercase tracking-wider mb-2">{user.email}</div>
-            <Button variant="outline" size="lg" onClick={logout} className="w-full justify-center gap-2 rounded-xl font-bold border-destructive/20 text-destructive"><LogOut className="h-5 w-5" />Sair</Button>
+            <div className="px-4 py-2 text-xs font-medium text-muted-foreground truncate uppercase tracking-wider mb-2">
+              {user.email}
+            </div>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={logout}
+              className="w-full justify-center gap-2 rounded-xl font-bold border-destructive/20 text-destructive"
+            >
+              <LogOut className="h-5 w-5" />
+              Sair
+            </Button>
           </div>
         </div>
       )}
@@ -230,6 +297,5 @@ function AppLayout() {
         </main>
       </div>
     </div>
-
   );
 }
