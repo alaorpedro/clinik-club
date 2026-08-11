@@ -38,6 +38,7 @@ import { Route as AuthenticatedAppCrmRelatoriosRouteImport } from './routes/_aut
 import { Route as AuthenticatedAppCrmPipelinesRouteImport } from './routes/_authenticated/app.crm.pipelines'
 import { Route as AuthenticatedAppCrmLeadsRouteImport } from './routes/_authenticated/app.crm.leads'
 import { Route as AuthenticatedAppCrmConfiguracoesRouteImport } from './routes/_authenticated/app.crm.configuracoes'
+import { Route as AuthenticatedAppCrmAtendimentoRouteImport } from './routes/_authenticated/app.crm.atendimento'
 import { Route as AuthenticatedAppAdminPagamentosRouteImport } from './routes/_authenticated/app.admin_.pagamentos'
 import { Route as AuthenticatedAppAdminNfRouteImport } from './routes/_authenticated/app.admin_.nf'
 import { Route as AuthenticatedAppFunisIdLeadsRouteImport } from './routes/_authenticated/app.funis.$id.leads'
@@ -195,6 +196,12 @@ const AuthenticatedAppCrmConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedAppCrmRoute,
   } as any)
+const AuthenticatedAppCrmAtendimentoRoute =
+  AuthenticatedAppCrmAtendimentoRouteImport.update({
+    id: '/atendimento',
+    path: '/atendimento',
+    getParentRoute: () => AuthenticatedAppCrmRoute,
+  } as any)
 const AuthenticatedAppAdminPagamentosRoute =
   AuthenticatedAppAdminPagamentosRouteImport.update({
     id: '/admin_/pagamentos',
@@ -240,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/app/admin/nf': typeof AuthenticatedAppAdminNfRoute
   '/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
+  '/app/crm/atendimento': typeof AuthenticatedAppCrmAtendimentoRoute
   '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
   '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
@@ -272,6 +280,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/app/admin/nf': typeof AuthenticatedAppAdminNfRoute
   '/app/admin/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
+  '/app/crm/atendimento': typeof AuthenticatedAppCrmAtendimentoRoute
   '/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
   '/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
@@ -308,6 +317,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/app/admin_/nf': typeof AuthenticatedAppAdminNfRoute
   '/_authenticated/app/admin_/pagamentos': typeof AuthenticatedAppAdminPagamentosRoute
+  '/_authenticated/app/crm/atendimento': typeof AuthenticatedAppCrmAtendimentoRoute
   '/_authenticated/app/crm/configuracoes': typeof AuthenticatedAppCrmConfiguracoesRoute
   '/_authenticated/app/crm/leads': typeof AuthenticatedAppCrmLeadsRoute
   '/_authenticated/app/crm/pipelines': typeof AuthenticatedAppCrmPipelinesRoute
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/app/admin/nf'
     | '/app/admin/pagamentos'
+    | '/app/crm/atendimento'
     | '/app/crm/configuracoes'
     | '/app/crm/leads'
     | '/app/crm/pipelines'
@@ -376,6 +387,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/app/admin/nf'
     | '/app/admin/pagamentos'
+    | '/app/crm/atendimento'
     | '/app/crm/configuracoes'
     | '/app/crm/leads'
     | '/app/crm/pipelines'
@@ -411,6 +423,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/_authenticated/app/admin_/nf'
     | '/_authenticated/app/admin_/pagamentos'
+    | '/_authenticated/app/crm/atendimento'
     | '/_authenticated/app/crm/configuracoes'
     | '/_authenticated/app/crm/leads'
     | '/_authenticated/app/crm/pipelines'
@@ -650,6 +663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppCrmConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAppCrmRoute
     }
+    '/_authenticated/app/crm/atendimento': {
+      id: '/_authenticated/app/crm/atendimento'
+      path: '/atendimento'
+      fullPath: '/app/crm/atendimento'
+      preLoaderRoute: typeof AuthenticatedAppCrmAtendimentoRouteImport
+      parentRoute: typeof AuthenticatedAppCrmRoute
+    }
     '/_authenticated/app/admin_/pagamentos': {
       id: '/_authenticated/app/admin_/pagamentos'
       path: '/admin/pagamentos'
@@ -682,6 +702,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAppCrmRouteChildren {
+  AuthenticatedAppCrmAtendimentoRoute: typeof AuthenticatedAppCrmAtendimentoRoute
   AuthenticatedAppCrmConfiguracoesRoute: typeof AuthenticatedAppCrmConfiguracoesRoute
   AuthenticatedAppCrmLeadsRoute: typeof AuthenticatedAppCrmLeadsRoute
   AuthenticatedAppCrmPipelinesRoute: typeof AuthenticatedAppCrmPipelinesRoute
@@ -691,6 +712,7 @@ interface AuthenticatedAppCrmRouteChildren {
 }
 
 const AuthenticatedAppCrmRouteChildren: AuthenticatedAppCrmRouteChildren = {
+  AuthenticatedAppCrmAtendimentoRoute: AuthenticatedAppCrmAtendimentoRoute,
   AuthenticatedAppCrmConfiguracoesRoute: AuthenticatedAppCrmConfiguracoesRoute,
   AuthenticatedAppCrmLeadsRoute: AuthenticatedAppCrmLeadsRoute,
   AuthenticatedAppCrmPipelinesRoute: AuthenticatedAppCrmPipelinesRoute,
