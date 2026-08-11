@@ -131,7 +131,7 @@ function AppLayout() {
           navy ? "bg-sidebar border-sidebar-border" : "bg-background border-border"
         } ${sidebarCollapsed ? "w-20" : "w-64"}`}
       >
-        <div className="mb-8 flex items-center">
+        <div className="mb-8 flex items-center px-3">
           <Link
             to="/app"
             className={`flex min-w-0 flex-1 items-center gap-2 hover:opacity-80 transition-opacity ${sidebarCollapsed ? "justify-center" : ""}`}
