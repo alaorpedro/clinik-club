@@ -132,7 +132,7 @@ function AtendimentoPage() {
                   onAssign={(assigneeId) => updateSelected({ assigneeId })}
                   onToggleAi={(aiActive) => updateSelected({ aiActive })}
                 />
-                <div ref={threadRef} className="flex-1 space-y-2 overflow-y-auto p-4">
+                <div ref={threadRef} className="ck-mesh-flat flex-1 space-y-2 overflow-y-auto p-4">
                   {selected.messages.map((m) => (
                     <MessageBubble key={m.id} message={m} />
                   ))}

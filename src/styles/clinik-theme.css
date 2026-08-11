@@ -259,6 +259,22 @@
 /* Sobre superfície escura o tile navy sumiria: usa o tile branco. */
 .ck-mesh.ck-mesh-light::before { background-image: url("/brand/clinik-mesh-light.svg"); }
 
+/* Trama uniforme, sem máscara de "sangrar na borda" — pra fundos com scroll
+ * (thread de conversa) onde a trama precisa ficar constante atrás do
+ * conteúdo em vez de sumir no meio, como o .ck-mesh faz em seções de hero. */
+.ck-mesh-flat { position: relative; isolation: isolate; }
+.ck-mesh-flat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: url("/brand/clinik-mesh.svg");
+  background-size: var(--ck-pattern-tile) var(--ck-pattern-tile);
+  background-repeat: repeat;
+  opacity: var(--ck-pattern-opacity);
+  pointer-events: none;
+}
+
 /* Trama no modo "capa": a MESMA trama, em escala grande e sangrando pela
  * borda. Continua sendo tecido — nunca ícones soltos espalhados. */
 .ck-mesh-xl { position: relative; isolation: isolate; overflow: hidden; }

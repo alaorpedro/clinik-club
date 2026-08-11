@@ -354,7 +354,7 @@ export function CardDetailDialog({
                   <div className="flex shrink-0 items-center gap-1.5 border-b border-border px-4 py-3 text-xs text-muted-foreground">
                     <Wifi className="h-3 w-3 text-emerald-600" /> {convo.channel} · {convo.phone}
                   </div>
-                  <div ref={threadRef} className="flex-1 space-y-2 overflow-y-auto p-4">
+                  <div ref={threadRef} className="ck-mesh-flat flex-1 space-y-2 overflow-y-auto p-4">
                     {convo.messages.map((m) => (
                       <MessageBubble key={m.id} message={m} />
                     ))}

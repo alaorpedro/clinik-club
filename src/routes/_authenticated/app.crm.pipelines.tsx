@@ -25,7 +25,9 @@ import {
   Trash2,
   Search,
   Upload,
+  Clock,
 } from "lucide-react";
+import { differenceInDays, differenceInHours } from "date-fns";
 import { toast } from "sonner";
 import {
   ensureDefaultPipeline,
@@ -226,6 +228,11 @@ function PipelinesPage() {
     queryFn: () => fetchMembers(),
   });
   const members = membersData?.members ?? [];
+  const memberByUserId = useMemo(() => {
+    const map = new Map<string, { email: string }>();
+    members.forEach((m: { userId: string; email: string }) => map.set(m.userId, { email: m.email }));
+    return map;
+  }, [members]);
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -526,12 +533,17 @@ function PipelinesPage() {
                 cards={byStage.get(stage.id) ?? []}
                 isDropTarget={!!activeId && activeCard?.stageId !== stage.id}
                 onCardClick={handleCardClick}
+                memberByUserId={memberByUserId}
               />
             ))}
             <div className="w-1 shrink-0" /> {/* Extra space at the end of scroll */}
           </div>
         </div>
-        <DragOverlay>{activeCard && <CardItem card={activeCard} overlay />}</DragOverlay>
+        <DragOverlay>
+          {activeCard && (
+            <CardItem card={activeCard} overlay memberByUserId={memberByUserId} />
+          )}
+        </DragOverlay>
       </DndContext>
 
       <CardDetailDialog
@@ -555,11 +567,13 @@ function StageColumn({
   cards,
   isDropTarget,
   onCardClick,
+  memberByUserId,
 }: {
   stage: Stage;
   cards: Card[];
   isDropTarget: boolean;
   onCardClick: (cardId: string) => void;
+  memberByUserId: Map<string, { email: string }>;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   return (
@@ -579,7 +593,12 @@ function StageColumn({
       </div>
       <div className="space-y-2 min-h-[60px]">
         {cards.map((card) => (
-          <CardItem key={card.id} card={card} onClick={() => onCardClick(card.id)} />
+          <CardItem
+            key={card.id}
+            card={card}
+            onClick={() => onCardClick(card.id)}
+            memberByUserId={memberByUserId}
+          />
         ))}
         {/* Placeholder de destino: aparece só na coluna que vai receber o card
          * solto, sempre no fim da lista — a posição real que moveCard usa. */}
@@ -603,14 +622,31 @@ function StageColumn({
   );
 }
 
+// "há X dias/horas" desde a última troca de etapa, com destaque quando o
+// card está parado há muito tempo (>7 dias âmbar, >14 dias vermelho — mesmo
+// limiar que a Fase 4 do plano de CRM prevê para "leads parados").
+function timeInStage(movedAt: string): { label: string; className: string } {
+  const days = differenceInDays(new Date(), new Date(movedAt));
+  if (days < 1) {
+    const hours = Math.max(0, differenceInHours(new Date(), new Date(movedAt)));
+    return { label: hours < 1 ? "agora" : `há ${hours}h`, className: "text-muted-foreground" };
+  }
+  const label = `há ${days}d`;
+  if (days > 14) return { label, className: "text-destructive" };
+  if (days > 7) return { label, className: "text-amber-600" };
+  return { label, className: "text-muted-foreground" };
+}
+
 function CardItem({
   card,
   onClick,
   overlay,
+  memberByUserId,
 }: {
   card: Card;
   onClick?: () => void;
   overlay?: boolean;
+  memberByUserId?: Map<string, { email: string }>;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: card.id,
@@ -619,6 +655,8 @@ function CardItem({
     transform && !overlay
       ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, zIndex: 50 }
       : undefined;
+  const assignee = card.assigneeId ? memberByUserId?.get(card.assigneeId) : undefined;
+  const stage = timeInStage(card.movedAt);
   return (
     <div
       ref={overlay ? undefined : setNodeRef}
@@ -632,15 +670,30 @@ function CardItem({
           : `hover:shadow cursor-grab active:cursor-grabbing ${isDragging ? "opacity-40" : ""}`
       }`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
         <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">
           {(card.lead.name ?? card.lead.email ?? "?").charAt(0).toUpperCase()}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold truncate">{card.lead.name ?? "Sem nome"}</div>
-          <div className="text-xs text-muted-foreground truncate">
-            {new Date(card.lead.createdAt).toLocaleDateString("pt-BR")}
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Clock className={`h-3 w-3 shrink-0 ${stage.className}`} />
+            <span className={stage.className}>{stage.label} na etapa</span>
+            <span className="opacity-50">·</span>
+            <span className="truncate">
+              lead {new Date(card.lead.createdAt).toLocaleDateString("pt-BR")}
+            </span>
           </div>
+        </div>
+        <div
+          title={assignee ? assignee.email : "Sem atendente"}
+          className={`h-6 w-6 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            assignee
+              ? "bg-secondary text-foreground/80"
+              : "border border-dashed border-border text-muted-foreground/50"
+          }`}
+        >
+          {assignee ? assignee.email.charAt(0).toUpperCase() : <UserIcon className="h-3 w-3" />}
         </div>
       </div>
       {(card.lead.email || card.lead.phone) && (
