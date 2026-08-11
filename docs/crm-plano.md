@@ -139,6 +139,21 @@ Funcionalidades:
 - Tempo real: Supabase Realtime nos canais de conversa (evita polling).
 - Áudio/anexos reais — armazenamento em Supabase Storage.
 
+**Regra de conversa → card no Kanban (decidida em 11/08/2026, ainda não implementada):**
+todo lead que aparece no Atendimento precisa ter exatamente um card no Kanban por trás —
+sem passo manual de "converter em lead". Espelha o mecanismo que já existe pro funil
+(`trg_leads_create_crm_card`, trigger Postgres que cria o card sozinho quando um `lead` é
+inserido — ver pegadinhas no topo deste doc):
+- Primeira mensagem recebida de um telefone desconhecido → cria `lead` + card
+  automaticamente no pipeline/etapa padrão (a mesma "Novos Leads" que o funil usa).
+- Telefone já conhecido → só linka na `crm_conversations` existente, nunca duplica
+  lead/card.
+- Chave de dedupe é o **telefone** (não tem funil/UTM por trás de contato vindo direto do
+  WhatsApp).
+- **Em aberto:** o que fazer se esse telefone já tiver card em OUTRO pipeline (do
+  cliente ter mais de um pipeline) — por ora, assumir que linka no pipeline padrão e
+  deixar o usuário mover manualmente, revisar se isso incomodar na prática.
+
 **Decisão técnica em aberto antes de começar o 3b:** Evolution API (não-oficial, já
 integrada, mais barata) cobre conversa 1:1 e recebimento? Ou precisa migrar/complementar
 com WhatsApp Cloud API oficial (exigido só para templates de disparo em massa, Fase 5)?
