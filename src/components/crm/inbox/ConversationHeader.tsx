@@ -30,7 +30,7 @@ export function ConversationHeader({
 }) {
   return (
     <div className="border-b border-border p-3">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-bold">
             {conversation.contactName.charAt(0).toUpperCase()}

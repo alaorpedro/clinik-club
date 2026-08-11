@@ -97,49 +97,51 @@ function AtendimentoPage() {
         </p>
       </div>
 
-      <div className="ck-r-sig flex flex-1 overflow-hidden border border-border">
-        <ConversationList
-          conversations={conversations}
-          selectedId={selectedId}
-          onSelect={selectConversation}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          search={search}
-          onSearchChange={setSearch}
-        />
+      <div className="ck-r-sig flex flex-1 overflow-x-auto overflow-y-hidden border border-border">
+        <div className="flex min-w-[960px] flex-1">
+          <ConversationList
+            conversations={conversations}
+            selectedId={selectedId}
+            onSelect={selectConversation}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            search={search}
+            onSearchChange={setSearch}
+          />
 
-        {selected ? (
-          <>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <ConversationHeader
-                conversation={selected}
-                onStageChange={(stageId) => updateSelected({ stageId })}
-                onAssign={(assigneeId) => updateSelected({ assigneeId })}
-                onToggleAi={(aiActive) => updateSelected({ aiActive })}
-              />
-              <div ref={threadRef} className="flex-1 space-y-2 overflow-y-auto p-4">
-                {selected.messages.map((m) => (
-                  <MessageBubble key={m.id} message={m} />
-                ))}
+          {selected ? (
+            <>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <ConversationHeader
+                  conversation={selected}
+                  onStageChange={(stageId) => updateSelected({ stageId })}
+                  onAssign={(assigneeId) => updateSelected({ assigneeId })}
+                  onToggleAi={(aiActive) => updateSelected({ aiActive })}
+                />
+                <div ref={threadRef} className="flex-1 space-y-2 overflow-y-auto p-4">
+                  {selected.messages.map((m) => (
+                    <MessageBubble key={m.id} message={m} />
+                  ))}
+                </div>
+                <Composer onSend={sendMessage} />
               </div>
-              <Composer onSend={sendMessage} />
+              <SidePanel
+                conversation={selected}
+                onUpdateTags={(tags) => updateSelected({ tags })}
+                onAddNote={(body) =>
+                  updateSelected((c) => ({
+                    notes: [...c.notes, { id: `note-${Date.now()}`, body, time: "agora" }],
+                  }))
+                }
+              />
+            </>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
+              <MessageSquare className="h-8 w-8 opacity-40" />
+              <p className="text-sm">Selecione uma conversa para começar.</p>
             </div>
-            <SidePanel
-              conversation={selected}
-              onUpdateTags={(tags) => updateSelected({ tags })}
-              onAddNote={(body) =>
-                updateSelected((c) => ({
-                  notes: [...c.notes, { id: `note-${Date.now()}`, body, time: "agora" }],
-                }))
-              }
-            />
-          </>
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
-            <MessageSquare className="h-8 w-8 opacity-40" />
-            <p className="text-sm">Selecione uma conversa para começar.</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
