@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Check, Sparkles, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -25,6 +26,8 @@ const FEATURES = [
 function UpgradePage() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [showCoupon, setShowCoupon] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4">
@@ -53,6 +56,28 @@ function UpgradePage() {
           >
             Ativar CRM agora
           </Button>
+
+          {/* Cupom precisa ser aplicado antes de abrir o checkout — o Stripe só
+           * dispensa pedir cartão (payment_method_collection: if_required) se o
+           * total já nasce zerado na criação da sessão, não quando o código é
+           * digitado depois, dentro da tela do Stripe. */}
+          {showCoupon ? (
+            <Input
+              autoFocus
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Código do cupom"
+              className="ck-input mt-3 h-9 w-48 text-xs"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowCoupon(true)}
+              className="mt-3 block text-xs text-muted-foreground underline hover:text-foreground"
+            >
+              Tenho um cupom
+            </button>
+          )}
         </div>
         <div className="p-8 md:p-12">
           <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">O que está incluído</h2>
@@ -87,6 +112,7 @@ function UpgradePage() {
                   priceId="crm_addon_monthly"
                   customerEmail={user.email ?? undefined}
                   returnUrl={`${window.location.origin}/app/crm/pipelines`}
+                  promoCode={promoCode.trim() || undefined}
                 />
               </Suspense>
             )}
