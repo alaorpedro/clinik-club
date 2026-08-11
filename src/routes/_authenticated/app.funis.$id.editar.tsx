@@ -293,15 +293,15 @@ function EditFunnel() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm" className="rounded-full">
+          <Button asChild variant="outline" size="sm" className="ck-btn">
             <Link to="/app/funis/$id/leads" params={{ id }}>Ver leads capturados</Link>
           </Button>
           {funnel.status === "published" && (
-            <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline" size="sm" className="rounded-full"><Eye className="h-4 w-4 mr-1" />Ver público</Button></a>
+            <a href={publicUrl} target="_blank" rel="noreferrer"><Button variant="outline" size="sm" className="ck-btn"><Eye className="h-4 w-4 mr-1" />Ver público</Button></a>
           )}
           <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button variant="outline" size="sm" className="ck-btn">
                 <Settings className="h-4 w-4 mr-1" />Configurações do funil
               </Button>
             </DialogTrigger>
@@ -383,10 +383,10 @@ function EditFunnel() {
               <ThankYouSettings funnel={funnel} onPatch={updateThankYou} />
             </DialogContent>
           </Dialog>
-          <Button onClick={saveAll} disabled={saveStatus === "saving"} variant="secondary" className="rounded-full font-semibold" size="sm">
+          <Button onClick={saveAll} disabled={saveStatus === "saving"} variant="secondary" className="ck-btn font-semibold" size="sm">
             <Save className="h-4 w-4 mr-1" />{saveStatus === "saving" ? "Salvando..." : "Salvar funil"}
           </Button>
-          <Button onClick={togglePublish} className="rounded-full font-semibold" size="sm">
+          <Button onClick={togglePublish} className="ck-btn font-semibold" size="sm">
             <Globe className="h-4 w-4 mr-1" />{funnel.status === "published" ? "Despublicar" : "Publicar"}
           </Button>
         </div>
