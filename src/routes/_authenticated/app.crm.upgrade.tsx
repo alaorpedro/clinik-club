@@ -3,7 +3,7 @@ import { useState, lazy, Suspense } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Sparkles, ArrowLeft } from "lucide-react";
+import { Check, ArrowLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const StripeEmbeddedCheckout = lazy(() =>
@@ -38,7 +38,7 @@ function UpgradePage() {
       <div className="ck-r-sig border border-border bg-card overflow-hidden grid md:grid-cols-2">
         <div className="bg-primary/5 p-8 md:p-12 border-b md:border-b-0 md:border-r border-border">
           <div className="inline-flex items-center gap-2 rounded-[var(--ck-r-flat-sm)] bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <Sparkles className="h-3.5 w-3.5" /> Módulo adicional
+            <img src="/brand/clinik-icon.svg" alt="" className="h-3.5 w-3.5" /> Módulo adicional
           </div>
           <h1 className="mt-4 ck-display text-4xl md:text-5xl tracking-tight">CRM Clinik.Club</h1>
           <p className="mt-3 text-muted-foreground max-w-xl">
