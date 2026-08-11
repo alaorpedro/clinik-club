@@ -70,7 +70,17 @@ export function ScheduleAppointmentDialog({
     queryFn: () => fetchClosedDates(),
     enabled: !!cardId,
   });
-  const isClosedDay = !!closedData?.closedDates?.some((c: { date: string }) => c.date === date);
+  const closedEntry = closedData?.closedDates?.find((c: { date: string }) => c.date === date) as
+    | { date: string; reason: string | null; startTime: string | null; endTime: string | null }
+    | undefined;
+  // Sem startTime/endTime = dia inteiro fechado, então qualquer horário conta;
+  // com os dois, só avisa se o horário escolhido cair dentro da janela fechada.
+  const isClosedDay =
+    !!closedEntry &&
+    (!closedEntry.startTime ||
+      !closedEntry.endTime ||
+      !time ||
+      (time >= closedEntry.startTime.slice(0, 5) && time < closedEntry.endTime.slice(0, 5)));
 
   // Pré-preenche com o agendamento existente (reagendar) — em branco quando é a
   // primeira vez que esse card recebe data/horário.
@@ -142,8 +152,10 @@ export function ScheduleAppointmentDialog({
             </div>
             {isClosedDay && (
               <p className="flex items-center gap-1.5 text-xs text-[var(--ck-warning)]">
-                <TriangleAlert className="h-3.5 w-3.5 shrink-0" /> Esse dia está marcado como
-                fechado na Agenda — ainda dá pra agendar, mas confira antes.
+                <TriangleAlert className="h-3.5 w-3.5 shrink-0" />
+                {closedEntry?.startTime && closedEntry?.endTime
+                  ? `Esse horário está dentro da janela fechada (${closedEntry.startTime.slice(0, 5)}–${closedEntry.endTime.slice(0, 5)}) na Agenda — ainda dá pra agendar, mas confira antes.`
+                  : "Esse dia está marcado como fechado na Agenda — ainda dá pra agendar, mas confira antes."}
               </p>
             )}
             <div>

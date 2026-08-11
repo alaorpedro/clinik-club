@@ -1,14 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   addMonths,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
   format,
-  isSameDay,
   isSameMonth,
   isToday,
   startOfMonth,
@@ -24,6 +23,8 @@ import {
   ChevronRight,
   Lock,
   LockOpen,
+  LayoutGrid,
+  ListIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -63,6 +64,8 @@ type Appointment = {
   stageColor: string;
   lead: { name: string | null; phone: string | null; email: string | null };
 };
+
+type ClosedEntry = { reason: string | null; startTime: string | null; endTime: string | null };
 
 const dayKey = (d: Date) => format(d, "yyyy-MM-dd");
 
@@ -110,6 +113,89 @@ function AppointmentRow({
   );
 }
 
+// Lista cronológica alternativa ao calendário — agrupada por dia (próximos
+// primeiro, ascendente; anteriores num acordeão, mais recente primeiro), pra
+// quem prefere escanear a agenda como texto em vez de navegar mês a mês.
+function AgendaList({
+  byDate,
+  closedByDate,
+  evaluatorEmailFor,
+  onDayClick,
+  onAppointmentClick,
+}: {
+  byDate: Map<string, Appointment[]>;
+  closedByDate: Map<string, ClosedEntry>;
+  evaluatorEmailFor: (id: string | null) => string | undefined;
+  onDayClick: (dateKey: string) => void;
+  onAppointmentClick: (appt: Appointment) => void;
+}) {
+  const todayKey = dayKey(new Date());
+  const allKeys = Array.from(byDate.keys()).sort();
+  const upcomingKeys = allKeys.filter((k) => k >= todayKey);
+  const pastKeys = allKeys.filter((k) => k < todayKey).reverse();
+
+  function DateGroup({ dateKeyStr }: { dateKeyStr: string }) {
+    const closedEntry = closedByDate.get(dateKeyStr);
+    const appts = (byDate.get(dateKeyStr) ?? [])
+      .slice()
+      .sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt));
+    return (
+      <div>
+        <button
+          type="button"
+          onClick={() => onDayClick(dateKeyStr)}
+          className="mb-1.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+        >
+          {format(new Date(`${dateKeyStr}T00:00:00`), "EEEE, d 'de' MMMM", { locale: ptBR })}
+          {closedEntry && (
+            <span className="inline-flex items-center gap-0.5 normal-case font-medium text-[var(--ck-warning)]">
+              <Lock className="h-3 w-3" />
+              {closedEntry.startTime && closedEntry.endTime
+                ? `${closedEntry.startTime.slice(0, 5)}–${closedEntry.endTime.slice(0, 5)} fechado`
+                : "fechado"}
+            </span>
+          )}
+        </button>
+        <div className="space-y-2">
+          {appts.map((a) => (
+            <AppointmentRow
+              key={a.id}
+              appt={a}
+              evaluatorEmail={evaluatorEmailFor(a.evaluatorId)}
+              onClick={() => onAppointmentClick(a)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl space-y-5">
+      {upcomingKeys.length === 0 && (
+        <div className="ck-r-sig border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhuma avaliação marcada ainda. Mova um lead para a etapa de agendamento no pipeline
+          para começar.
+        </div>
+      )}
+      {upcomingKeys.map((k) => (
+        <DateGroup key={k} dateKeyStr={k} />
+      ))}
+
+      {pastKeys.length > 0 && (
+        <details className="pt-2">
+          <summary className="ck-eyebrow cursor-pointer">Anteriores</summary>
+          <div className="mt-3 space-y-5 opacity-70">
+            {pastKeys.map((k) => (
+              <DateGroup key={k} dateKeyStr={k} />
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
 function AgendaPage() {
   const qc = useQueryClient();
   const fetchAppointments = useServerFn(listAppointments);
@@ -118,9 +204,13 @@ function AgendaPage() {
   const setClosedFn = useServerFn(setDateClosed);
   const fetchBoard = useServerFn(getBoard);
 
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [monthCursor, setMonthCursor] = useState(() => startOfMonth(new Date()));
   const [dayPanel, setDayPanel] = useState<string | null>(null);
   const [closeReason, setCloseReason] = useState("");
+  const [closeMode, setCloseMode] = useState<"day" | "range">("day");
+  const [closeStart, setCloseStart] = useState("");
+  const [closeEnd, setCloseEnd] = useState("");
   const [selected, setSelected] = useState<{ cardId: string; pipelineId: string } | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -138,9 +228,10 @@ function AgendaPage() {
     queryFn: () => fetchClosedDates(),
   });
   const closedByDate = useMemo(() => {
-    const map = new Map<string, { reason: string | null }>();
-    (closedData?.closedDates ?? []).forEach((c: { date: string; reason: string | null }) =>
-      map.set(c.date, { reason: c.reason }),
+    const map = new Map<string, ClosedEntry>();
+    (closedData?.closedDates ?? []).forEach(
+      (c: { date: string; reason: string | null; startTime: string | null; endTime: string | null }) =>
+        map.set(c.date, { reason: c.reason, startTime: c.startTime, endTime: c.endTime }),
     );
     return map;
   }, [closedData]);
@@ -152,14 +243,35 @@ function AgendaPage() {
   });
 
   const closeMut = useMutation({
-    mutationFn: (vars: { date: string; closed: boolean; reason?: string | null }) =>
-      setClosedFn({ data: vars }),
+    mutationFn: (vars: {
+      date: string;
+      closed: boolean;
+      reason?: string | null;
+      startTime?: string | null;
+      endTime?: string | null;
+    }) => setClosedFn({ data: vars }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["crm", "closedDates"] });
-      setCloseReason("");
     },
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível atualizar o dia."),
   });
+
+  // Ao abrir o painel de um dia, pré-preenche com a regra de fechamento que já
+  // existe (pra editar), ou reseta pros padrões quando o dia está aberto.
+  useEffect(() => {
+    if (!dayPanel) return;
+    const existing = closedByDate.get(dayPanel);
+    setCloseReason(existing?.reason ?? "");
+    if (existing?.startTime && existing?.endTime) {
+      setCloseMode("range");
+      setCloseStart(existing.startTime.slice(0, 5));
+      setCloseEnd(existing.endTime.slice(0, 5));
+    } else {
+      setCloseMode("day");
+      setCloseStart("");
+      setCloseEnd("");
+    }
+  }, [dayPanel, closedByDate]);
 
   const appointments: Appointment[] = data?.appointments ?? [];
   const byDate = useMemo(() => {
@@ -204,30 +316,55 @@ function AgendaPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="ck-btn h-9 w-9"
-            onClick={() => setMonthCursor((m) => subMonths(m, 1))}
-            aria-label="Mês anterior"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <p className="ck-display w-40 text-center text-lg capitalize">
-            {format(monthCursor, "MMMM 'de' yyyy", { locale: ptBR })}
-          </p>
-          <Button
-            variant="outline"
-            size="icon"
-            className="ck-btn h-9 w-9"
-            onClick={() => setMonthCursor((m) => addMonths(m, 1))}
-            aria-label="Próximo mês"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+          {viewMode === "calendar" && (
+            <>
+              <Button
+                variant="outline"
+                size="icon"
+                className="ck-btn h-9 w-9"
+                onClick={() => setMonthCursor((m) => subMonths(m, 1))}
+                aria-label="Mês anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <p className="ck-display w-40 text-center text-lg capitalize">
+                {format(monthCursor, "MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
+              <Button
+                variant="outline"
+                size="icon"
+                className="ck-btn h-9 w-9"
+                onClick={() => setMonthCursor((m) => addMonths(m, 1))}
+                aria-label="Próximo mês"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+          <div className="ck-r-flat flex items-center border border-border p-0.5">
+            <Button
+              variant={viewMode === "calendar" ? "default" : "ghost"}
+              size="icon"
+              className={`h-8 w-8 ${viewMode === "calendar" ? "ck-btn" : ""}`}
+              onClick={() => setViewMode("calendar")}
+              aria-label="Ver calendário"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="icon"
+              className={`h-8 w-8 ${viewMode === "list" ? "ck-btn" : ""}`}
+              onClick={() => setViewMode("list")}
+              aria-label="Ver lista"
+            >
+              <ListIcon className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
+      {viewMode === "calendar" ? (
       <div className="ck-r-sig max-w-4xl border border-border bg-card p-3">
         <div className="grid grid-cols-7 gap-1 mb-1">
           {weekdayLabels.map((w) => (
@@ -240,7 +377,8 @@ function AgendaPage() {
           {days.map((d) => {
             const key = dayKey(d);
             const inMonth = isSameMonth(d, monthCursor);
-            const closed = closedByDate.has(key);
+            const closedEntry = closedByDate.get(key);
+            const closed = !!closedEntry;
             const dayAppts = byDate.get(key) ?? [];
             return (
               <button
@@ -260,7 +398,10 @@ function AgendaPage() {
                 </span>
                 {closed && (
                   <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-muted-foreground">
-                    <Lock className="h-2.5 w-2.5" /> Fechado
+                    <Lock className="h-2.5 w-2.5" />
+                    {closedEntry.startTime && closedEntry.endTime
+                      ? `${closedEntry.startTime.slice(0, 5)}–${closedEntry.endTime.slice(0, 5)}`
+                      : "Fechado"}
                   </span>
                 )}
                 {dayAppts.length > 0 && (
@@ -273,6 +414,15 @@ function AgendaPage() {
           })}
         </div>
       </div>
+      ) : (
+        <AgendaList
+          byDate={byDate}
+          closedByDate={closedByDate}
+          evaluatorEmailFor={evaluatorEmailFor}
+          onDayClick={setDayPanel}
+          onAppointmentClick={(a) => setSelected({ cardId: a.cardId, pipelineId: a.pipelineId })}
+        />
+      )}
 
       <Dialog open={!!dayPanel} onOpenChange={(open) => !open && setDayPanel(null)}>
         <DialogContent className="max-w-lg">
@@ -282,48 +432,95 @@ function AgendaPage() {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="ck-r-flat flex items-center justify-between gap-3 border border-border bg-secondary/40 p-3">
+          <div className="ck-r-flat space-y-2.5 border border-border bg-secondary/40 p-3">
             {panelClosed ? (
-              <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-sm font-medium text-foreground/90">
-                  <Lock className="h-3.5 w-3.5" /> Agenda fechada neste dia
-                </p>
-                {panelClosed.reason && (
-                  <p className="mt-0.5 text-xs text-muted-foreground truncate">{panelClosed.reason}</p>
-                )}
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-sm font-medium text-foreground/90">
+                    <Lock className="h-3.5 w-3.5 shrink-0" />
+                    {panelClosed.startTime && panelClosed.endTime
+                      ? `Fechada das ${panelClosed.startTime.slice(0, 5)} às ${panelClosed.endTime.slice(0, 5)}`
+                      : "Agenda fechada neste dia"}
+                  </p>
+                  {panelClosed.reason && (
+                    <p className="mt-0.5 text-xs text-muted-foreground truncate">{panelClosed.reason}</p>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ck-btn shrink-0"
+                  disabled={closeMut.isPending}
+                  onClick={() => dayPanel && closeMut.mutate({ date: dayPanel, closed: false })}
+                >
+                  <LockOpen className="h-3.5 w-3.5" /> Reabrir dia
+                </Button>
               </div>
             ) : (
-              <Input
-                value={closeReason}
-                onChange={(e) => setCloseReason(e.target.value)}
-                placeholder="Motivo (opcional)..."
-                className="ck-input h-8 flex-1 text-xs"
-              />
+              <>
+                <div className="flex items-center gap-3 text-xs">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={closeMode === "day"}
+                      onChange={() => setCloseMode("day")}
+                    />
+                    Dia inteiro
+                  </label>
+                  <label className="flex items-center gap-1.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      checked={closeMode === "range"}
+                      onChange={() => setCloseMode("range")}
+                    />
+                    Só um horário
+                  </label>
+                </div>
+                {closeMode === "range" && (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="time"
+                      value={closeStart}
+                      onChange={(e) => setCloseStart(e.target.value)}
+                      className="ck-input h-8 text-xs"
+                    />
+                    <span className="text-xs text-muted-foreground">até</span>
+                    <Input
+                      type="time"
+                      value={closeEnd}
+                      onChange={(e) => setCloseEnd(e.target.value)}
+                      className="ck-input h-8 text-xs"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={closeReason}
+                    onChange={(e) => setCloseReason(e.target.value)}
+                    placeholder="Motivo (opcional)..."
+                    className="ck-input h-8 flex-1 text-xs"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ck-btn shrink-0"
+                    disabled={closeMut.isPending || (closeMode === "range" && (!closeStart || !closeEnd))}
+                    onClick={() =>
+                      dayPanel &&
+                      closeMut.mutate({
+                        date: dayPanel,
+                        closed: true,
+                        reason: closeReason,
+                        startTime: closeMode === "range" ? closeStart : null,
+                        endTime: closeMode === "range" ? closeEnd : null,
+                      })
+                    }
+                  >
+                    <Lock className="h-3.5 w-3.5" /> Fechar
+                  </Button>
+                </div>
+              </>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="ck-btn shrink-0"
-              disabled={closeMut.isPending}
-              onClick={() =>
-                dayPanel &&
-                closeMut.mutate({
-                  date: dayPanel,
-                  closed: !panelClosed,
-                  reason: panelClosed ? undefined : closeReason,
-                })
-              }
-            >
-              {panelClosed ? (
-                <>
-                  <LockOpen className="h-3.5 w-3.5" /> Reabrir dia
-                </>
-              ) : (
-                <>
-                  <Lock className="h-3.5 w-3.5" /> Fechar dia
-                </>
-              )}
-            </Button>
           </div>
 
           <div className="space-y-2 max-h-[50vh] overflow-y-auto">

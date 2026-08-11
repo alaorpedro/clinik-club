@@ -627,32 +627,65 @@ export const listClosedDates = createServerFn({ method: "GET" })
     await assertCrmAccess(supabase, userId);
     const { data } = await (supabase as any)
       .from("crm_closed_dates")
-      .select("date, reason")
+      .select("date, reason, start_time, end_time")
       .eq("owner_id", userId)
       .order("date", { ascending: true });
-    return { closedDates: (data ?? []).map((d: any) => ({ date: d.date, reason: d.reason })) };
+    return {
+      closedDates: (data ?? []).map((d: any) => ({
+        date: d.date,
+        reason: d.reason,
+        startTime: d.start_time,
+        endTime: d.end_time,
+      })),
+    };
   });
 
-// Abrir/fechar um dia é sempre do dono da conta (mesma trava de assertCrmAccess
-// das outras configurações de pipeline) — não é uma ação por card, então não
-// passa por assertCardOwnership.
+// Abrir/fechar um dia (ou uma faixa de horário dentro dele) é sempre do dono
+// da conta (mesma trava de assertCrmAccess das outras configurações de
+// pipeline) — não é uma ação por card, então não passa por assertCardOwnership.
+// startTime/endTime ausentes = fecha o dia inteiro; presentes = só aquela
+// janela (ex.: almoço), guardado na mesma linha (uma regra por data).
+const HHMM = /^\d{2}:\d{2}$/;
 export const setDateClosed = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { date: string; closed: boolean; reason?: string | null }) => {
-    if (!d?.date || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) throw new Error("Data inválida");
-    if (typeof d.closed !== "boolean") throw new Error("Dados inválidos");
-    return { date: d.date, closed: d.closed, reason: d.reason?.trim() || null };
-  })
+  .inputValidator(
+    (d: {
+      date: string;
+      closed: boolean;
+      reason?: string | null;
+      startTime?: string | null;
+      endTime?: string | null;
+    }) => {
+      if (!d?.date || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) throw new Error("Data inválida");
+      if (typeof d.closed !== "boolean") throw new Error("Dados inválidos");
+      const startTime = d.startTime?.trim() || null;
+      const endTime = d.endTime?.trim() || null;
+      if ((startTime && !HHMM.test(startTime)) || (endTime && !HHMM.test(endTime))) {
+        throw new Error("Horário inválido");
+      }
+      if ((startTime && !endTime) || (!startTime && endTime)) {
+        throw new Error("Informe início e fim do horário");
+      }
+      if (startTime && endTime && startTime >= endTime) {
+        throw new Error("Horário final precisa ser depois do inicial");
+      }
+      return { date: d.date, closed: d.closed, reason: d.reason?.trim() || null, startTime, endTime };
+    },
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertCrmAccess(supabase, userId);
     if (data.closed) {
-      const { error } = await (supabase as any)
-        .from("crm_closed_dates")
-        .upsert(
-          { owner_id: userId, date: data.date, reason: data.reason },
-          { onConflict: "owner_id,date" },
-        );
+      const { error } = await (supabase as any).from("crm_closed_dates").upsert(
+        {
+          owner_id: userId,
+          date: data.date,
+          reason: data.reason,
+          start_time: data.startTime,
+          end_time: data.endTime,
+        },
+        { onConflict: "owner_id,date" },
+      );
       if (error) throw new Error(error.message);
     } else {
       const { error } = await (supabase as any)
