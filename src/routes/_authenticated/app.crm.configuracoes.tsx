@@ -243,6 +243,15 @@ function SettingsPage() {
 
       <p className="ck-eyebrow mb-3">Etapas</p>
       <div className="mb-8 max-w-xl">
+        {!!stages.length && !stages.some((s) => s.triggersScheduling) && (
+          <div className="ck-r-flat mb-3 flex items-center gap-2 border border-[var(--ck-warning)]/30 bg-[var(--ck-warning-bg)] px-3 py-2 text-xs text-[var(--ck-warning)]">
+            <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+            <p>
+              Nenhuma etapa deste pipeline dispara o agendamento — clique no ícone de calendário
+              de uma etapa abaixo para marcar.
+            </p>
+          </div>
+        )}
         {pipelines.length > 0 && (
           <Select value={activePipeline?.id} onValueChange={(id) => setActivePipelineId(id)}>
             <SelectTrigger className="ck-input h-9 w-48 mb-3">

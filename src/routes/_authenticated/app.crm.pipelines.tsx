@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
@@ -26,6 +26,7 @@ import {
   Search,
   Upload,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { differenceInDays, differenceInHours } from "date-fns";
 import { toast } from "sonner";
@@ -384,6 +385,22 @@ function PipelinesPage() {
           </Button>
         </div>
       </div>
+
+      {!!(data?.stages ?? []).length && !(data?.stages ?? []).some((s: Stage) => s.triggersScheduling) && (
+        <div className="ck-r-flat mb-6 flex items-center gap-2 border border-[var(--ck-warning)]/30 bg-[var(--ck-warning-bg)] px-4 py-3 text-sm text-[var(--ck-warning)]">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <p>
+            Nenhuma etapa deste pipeline dispara o agendamento — todo lead marcado como "agendado"
+            precisa ter uma coluna com essa regra ativa.{" "}
+            <Link
+              to="/app/crm/configuracoes"
+              className="font-medium underline underline-offset-2 hover:opacity-80"
+            >
+              Marcar uma etapa
+            </Link>
+          </p>
+        </div>
+      )}
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <div className="relative">
