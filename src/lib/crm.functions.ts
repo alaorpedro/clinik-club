@@ -802,7 +802,14 @@ export const importContacts = createServerFn({ method: "POST" })
       .eq("stage_id", data.stageId);
     let position = existingCount ?? 0;
 
-    const { error: cardsError } = await supabaseAdmin.from("crm_lead_cards").insert(
+    // Upsert, não insert: um trigger (trg_leads_create_crm_card) já cria um
+    // card automaticamente no pipeline padrão assim que o lead é inserido.
+    // Se o destino escolhido aqui for o pipeline padrão, esse card já existe
+    // (mesmo lead_id + pipeline_id) — upsert move ele pra etapa escolhida em
+    // vez de colidir com a constraint única. Se for outro pipeline, insere
+    // normal (o card do padrão continua existindo à parte, mesmo comportamento
+    // de qualquer lead vindo de funil).
+    const { error: cardsError } = await supabaseAdmin.from("crm_lead_cards").upsert(
       newLeads.map((lead: any) => ({
         owner_id: userId,
         lead_id: lead.id,
@@ -811,6 +818,7 @@ export const importContacts = createServerFn({ method: "POST" })
         position: position++,
         status: "active",
       })),
+      { onConflict: "lead_id,pipeline_id" },
     );
     if (cardsError) throw new Error(cardsError.message);
 
