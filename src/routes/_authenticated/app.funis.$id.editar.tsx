@@ -774,7 +774,7 @@ function SingleOptionsEditor({ options, otherSteps, onChange }: { options: QuizO
           <p className="text-[11px] text-muted-foreground rounded-lg border border-dashed border-border p-3 text-center">Nenhuma opção. Clique abaixo para adicionar.</p>
         )}
       </div>
-      <Button variant="outline" size="sm" className="mt-2 rounded-full" onClick={add}>
+      <Button variant="outline" size="sm" className="mt-2 ck-btn" onClick={add}>
         <Plus className="h-3.5 w-3.5 mr-1" />Adicionar opção
       </Button>
     </div>

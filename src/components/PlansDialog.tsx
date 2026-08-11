@@ -135,7 +135,7 @@ export function PlansDialog({ open, onOpenChange }: PlansDialogProps) {
                     )}
                     <Button
                       onClick={() => handleSubscribe(current.priceId)}
-                      className={`mt-5 w-full rounded-full font-semibold ${p.highlight ? "bg-highlight text-foreground hover:bg-highlight/90" : ""}`}
+                      className={`mt-5 w-full ck-btn font-semibold ${p.highlight ? "bg-highlight text-foreground hover:bg-highlight/90" : ""}`}
                     >
                       {p.cta}
                     </Button>

@@ -94,10 +94,10 @@ export function ModalDialogsHost() {
               placeholder={prompt?.placeholder}
             />
             <DialogFooter>
-              <Button type="button" variant="secondary" onClick={() => closePrompt(null)} className="rounded-full">
+              <Button type="button" variant="secondary" onClick={() => closePrompt(null)} className="ck-btn">
                 {prompt?.cancelText ?? "Cancelar"}
               </Button>
-              <Button type="submit" className="rounded-full">
+              <Button type="submit" className="ck-btn">
                 {prompt?.okText ?? "OK"}
               </Button>
             </DialogFooter>
@@ -112,13 +112,13 @@ export function ModalDialogsHost() {
             {confirm?.description && <DialogDescription>{confirm.description}</DialogDescription>}
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => closeConfirm(false)} className="rounded-full">
+            <Button variant="secondary" onClick={() => closeConfirm(false)} className="ck-btn">
               {confirm?.cancelText ?? "Cancelar"}
             </Button>
             <Button
               variant={confirm?.destructive ? "destructive" : "default"}
               onClick={() => closeConfirm(true)}
-              className="rounded-full"
+              className="ck-btn"
             >
               {confirm?.okText ?? "Confirmar"}
             </Button>

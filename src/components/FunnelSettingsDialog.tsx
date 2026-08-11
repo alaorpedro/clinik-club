@@ -416,7 +416,7 @@ export function FunnelSettingsDialog({
                 </ol>
                 <div className="mt-3 flex items-center justify-between gap-2">
                   <span className="font-semibold text-foreground">Código para colar no Apps Script</span>
-                  <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={copyAppsScript}>
+                  <Button type="button" variant="outline" size="sm" className="ck-btn" onClick={copyAppsScript}>
                     <Copy className="h-3.5 w-3.5" /> Copiar código
                   </Button>
                 </div>
@@ -437,7 +437,7 @@ export function FunnelSettingsDialog({
                     onBlur={(e) => saveSheetsUrl(e.target.value)}
                     placeholder="https://script.google.com/macros/s/AKfy.../exec"
                   />
-                  <Button type="button" variant="outline" className="rounded-full sm:w-36" onClick={testSheets} disabled={testingSheets}>
+                  <Button type="button" variant="outline" className="ck-btn sm:w-36" onClick={testSheets} disabled={testingSheets}>
                     {testingSheets ? (
                       "Testando..."
                     ) : (
@@ -497,7 +497,7 @@ export function FunnelSettingsDialog({
                   </div>
                 ))}
                 {waNumbers.length < 5 && (
-                  <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={addWaNumberField}>
+                  <Button type="button" variant="outline" size="sm" className="ck-btn" onClick={addWaNumberField}>
                     <Plus className="h-3.5 w-3.5" /> Adicionar número
                   </Button>
                 )}
@@ -512,7 +512,7 @@ export function FunnelSettingsDialog({
                     placeholder="Ex: BEMVINDO10"
                     className="mt-1.5"
                   />
-                  <Button type="button" className="mt-3 w-full rounded-full" onClick={handleActivateWhatsappAlert} disabled={waSaving}>
+                  <Button type="button" className="mt-3 w-full ck-btn" onClick={handleActivateWhatsappAlert} disabled={waSaving}>
                     {waSaving
                       ? "Salvando..."
                       : wa?.status === "canceled" || wa?.status === "failed"
@@ -530,7 +530,7 @@ export function FunnelSettingsDialog({
 
               {wa?.status === "active" && (
                 <div className="mt-4">
-                  <Button type="button" variant="outline" className="rounded-full w-full" onClick={handleSaveWhatsappNumbers} disabled={waSaving}>
+                  <Button type="button" variant="outline" className="ck-btn w-full" onClick={handleSaveWhatsappNumbers} disabled={waSaving}>
                     {waSaving ? "Salvando..." : "Salvar números"}
                   </Button>
                 </div>
@@ -552,7 +552,7 @@ export function FunnelSettingsDialog({
                       Abrir convite do grupo <ExternalLink className="h-3 w-3" />
                     </a>
                   )}
-                  <Button type="button" variant="outline" size="sm" className="mt-3 rounded-full" onClick={handleSaveWhatsappNumbers} disabled={waSaving}>
+                  <Button type="button" variant="outline" size="sm" className="mt-3 ck-btn" onClick={handleSaveWhatsappNumbers} disabled={waSaving}>
                     {waSaving ? "Salvando..." : "Salvar números"}
                   </Button>
                 </div>
