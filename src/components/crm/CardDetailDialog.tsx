@@ -15,6 +15,7 @@ import {
   Compass,
   Megaphone,
   ClipboardList,
+  CalendarClock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -29,6 +30,7 @@ import { tagColorClass } from "@/lib/crm-tag-color";
 import { CONVERSATIONS, type Conversation, type Message } from "@/lib/crm-inbox-mock";
 import { MessageBubble } from "@/components/crm/inbox/MessageBubble";
 import { Composer } from "@/components/crm/inbox/Composer";
+import { ScheduleAppointmentDialog } from "@/components/crm/ScheduleAppointmentDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,7 +43,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-type Stage = { id: string; name: string; color: string };
+type Stage = { id: string; name: string; color: string; triggersScheduling?: boolean };
 
 function findMockConversation(name: string | null, phone: string | null): Conversation | null {
   const needle = `${name ?? ""} ${phone ?? ""}`.trim().toLowerCase();
@@ -77,6 +79,7 @@ export function CardDetailDialog({
 
   const [noteBody, setNoteBody] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [convo, setConvo] = useState<Conversation | null>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
@@ -121,7 +124,10 @@ export function CardDetailDialog({
 
   const moveMut = useMutation({
     mutationFn: (stageId: string) => moveCardFn({ data: { cardId: cardId!, stageId, position: 0 } }),
-    onSuccess: invalidateAll,
+    onSuccess: (_res, stageId) => {
+      invalidateAll();
+      if (stages.find((s) => s.id === stageId)?.triggersScheduling) setScheduleOpen(true);
+    },
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível mudar a etapa."),
   });
 
@@ -135,6 +141,13 @@ export function CardDetailDialog({
   const utmCampaign = utm.utm_campaign ?? utm.campaign;
   const utmMedium = utm.utm_medium ?? utm.medium;
   const hasCampaign = !!(utmSource || utmCampaign || utmMedium);
+  const appointment = data?.appointment as
+    | { scheduled_at: string; evaluator_id: string | null }
+    | null
+    | undefined;
+  const evaluatorEmail = appointment?.evaluator_id
+    ? members.find((m) => m.userId === appointment.evaluator_id)?.email
+    : undefined;
 
   // Liga com a conversa mockada da Fase 3a por nome/telefone — leads reais de
   // teste não têm par nenhum ainda, é o esperado até a integração de verdade
@@ -191,6 +204,15 @@ export function CardDetailDialog({
     if (ev.type === "tags_changed") {
       const t = ev.payload?.tags as string[] | undefined;
       return t?.length ? `Etiquetas: ${t.join(", ")}` : "Etiquetas removidas";
+    }
+    if (ev.type === "appointment_scheduled") {
+      const when = ev.payload?.scheduledAt
+        ? new Date(ev.payload.scheduledAt).toLocaleString("pt-BR", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })
+        : "data indefinida";
+      return `Agendou avaliação para ${when}`;
     }
     return ev.type;
   }
@@ -285,6 +307,43 @@ export function CardDetailDialog({
                   </div>
                 </div>
               )}
+
+              {/* Agendamento */}
+              <div>
+                <p className="ck-eyebrow mb-2 flex items-center gap-1.5">
+                  <CalendarClock className="h-3.5 w-3.5" /> Agendamento
+                </p>
+                {appointment ? (
+                  <div className="ck-r-flat border border-border bg-secondary/40 p-2.5 text-sm">
+                    <p className="font-medium text-foreground/90">
+                      {new Date(appointment.scheduled_at).toLocaleString("pt-BR", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Avaliador: {evaluatorEmail ?? "a definir"}
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="ck-btn mt-2 h-7 text-xs"
+                      onClick={() => setScheduleOpen(true)}
+                    >
+                      Reagendar
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ck-btn"
+                    onClick={() => setScheduleOpen(true)}
+                  >
+                    <CalendarClock className="h-3.5 w-3.5" /> Marcar avaliação
+                  </Button>
+                )}
+              </div>
 
               {/* Atendente */}
               <div>
@@ -434,6 +493,11 @@ export function CardDetailDialog({
           </div>
         )}
       </DialogContent>
+
+      <ScheduleAppointmentDialog
+        cardId={scheduleOpen ? cardId : null}
+        onOpenChange={(open) => setScheduleOpen(open)}
+      />
     </Dialog>
   );
 }

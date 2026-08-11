@@ -413,6 +413,34 @@ export const deleteStage = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Marca qual(is) etapa(s) do pipeline disparam o modal de agendamento ao
+// receber um card — deliberadamente por flag, não por nome da etapa, porque
+// etapas são renomeáveis livremente por cada clínica (ver docs/crm-plano.md).
+export const setStageSchedulingFlag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { stageId: string; triggersScheduling: boolean }) => {
+    if (!d?.stageId || typeof d.triggersScheduling !== "boolean")
+      throw new Error("Dados inválidos");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data: stage } = await supabase
+      .from("crm_stages")
+      .select("id, crm_pipelines!inner(owner_id)")
+      .eq("id", data.stageId)
+      .maybeSingle();
+    if (!stage || (stage as any).crm_pipelines.owner_id !== userId)
+      throw new Error("Etapa não encontrada");
+    const { error } = await supabase
+      .from("crm_stages")
+      .update({ triggers_scheduling: data.triggersScheduling } as any)
+      .eq("id", data.stageId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getBoard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { pipelineId?: string }) => d ?? {})
@@ -432,9 +460,9 @@ export const getBoard = createServerFn({ method: "GET" })
     if (!pipelineId) return { pipelineId: null, stages: [], cards: [] };
 
     const [{ data: stages }, { data: cards }] = await Promise.all([
-      supabase
+      (supabase as any)
         .from("crm_stages")
-        .select("id, name, color, order")
+        .select("id, name, color, order, triggers_scheduling")
         .eq("pipeline_id", pipelineId)
         .order("order", { ascending: true }),
       supabase
@@ -447,6 +475,15 @@ export const getBoard = createServerFn({ method: "GET" })
         .order("position", { ascending: true }),
     ]);
 
+    const cardIds = (cards ?? []).map((c: any) => c.id);
+    const { data: appts } = cardIds.length
+      ? await (supabase as any)
+          .from("crm_appointments")
+          .select("lead_card_id, scheduled_at, evaluator_id")
+          .in("lead_card_id", cardIds)
+      : { data: [] as any[] };
+    const apptByCard = new Map<string, any>((appts ?? []).map((a: any) => [a.lead_card_id, a]));
+
     return {
       pipelineId,
       stages: (stages ?? []).map((s: any) => ({
@@ -454,22 +491,29 @@ export const getBoard = createServerFn({ method: "GET" })
         name: s.name,
         color: s.color,
         order: s.order,
+        triggersScheduling: s.triggers_scheduling,
       })),
-      cards: (cards ?? []).map((c: any) => ({
-        id: c.id,
-        stageId: c.stage_id,
-        position: c.position,
-        assigneeId: c.assignee_id,
-        movedAt: c.moved_at,
-        tags: c.tags ?? [],
-        lead: {
-          id: c.leads.id,
-          name: c.leads.name,
-          email: c.leads.email,
-          phone: c.leads.phone,
-          createdAt: c.leads.created_at,
-        },
-      })),
+      cards: (cards ?? []).map((c: any) => {
+        const appt = apptByCard.get(c.id);
+        return {
+          id: c.id,
+          stageId: c.stage_id,
+          position: c.position,
+          assigneeId: c.assignee_id,
+          movedAt: c.moved_at,
+          tags: c.tags ?? [],
+          appointment: appt
+            ? { scheduledAt: appt.scheduled_at, evaluatorId: appt.evaluator_id }
+            : null,
+          lead: {
+            id: c.leads.id,
+            name: c.leads.name,
+            email: c.leads.email,
+            phone: c.leads.phone,
+            createdAt: c.leads.created_at,
+          },
+        };
+      }),
     };
   });
 
@@ -505,6 +549,75 @@ export const moveCard = createServerFn({ method: "POST" })
       });
     }
     return { ok: true };
+  });
+
+export const upsertAppointment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { cardId: string; scheduledAt: string; evaluatorId: string | null }) => {
+    if (!d?.cardId || !d?.scheduledAt) throw new Error("Dados inválidos");
+    const when = new Date(d.scheduledAt);
+    if (Number.isNaN(when.getTime())) throw new Error("Data/hora inválida");
+    return { cardId: d.cardId, scheduledAt: when.toISOString(), evaluatorId: d.evaluatorId ?? null };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    await assertCardOwnership(supabase, userId, data.cardId);
+    if (data.evaluatorId && data.evaluatorId !== userId) {
+      const { data: member } = await supabase
+        .from("crm_members")
+        .select("id")
+        .eq("owner_id", userId)
+        .eq("user_id", data.evaluatorId)
+        .maybeSingle();
+      if (!member) throw new Error("Esse avaliador não faz parte da sua equipe");
+    }
+    const { error } = await (supabase as any).from("crm_appointments").upsert(
+      {
+        lead_card_id: data.cardId,
+        scheduled_at: data.scheduledAt,
+        evaluator_id: data.evaluatorId,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "lead_card_id" },
+    );
+    if (error) throw new Error(error.message);
+    await logEvent(supabase, data.cardId, "appointment_scheduled", {
+      scheduledAt: data.scheduledAt,
+      evaluatorId: data.evaluatorId,
+    });
+    return { ok: true };
+  });
+
+export const listAppointments = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data } = await (supabase as any)
+      .from("crm_appointments")
+      .select(
+        "id, scheduled_at, evaluator_id, lead_card_id, crm_lead_cards!inner(pipeline_id, status, leads!inner(name, phone, email), crm_stages!inner(name, color), crm_pipelines!inner(name))",
+      )
+      .eq("crm_lead_cards.status", "active")
+      .order("scheduled_at", { ascending: true });
+    return {
+      appointments: (data ?? []).map((a: any) => ({
+        id: a.id,
+        scheduledAt: a.scheduled_at,
+        evaluatorId: a.evaluator_id,
+        cardId: a.lead_card_id,
+        pipelineId: a.crm_lead_cards.pipeline_id,
+        pipelineName: a.crm_lead_cards.crm_pipelines?.name ?? "—",
+        stageName: a.crm_lead_cards.crm_stages?.name ?? "—",
+        stageColor: a.crm_lead_cards.crm_stages?.color ?? "slate",
+        lead: {
+          name: a.crm_lead_cards.leads?.name ?? null,
+          phone: a.crm_lead_cards.leads?.phone ?? null,
+          email: a.crm_lead_cards.leads?.email ?? null,
+        },
+      })),
+    };
   });
 
 export const listLeads = createServerFn({ method: "GET" })
@@ -552,7 +665,7 @@ export const getCardDetail = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!card) throw new Error("Card não encontrado");
     const leadRow = (card as any).leads as { funnel_id: string | null; answers: any; utm: any };
-    const [{ data: notes }, { data: events }, origin] = await Promise.all([
+    const [{ data: notes }, { data: events }, origin, { data: appointment }] = await Promise.all([
       supabase
         .from("crm_notes")
         .select("id, body, author_id, created_at")
@@ -564,8 +677,13 @@ export const getCardDetail = createServerFn({ method: "GET" })
         .eq("lead_card_id", data.cardId)
         .order("created_at", { ascending: false }),
       resolveFunnelOrigin(supabase, leadRow?.funnel_id ?? null, leadRow?.answers ?? null),
+      (supabase as any)
+        .from("crm_appointments")
+        .select("scheduled_at, evaluator_id")
+        .eq("lead_card_id", data.cardId)
+        .maybeSingle(),
     ]);
-    return { card, notes: notes ?? [], events: events ?? [], origin };
+    return { card, notes: notes ?? [], events: events ?? [], origin, appointment: appointment ?? null };
   });
 
 export const addNote = createServerFn({ method: "POST" })

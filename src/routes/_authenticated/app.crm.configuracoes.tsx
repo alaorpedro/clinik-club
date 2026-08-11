@@ -10,7 +10,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2, Loader2, UserPlus } from "lucide-react";
+import { GripVertical, Plus, Trash2, Loader2, UserPlus, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import {
   ensureDefaultPipeline,
@@ -20,6 +20,7 @@ import {
   renameStage,
   reorderStages,
   deleteStage,
+  setStageSchedulingFlag,
   listMembers,
   inviteMember,
   updateMemberRole,
@@ -56,7 +57,13 @@ export const Route = createFileRoute("/_authenticated/app/crm/configuracoes")({
   component: SettingsPage,
 });
 
-type Stage = { id: string; name: string; color: string; order: number };
+type Stage = {
+  id: string;
+  name: string;
+  color: string;
+  order: number;
+  triggersScheduling?: boolean;
+};
 
 // Mesma paleta usada no kanban (app.crm.pipelines.tsx) — sete cores curadas
 // pra etapa, diferente da paleta de dez cores por hash das etiquetas.
@@ -79,6 +86,7 @@ function SettingsPage() {
   const renameStageFn = useServerFn(renameStage);
   const reorderStagesFn = useServerFn(reorderStages);
   const deleteStageFn = useServerFn(deleteStage);
+  const schedulingFlagFn = useServerFn(setStageSchedulingFlag);
   const fetchMembers = useServerFn(listMembers);
   const inviteMemberFn = useServerFn(inviteMember);
   const updateMemberRoleFn = useServerFn(updateMemberRole);
@@ -144,7 +152,7 @@ function SettingsPage() {
       await qc.cancelQueries({ queryKey: boardKey });
       const prev = qc.getQueryData<typeof data>(boardKey);
       if (prev) {
-        const byId = new Map(prev.stages.map((s: any) => [s.id, s]));
+        const byId = new Map<string, any>(prev.stages.map((s: any) => [s.id, s]));
         qc.setQueryData(boardKey, {
           ...prev,
           stages: orderedStageIds.map((id, i) => ({ ...byId.get(id), order: i })),
@@ -167,6 +175,13 @@ function SettingsPage() {
       toast.success("Etapa excluída.");
     },
     onError: (e: any) => toast.error(e?.message ?? "Não foi possível excluir a etapa."),
+  });
+
+  const schedulingMut = useMutation({
+    mutationFn: (vars: { stageId: string; triggersScheduling: boolean }) =>
+      schedulingFlagFn({ data: vars }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: boardKey }),
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível atualizar a etapa."),
   });
 
   const { data: membersData } = useQuery({
@@ -264,6 +279,12 @@ function SettingsPage() {
                         renameMut.mutate({ stageId: stage.id, name: stage.name, color })
                       }
                       onDelete={() => setDeleteTarget(stage)}
+                      onToggleScheduling={() =>
+                        schedulingMut.mutate({
+                          stageId: stage.id,
+                          triggersScheduling: !stage.triggersScheduling,
+                        })
+                      }
                     />
                   ))}
                 </div>
@@ -406,6 +427,12 @@ function SettingsPage() {
             <AlertDialogDescription>
               Só é possível excluir uma etapa sem cards. Mova os leads para outra etapa antes, se
               houver algum aqui. Essa ação não pode ser desfeita.
+              {deleteTarget?.triggersScheduling && (
+                <span className="mt-2 block font-medium text-amber-600">
+                  Essa é a etapa que dispara o agendamento automático. Ao excluir, nenhuma etapa vai
+                  abrir o modal de agendamento até você marcar outra.
+                </span>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -429,11 +456,13 @@ function StageRow({
   onRename,
   onColor,
   onDelete,
+  onToggleScheduling,
 }: {
   stage: Stage;
   onRename: (name: string) => void;
   onColor: (color: string) => void;
   onDelete: () => void;
+  onToggleScheduling: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stage.id,
@@ -481,6 +510,29 @@ function StageRow({
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
         className="ck-input h-8 flex-1 min-w-0"
       />
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onToggleScheduling}
+        aria-label={
+          stage.triggersScheduling
+            ? "Desativar disparo de agendamento"
+            : "Ativar disparo de agendamento nesta etapa"
+        }
+        title={
+          stage.triggersScheduling
+            ? "Essa etapa dispara o modal de agendamento"
+            : "Marcar esta etapa como a que dispara o agendamento"
+        }
+        className={`h-8 w-8 shrink-0 ${
+          stage.triggersScheduling
+            ? "text-primary hover:text-primary"
+            : "text-muted-foreground/40 hover:text-muted-foreground"
+        }`}
+      >
+        <CalendarClock className="h-4 w-4" />
+      </Button>
 
       <Button
         variant="ghost"

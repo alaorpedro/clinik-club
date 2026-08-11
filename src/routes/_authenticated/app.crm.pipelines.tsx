@@ -41,6 +41,7 @@ import {
 } from "@/lib/crm.functions";
 import { tagColorClass } from "@/lib/crm-tag-color";
 import { CardDetailDialog } from "@/components/crm/CardDetailDialog";
+import { ScheduleAppointmentDialog } from "@/components/crm/ScheduleAppointmentDialog";
 import { ImportContactsDialog } from "@/components/crm/ImportContactsDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,7 +104,7 @@ type Card = {
     createdAt: string;
   };
 };
-type Stage = { id: string; name: string; color: string; order: number };
+type Stage = { id: string; name: string; color: string; order: number; triggersScheduling?: boolean };
 
 // Paleta de etiquetas da marca (docs/brand/design-system.md §2) — dessaturada,
 // todos os pares com contraste >=4.6:1.
@@ -136,6 +137,7 @@ function PipelinesPage() {
   const [renameName, setRenameName] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [scheduleCardId, setScheduleCardId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("all");
@@ -297,6 +299,10 @@ function PipelinesPage() {
     if (!card || card.stageId === newStageId) return;
     const position = byStage.get(newStageId)?.length ?? 0;
     moveMut.mutate({ cardId, stageId: newStageId, position });
+    const targetStage = (data?.stages ?? []).find((s: Stage) => s.id === newStageId);
+    if (targetStage?.triggersScheduling) {
+      setScheduleCardId(cardId);
+    }
   }
 
   if (isLoading) {
@@ -550,6 +556,11 @@ function PipelinesPage() {
         cardId={selectedCardId}
         stages={data?.stages ?? []}
         onOpenChange={(open) => !open && setSelectedCardId(null)}
+      />
+
+      <ScheduleAppointmentDialog
+        cardId={scheduleCardId}
+        onOpenChange={(open) => !open && setScheduleCardId(null)}
       />
 
       <ImportContactsDialog

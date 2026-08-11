@@ -15,6 +15,7 @@ import {
   ListChecks,
   BarChart3,
   Settings as SettingsIcon,
+  CalendarClock,
 } from "lucide-react";
 import { hasCrmAccess } from "@/lib/crm.functions";
 
@@ -64,6 +65,7 @@ function CrmLayout() {
 
   const links = [
     { to: "/app/crm/pipelines", label: "Pipeline", icon: LayoutGrid },
+    { to: "/app/crm/agenda", label: "Agenda", icon: CalendarClock },
     { to: "/app/crm/atendimento", label: "Atendimento", icon: MessageSquare },
     { to: "/app/crm/leads", label: "Leads", icon: ListChecks },
     { to: "/app/crm/relatorios", label: "Relatórios", icon: BarChart3 },
