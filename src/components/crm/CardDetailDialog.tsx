@@ -198,7 +198,7 @@ export function CardDetailDialog({
   return (
     <Dialog open={!!cardId} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[85vh] max-w-5xl flex-col overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
+        <DialogHeader className="shrink-0 border-b border-border py-4 pl-6 pr-12">
           <div className="flex flex-wrap items-center gap-3">
             <DialogTitle className="mr-auto">{card?.leads?.name ?? "Lead sem nome"}</DialogTitle>
             {!isLoading && card && (
