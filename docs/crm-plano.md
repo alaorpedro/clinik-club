@@ -63,13 +63,21 @@ já comprou funil, sem distinção de código (`hasCrmAccess()` em `crm.function
   lista "Meus funis" (`app.index.tsx`) — se criar qualquer outro mecanismo parecido,
   replicar esses dois filtros ou vai travar cliente Starter de criar o funil de verdade.
 
+**Fase 3a completa (11/08/2026)** — protótipo mockado do inbox em `/app/crm/atendimento`
+(fixture em `src/lib/crm-inbox-mock.ts`, componentes em `src/components/crm/inbox/*`).
+Três colunas: lista (abas Novos/Meus/Outros + busca), janela de conversa (header com
+etapa/IA/transferir/concluir, bolhas texto/áudio/imagem, composer com respostas rápidas
+via `/` e envio otimista pendente→enviado→entregue), painel lateral (etiquetas + notas
+internas). Tudo em memória, nada bate em `crm_channels`/`crm_conversations`/
+`crm_messages` (que ainda não existem) nem no Evolution API de verdade.
+
 O que existe só como placeholder ("Em construção"/"Em breve"):
 - `app.crm.relatorios.tsx`
 
-O que **não existe ainda**: nenhuma rota de atendimento/inbox. `evolution.server.ts`
+O que **não existe ainda**: infra real de atendimento. `evolution.server.ts`
 (114 linhas) só sabe criar grupo e mandar mensagem *para* um grupo — não lê nem
-armazena conversa 1:1, que é o que o inbox precisa. Fase 3 (3a, mockado) é o próximo
-passo natural — ver seção abaixo.
+armazena conversa 1:1, que é o que o inbox precisa de verdade (Fase 3b). Próximo passo
+natural: validar o protótipo mockado com o Alaor e só então atacar 3b.
 
 ---
 
@@ -102,18 +110,23 @@ No CRMax é descrito como "o coração do produto" — provavelmente vale o mesm
 Divide em duas etapas: primeiro mockado (validar a UI/UX sem depender de infra nova),
 integração real só depois de aprovado.
 
-**3a — Protótipo mockado (primeiro passo).** Tela inteira funcional com dados fake em
+**3a — Protótipo mockado (feito, 11/08/2026).** Tela inteira funcional com dados fake em
 memória/fixture — sem `crm_channels`/`crm_conversations`/`crm_messages` reais, sem
-Evolution API, sem webhook. Objetivo é destravar decisão de UX antes de investir em
-infra:
+Evolution API, sem webhook. Entregue:
 - Abas Novos/Meus/Outros (fila → atribuição), lista de conversas fake.
-- Janela de conversa com mensagens de exemplo (texto, áudio com player, mídia).
-- Respostas rápidas, trocar etapa do pipeline direto da conversa, notas internas.
+- Janela de conversa com mensagens de exemplo (texto, áudio com player falso, imagem).
+- Respostas rápidas (`/atalho` no composer), trocar etapa do pipeline direto do header
+  da conversa, notas internas no painel lateral.
 - Toggle "IA ativa" (visual, sem IA de verdade ainda).
-- Estado otimista de envio (mensagem aparece na hora, antes de qualquer confirmação) —
-  pendência do design-system.md §4, decidir e implementar aqui mesmo em mock.
-- Regras de arraste/interação validadas com o Alaor usando o protótipo antes de gastar
-  tempo em backend.
+- Estado otimista de envio — mensagem aparece na hora com relógio, vira "enviada" e
+  depois "entregue" sozinha (pendência do design-system.md §4, resolvida aqui: ver nota
+  abaixo). Bolha uniforme sem cantos assimétricos, como o design-system já mandava.
+- Board com `overflow-x-auto` abaixo de ~960px de largura — lista+painel lateral são
+  largura fixa, então em tela estreita o meio some e vira scroll horizontal em vez de
+  quebrar o layout (achado ao testar no preview, corrigido no mesmo commit).
+- Ainda falta decidir/escrever: regra de "chegada de mensagem nova" (não existe nesse
+  mock por não haver mensagens de entrada assíncronas ainda) — só a 3b traz isso de
+  verdade via Realtime.
 
 **3b — Integração real (depois que o mock for aprovado).** Exige schema novo:
 - `crm_channels` — conexão WhatsApp por clínica (permite multi-canal).
