@@ -109,6 +109,7 @@ export type Database = {
           position: number
           stage_id: string
           status: string
+          tags: string[]
           updated_at: string
         }
         Insert: {
@@ -122,6 +123,7 @@ export type Database = {
           position?: number
           stage_id: string
           status?: string
+          tags?: string[]
           updated_at?: string
         }
         Update: {
@@ -135,6 +137,7 @@ export type Database = {
           position?: number
           stage_id?: string
           status?: string
+          tags?: string[]
           updated_at?: string
         }
         Relationships: [
@@ -818,6 +821,7 @@ export type Database = {
         Args: { check_env?: string; user_uuid: string }
         Returns: string
       }
+      get_user_id_by_email: { Args: { lookup_email: string }; Returns: string }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
         Returns: boolean
