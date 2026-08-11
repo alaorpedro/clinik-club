@@ -3,6 +3,10 @@ import { useEffect, useState, useCallback } from "react";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { createCheckoutSession, startBoletoSubscription } from "@/utils/payments.functions";
 
+// Liga/desliga a opção de boleto em todo checkout do site (funis, CRM, alerta
+// WhatsApp) com uma troca só — volta e meia sai/entra por causa de campanha.
+const BOLETO_ENABLED = false;
+
 interface Props {
   priceId: string;
   customerEmail?: string;
@@ -126,36 +130,38 @@ export function StripeEmbeddedCheckout({ priceId, customerEmail, returnUrl, funn
 
   return (
     <div id="checkout">
-      <div className="ck-r-sig-sm mb-3 flex items-center justify-between gap-2 border border-border bg-muted/30 px-3 py-2 text-xs">
-        {paymentMethod === "card" ? (
-          <>
-            <span className="text-muted-foreground">
-              Problemas com o cartão? Pague com <strong className="text-foreground">boleto</strong>.
-            </span>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("boleto")}
-              className="font-semibold text-primary hover:underline whitespace-nowrap"
-            >
-              Usar boleto →
-            </button>
-          </>
-        ) : (
-          <>
-            <span className="text-muted-foreground">
-              Você receberá um <strong className="text-foreground">novo boleto por email todo mês</strong>. Acesso liberado após confirmação.
-            </span>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod("card")}
-              className="font-semibold text-primary hover:underline whitespace-nowrap"
-            >
-              Voltar ao cartão
-            </button>
-          </>
-        )}
-      </div>
-      {paymentMethod === "boleto" ? (
+      {BOLETO_ENABLED && (
+        <div className="ck-r-sig-sm mb-3 flex items-center justify-between gap-2 border border-border bg-muted/30 px-3 py-2 text-xs">
+          {paymentMethod === "card" ? (
+            <>
+              <span className="text-muted-foreground">
+                Problemas com o cartão? Pague com <strong className="text-foreground">boleto</strong>.
+              </span>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("boleto")}
+                className="font-semibold text-primary hover:underline whitespace-nowrap"
+              >
+                Usar boleto →
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-muted-foreground">
+                Você receberá um <strong className="text-foreground">novo boleto por email todo mês</strong>. Acesso liberado após confirmação.
+              </span>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("card")}
+                className="font-semibold text-primary hover:underline whitespace-nowrap"
+              >
+                Voltar ao cartão
+              </button>
+            </>
+          )}
+        </div>
+      )}
+      {BOLETO_ENABLED && paymentMethod === "boleto" ? (
         <div className="ck-r-sig border border-border bg-background p-6">
           <h3 className="text-lg font-semibold text-foreground">Gerar boleto mensal</h3>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
