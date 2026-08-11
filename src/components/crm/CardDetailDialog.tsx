@@ -12,6 +12,9 @@ import {
   UserRound,
   MessageSquareOff,
   Wifi,
+  Compass,
+  Megaphone,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -124,6 +127,14 @@ export function CardDetailDialog({
 
   const card = data?.card as any;
   const tags: string[] = card?.tags ?? [];
+  const origin = data?.origin as
+    | { funnelName: string | null; answers: Array<{ question: string; answer: string }> }
+    | undefined;
+  const utm = (card?.leads?.utm ?? {}) as Record<string, string>;
+  const utmSource = utm.utm_source ?? utm.source;
+  const utmCampaign = utm.utm_campaign ?? utm.campaign;
+  const utmMedium = utm.utm_medium ?? utm.medium;
+  const hasCampaign = !!(utmSource || utmCampaign || utmMedium);
 
   // Liga com a conversa mockada da Fase 3a por nome/telefone — leads reais de
   // teste não têm par nenhum ainda, é o esperado até a integração de verdade
@@ -226,6 +237,54 @@ export function CardDetailDialog({
                   </span>
                 )}
               </div>
+
+              {/* Origem: funil e campanha */}
+              {(origin?.funnelName || hasCampaign) && (
+                <div>
+                  <p className="ck-eyebrow mb-2 flex items-center gap-1.5">
+                    <Compass className="h-3.5 w-3.5" /> Origem
+                  </p>
+                  <div className="space-y-1 text-sm">
+                    {origin?.funnelName && (
+                      <p className="text-foreground/80">
+                        Funil: <span className="font-medium">{origin.funnelName}</span>
+                      </p>
+                    )}
+                    {hasCampaign ? (
+                      <p className="flex items-start gap-1.5 text-foreground/80">
+                        <Megaphone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span>
+                          {[utmSource, utmMedium, utmCampaign].filter(Boolean).join(" · ")}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Sem dados de campanha (lead não veio com parâmetros de UTM na URL).
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Respostas do funil */}
+              {!!origin?.answers?.length && (
+                <div>
+                  <p className="ck-eyebrow mb-2 flex items-center gap-1.5">
+                    <ClipboardList className="h-3.5 w-3.5" /> Respostas do funil
+                  </p>
+                  <div className="space-y-2">
+                    {origin.answers.map((a, i) => (
+                      <div
+                        key={i}
+                        className="ck-r-flat border border-border bg-secondary/40 p-2.5 text-sm"
+                      >
+                        <p className="text-xs font-medium text-muted-foreground">{a.question}</p>
+                        <p className="mt-0.5 text-foreground/90">{a.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Atendente */}
               <div>

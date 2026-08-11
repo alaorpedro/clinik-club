@@ -22,6 +22,41 @@ async function isAdminUser(userId: string): Promise<boolean> {
   return !!data;
 }
 
+// Traduz as respostas cruas do funil (chave "step_<id>") pro texto da pergunta,
+// mesma convenção que buildSheetsLeadPayload usa pro webhook do Sheets — aqui é
+// só leitura pra exibir no card do CRM, sem duplicar o payload inteiro.
+async function resolveFunnelOrigin(
+  supabase: any,
+  funnelId: string | null,
+  answers: Record<string, unknown> | null,
+) {
+  if (!funnelId) return { funnelName: null, answers: [] as Array<{ question: string; answer: string }> };
+  const [{ data: funnel }, { data: steps }] = await Promise.all([
+    supabase.from("funnels").select("name").eq("id", funnelId).maybeSingle(),
+    supabase
+      .from("funnel_steps")
+      .select("id, type, config, order")
+      .eq("funnel_id", funnelId)
+      .order("order", { ascending: true }),
+  ]);
+  const answersIn = (answers ?? {}) as Record<string, unknown>;
+  const pretty: Array<{ question: string; answer: string }> = [];
+  for (const s of (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>) {
+    if (s.type === "contact") {
+      const f = (s.config?.fields ?? {}) as Record<string, unknown>;
+      if (f.city === true && answersIn["Cidade"]) pretty.push({ question: "Cidade", answer: String(answersIn["Cidade"]) });
+      if (f.neighborhood === true && answersIn["Bairro"]) pretty.push({ question: "Bairro", answer: String(answersIn["Bairro"]) });
+      continue;
+    }
+    if (s.type === "lead" || s.type === "text") continue;
+    const raw = answersIn[`step_${s.id}`];
+    if (raw === undefined || raw === null || raw === "") continue;
+    const title = (s.config?.title as string) || `Etapa ${s.order ?? ""}`.trim();
+    pretty.push({ question: title, answer: Array.isArray(raw) ? raw.join(", ") : String(raw) });
+  }
+  return { funnelName: funnel?.name ?? null, answers: pretty };
+}
+
 async function assertCardOwnership(supabase: any, userId: string, cardId: string) {
   const { data: card } = await supabase
     .from("crm_lead_cards")
@@ -516,7 +551,8 @@ export const getCardDetail = createServerFn({ method: "GET" })
       .eq("owner_id", userId)
       .maybeSingle();
     if (!card) throw new Error("Card não encontrado");
-    const [{ data: notes }, { data: events }] = await Promise.all([
+    const leadRow = (card as any).leads as { funnel_id: string | null; answers: any; utm: any };
+    const [{ data: notes }, { data: events }, origin] = await Promise.all([
       supabase
         .from("crm_notes")
         .select("id, body, author_id, created_at")
@@ -527,8 +563,9 @@ export const getCardDetail = createServerFn({ method: "GET" })
         .select("id, type, payload, created_at")
         .eq("lead_card_id", data.cardId)
         .order("created_at", { ascending: false }),
+      resolveFunnelOrigin(supabase, leadRow?.funnel_id ?? null, leadRow?.answers ?? null),
     ]);
-    return { card, notes: notes ?? [], events: events ?? [] };
+    return { card, notes: notes ?? [], events: events ?? [], origin };
   });
 
 export const addNote = createServerFn({ method: "POST" })

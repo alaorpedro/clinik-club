@@ -6,6 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 
+// Parâmetros padrão de campanha (Google/Meta Ads) — lidos uma vez da URL de
+// entrada do funil e salvos junto com o lead (leads.utm), pra CRM mostrar de
+// onde cada lead veio. Ausentes = objeto vazio, comportamento igual a antes.
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
+function captureUtmFromUrl(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const params = new URLSearchParams(window.location.search);
+  const utm: Record<string, string> = {};
+  for (const key of UTM_KEYS) {
+    const v = params.get(key);
+    if (v) utm[key] = v;
+  }
+  return utm;
+}
+
 type Step = { id: string; type: string; config: any; order: number };
 type FunnelData = { id: string; name: string; clinic_name: string | null; clinic_logo_url: string | null; instagram_url: string | null; gtm_id: string | null; meta_pixel_id: string | null; theme?: any };
 type LeadData = { name?: string; email?: string; phone?: string };
@@ -231,6 +246,7 @@ function PublicFunnel() {
   const [lead, setLead] = useState<{ name?: string; email?: string; phone?: string }>({});
   const [done, setDone] = useState(false);
   const sessionId = useMemo(() => genId(), []);
+  const utm = useMemo(() => captureUtmFromUrl(), []);
 
   // Inject GTM + Meta Pixel once
   useEffect(() => {
@@ -285,7 +301,7 @@ function PublicFunnel() {
   }
 
   async function finish(finalAnswers: Record<string, unknown>, finalLead: typeof lead) {
-    await submit({ data: { funnelId: funnel.id, sessionId, answers: finalAnswers, ...finalLead } });
+    await submit({ data: { funnelId: funnel.id, sessionId, answers: finalAnswers, utm, ...finalLead } });
     await track({ data: { funnelId: funnel.id, sessionId, stepIndex: index, completed: true } }).catch(() => {});
     fireEvent("CompleteRegistration");
     setDone(true);
@@ -323,6 +339,7 @@ function PublicFunnel() {
             sessionId,
             stepIndex: index + 1,
             answers: a,
+            utm,
             name: l.name,
             email: l.email,
             phone: l.phone,
