@@ -43,7 +43,7 @@ function UpgradePage() {
             Tudo integrado aos seus funis.
           </p>
           <div className="mt-6 flex items-baseline gap-2">
-            <span className="ck-num text-5xl font-light tracking-tight">R$ 97</span>
+            <span className="ck-num text-5xl font-light tracking-tight">R$ 1.200</span>
             <span className="text-muted-foreground">/mês</span>
           </div>
           <Button

@@ -5,10 +5,11 @@ Este é o backlog completo do CRM — tudo que queremos construir, referenciado 
 08/08/2026). Este doc responde *o quê* e *em que ordem*; a implementação de cada fase
 vira sessão própria quando for a vez dela.
 
-**Preço:** fora de escopo aqui. O add-on hoje cobra R$97/mês avulso
-(`price_id: crm_addon_monthly`, ver `app.crm.upgrade.tsx`), mas a ideia é reposicionar
-para a faixa de R$700–900. Repensar plano/Stripe é conversa separada, depois que o
-produto justificar o preço.
+**Preço:** decidido em 11/08/2026 — **R$1.200/mês** (`price_id: crm_addon_monthly`, ver
+`app.crm.upgrade.tsx`; substitui o R$97 antigo, nunca cobrado de cliente real). Ainda
+falta trocar o Price de verdade no Stripe Dashboard (criar Price novo de R$1.200,
+mover o `lookup_key` "crm_addon_monthly" pra ele) — o texto da tela já reflete o valor
+novo, mas o checkout só cobra certo depois desse passo manual no Stripe.
 
 ---
 
