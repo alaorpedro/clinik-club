@@ -24,6 +24,7 @@ import {
   Pencil,
   Trash2,
   Search,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,6 +39,7 @@ import {
 } from "@/lib/crm.functions";
 import { tagColorClass } from "@/lib/crm-tag-color";
 import { CardDetailDialog } from "@/components/crm/CardDetailDialog";
+import { ImportContactsDialog } from "@/components/crm/ImportContactsDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -132,6 +134,7 @@ function PipelinesPage() {
   const [renameName, setRenameName] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [tagFilter, setTagFilter] = useState("all");
   const [assigneeFilter, setAssigneeFilter] = useState("all");
@@ -353,6 +356,15 @@ function PipelinesPage() {
             variant="outline"
             size="sm"
             className="ck-btn"
+            disabled={!activePipeline}
+            onClick={() => setImportOpen(true)}
+          >
+            <Upload className="h-4 w-4" /> Importar contatos
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ck-btn"
             onClick={() => setCreateOpen(true)}
           >
             <Plus className="h-4 w-4" /> Novo pipeline
@@ -526,6 +538,13 @@ function PipelinesPage() {
         cardId={selectedCardId}
         stages={data?.stages ?? []}
         onOpenChange={(open) => !open && setSelectedCardId(null)}
+      />
+
+      <ImportContactsDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        pipelineId={activePipeline?.id}
+        stages={data?.stages ?? []}
       />
     </div>
   );

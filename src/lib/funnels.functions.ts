@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
 import { postToWhatsAppAlert } from "@/lib/whatsapp-alerts.functions";
+import { crmImportFunnelSlug } from "@/lib/crm.functions";
 
 type PaymentsEnv = "sandbox" | "live";
 
@@ -22,7 +23,11 @@ function getRequestHost(): string | null {
 
 function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
   const host = getRequestHost();
-  if (host === "clinik.club" || host === "www.clinik.club" || host === "kindred-ignite-forge.lovable.app") {
+  if (
+    host === "clinik.club" ||
+    host === "www.clinik.club" ||
+    host === "kindred-ignite-forge.lovable.app"
+  ) {
     return "live";
   }
 
@@ -69,13 +74,16 @@ function getClientIp(): string | null {
   }
 }
 
-async function checkAndLogRate(action: string, opts: {
-  sessionId?: string | null;
-  funnelId?: string | null;
-  windowSec: number;
-  maxPerSession: number;
-  maxPerIp: number;
-}) {
+async function checkAndLogRate(
+  action: string,
+  opts: {
+    sessionId?: string | null;
+    funnelId?: string | null;
+    windowSec: number;
+    maxPerSession: number;
+    maxPerIp: number;
+  },
+) {
   const ip = getClientIp();
   const since = new Date(Date.now() - opts.windowSec * 1000).toISOString();
   if (opts.sessionId) {
@@ -119,15 +127,19 @@ type SubscriptionPlanRow = {
 
 function isActiveSubscription(row: SubscriptionPlanRow): boolean {
   const endOk = !row.current_period_end || new Date(row.current_period_end) > new Date();
-  return (["active", "trialing", "past_due"].includes(row.status ?? "") && endOk) || (row.status === "canceled" && endOk);
+  return (
+    (["active", "trialing", "past_due"].includes(row.status ?? "") && endOk) ||
+    (row.status === "canceled" && endOk)
+  );
 }
 
 function pickActivePriceId(rows: SubscriptionPlanRow[], env: PaymentsEnv): string | null {
   const active = rows.filter(isActiveSubscription);
-  const preferred = active.find((s) => s.environment === env)
-    ?? active.find((s) => s.environment === "live")
-    ?? active.find((s) => s.environment === "sandbox")
-    ?? active[0];
+  const preferred =
+    active.find((s) => s.environment === env) ??
+    active.find((s) => s.environment === "live") ??
+    active.find((s) => s.environment === "sandbox") ??
+    active[0];
   return preferred?.price_id ?? null;
 }
 
@@ -213,7 +225,10 @@ async function postJsonToSheetsWebhook(url: string, payload: Record<string, unkn
     if (!res.ok) {
       const text = await res.text().catch(() => "");
       console.error("[sheets-webhook] non-2xx", res.status, text.slice(0, 300));
-      return { ok: false, error: "A planilha recusou o envio. Verifique a implantação do Apps Script." };
+      return {
+        ok: false,
+        error: "A planilha recusou o envio. Verifique a implantação do Apps Script.",
+      };
     }
     return { ok: true };
   } catch (e: any) {
@@ -260,12 +275,23 @@ async function buildSheetsLeadPayload(
   const answersIn = (payload.answers ?? {}) as Record<string, unknown>;
   const questions: string[] = [];
   const answers_pretty: Record<string, unknown> = {};
-  for (const s of (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>) {
+  for (const s of (steps ?? []) as Array<{
+    id: string;
+    type: string;
+    config: any;
+    order: number;
+  }>) {
     if (s.type === "contact") {
       // Cidade/Bairro são gravados em answers com chaves fixas pelo StepView, quando ativos na etapa
       const f = (s.config?.fields ?? {}) as Record<string, unknown>;
-      if (f.city === true) { questions.push("Cidade"); answers_pretty["Cidade"] = answersIn["Cidade"] ?? ""; }
-      if (f.neighborhood === true) { questions.push("Bairro"); answers_pretty["Bairro"] = answersIn["Bairro"] ?? ""; }
+      if (f.city === true) {
+        questions.push("Cidade");
+        answers_pretty["Cidade"] = answersIn["Cidade"] ?? "";
+      }
+      if (f.neighborhood === true) {
+        questions.push("Bairro");
+        answers_pretty["Bairro"] = answersIn["Bairro"] ?? "";
+      }
       continue;
     }
     if (s.type === "lead" || s.type === "text") continue;
@@ -329,7 +355,8 @@ export const testSheetsConnection = createServerFn({ method: "POST" })
 
 export const getPublicFunnel = createServerFn({ method: "GET" })
   .inputValidator((d: { slug: string }) => {
-    if (!d?.slug || typeof d.slug !== "string" || d.slug.length > 200) throw new Error("slug inválido");
+    if (!d?.slug || typeof d.slug !== "string" || d.slug.length > 200)
+      throw new Error("slug inválido");
     return d;
   })
   .handler(async ({ data }) => {
@@ -340,7 +367,11 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
       .eq("status", "published")
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!funnel) return { funnel: null, steps: [] as Array<{ id: string; type: string; config: any; order: number }> };
+    if (!funnel)
+      return {
+        funnel: null,
+        steps: [] as Array<{ id: string; type: string; config: any; order: number }>,
+      };
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("clinic_name, clinic_logo_url, instagram_url")
@@ -358,16 +389,29 @@ export const getPublicFunnel = createServerFn({ method: "GET" })
       .select("id, type, config, order")
       .eq("funnel_id", funnel.id)
       .order("order", { ascending: true });
-    return { funnel: enriched, steps: (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }> };
+    return {
+      funnel: enriched,
+      steps: (steps ?? []) as Array<{ id: string; type: string; config: any; order: number }>,
+    };
   });
 
 export const submitLead = createServerFn({ method: "POST" })
-  .inputValidator((d: { funnelId: string; sessionId?: string; answers: Record<string, unknown>; email?: string; name?: string; phone?: string; utm?: Record<string, unknown> }) => {
-    if (!d?.funnelId) throw new Error("funnelId obrigatório");
-    assertJsonSize(d.answers, "answers");
-    assertJsonSize(d.utm, "utm");
-    return d;
-  })
+  .inputValidator(
+    (d: {
+      funnelId: string;
+      sessionId?: string;
+      answers: Record<string, unknown>;
+      email?: string;
+      name?: string;
+      phone?: string;
+      utm?: Record<string, unknown>;
+    }) => {
+      if (!d?.funnelId) throw new Error("funnelId obrigatório");
+      assertJsonSize(d.answers, "answers");
+      assertJsonSize(d.utm, "utm");
+      return d;
+    },
+  )
   .handler(async ({ data }) => {
     await checkAndLogRate("submitLead", {
       sessionId: data.sessionId ?? null,
@@ -416,7 +460,9 @@ export const submitLead = createServerFn({ method: "POST" })
     if (!isExisting) {
       const used = await countLeadsThisMonthForOwner(ownerId);
       if (used >= ownerLimits.maxLeadsPerMonth) {
-        throw new Error("Limite mensal de leads deste funil atingido. Tente novamente no próximo mês.");
+        throw new Error(
+          "Limite mensal de leads deste funil atingido. Tente novamente no próximo mês.",
+        );
       }
     }
     const finalAnswers = { ...((existingLead?.answers as any) ?? {}), ...(data.answers ?? {}) };
@@ -425,16 +471,19 @@ export const submitLead = createServerFn({ method: "POST" })
     const finalName = data.name ?? existingLead?.name ?? null;
     const finalPhone = data.phone ?? existingLead?.phone ?? null;
     if (data.sessionId) {
-      const { error } = await supabaseAdmin.from("leads").upsert({
-        funnel_id: data.funnelId,
-        session_id: data.sessionId,
-        email: finalEmail,
-        name: finalName,
-        phone: finalPhone,
-        answers: finalAnswers as any,
-        utm: finalUtm as any,
-        status: "completed",
-      }, { onConflict: "funnel_id,session_id" });
+      const { error } = await supabaseAdmin.from("leads").upsert(
+        {
+          funnel_id: data.funnelId,
+          session_id: data.sessionId,
+          email: finalEmail,
+          name: finalName,
+          phone: finalPhone,
+          answers: finalAnswers as any,
+          utm: finalUtm as any,
+          status: "completed",
+        },
+        { onConflict: "funnel_id,session_id" },
+      );
       if (error) throw new Error(error.message);
     } else {
       const { error } = await supabaseAdmin.from("leads").insert({
@@ -470,34 +519,37 @@ export const submitLead = createServerFn({ method: "POST" })
   });
 
 export const upsertPartialLead = createServerFn({ method: "POST" })
-  .inputValidator((d: {
-    funnelId: string;
-    sessionId: string;
-    stepIndex: number;
-    answers?: Record<string, unknown>;
-    email?: string;
-    name?: string;
-    phone?: string;
-    utm?: Record<string, unknown>;
-  }) => {
-    if (!d?.funnelId) throw new Error("funnelId obrigatório");
-    if (!d?.sessionId || typeof d.sessionId !== "string" || d.sessionId.length > 200) throw new Error("sessionId inválido");
-    if (typeof d.stepIndex !== "number") throw new Error("stepIndex inválido");
-    assertJsonSize(d.answers ?? {}, "answers");
-    assertJsonSize(d.utm ?? {}, "utm");
-    // sanity caps to prevent abuse
-    const cap = (v: string | undefined, n: number) => (v ? String(v).slice(0, n) : null);
-    return {
-      funnelId: d.funnelId,
-      sessionId: d.sessionId,
-      stepIndex: d.stepIndex,
-      answers: d.answers ?? {},
-      utm: d.utm ?? {},
-      email: cap(d.email, 255),
-      name: cap(d.name, 200),
-      phone: cap(d.phone, 40),
-    };
-  })
+  .inputValidator(
+    (d: {
+      funnelId: string;
+      sessionId: string;
+      stepIndex: number;
+      answers?: Record<string, unknown>;
+      email?: string;
+      name?: string;
+      phone?: string;
+      utm?: Record<string, unknown>;
+    }) => {
+      if (!d?.funnelId) throw new Error("funnelId obrigatório");
+      if (!d?.sessionId || typeof d.sessionId !== "string" || d.sessionId.length > 200)
+        throw new Error("sessionId inválido");
+      if (typeof d.stepIndex !== "number") throw new Error("stepIndex inválido");
+      assertJsonSize(d.answers ?? {}, "answers");
+      assertJsonSize(d.utm ?? {}, "utm");
+      // sanity caps to prevent abuse
+      const cap = (v: string | undefined, n: number) => (v ? String(v).slice(0, n) : null);
+      return {
+        funnelId: d.funnelId,
+        sessionId: d.sessionId,
+        stepIndex: d.stepIndex,
+        answers: d.answers ?? {},
+        utm: d.utm ?? {},
+        email: cap(d.email, 255),
+        name: cap(d.name, 200),
+        phone: cap(d.phone, 40),
+      };
+    },
+  )
   .handler(async ({ data }) => {
     await checkAndLogRate("upsertPartialLead", {
       sessionId: data.sessionId,
@@ -549,37 +601,47 @@ export const upsertPartialLead = createServerFn({ method: "POST" })
       });
       if (error) throw new Error(error.message);
     }
-    await postToSheetsWebhook(data.funnelId, await buildSheetsLeadPayload(data.funnelId, {
-      sessionId: data.sessionId,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      answers: mergedAnswers,
-      utm: data.utm,
-      status: "partial",
-    }));
+    await postToSheetsWebhook(
+      data.funnelId,
+      await buildSheetsLeadPayload(data.funnelId, {
+        sessionId: data.sessionId,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        answers: mergedAnswers,
+        utm: data.utm,
+        status: "partial",
+      }),
+    );
     return { ok: true };
   });
 
 export const trackStep = createServerFn({ method: "POST" })
-  .inputValidator((d: { funnelId: string; sessionId: string; stepIndex: number; completed?: boolean }) => {
-    if (!d || typeof d !== "object") throw new Error("payload inválido");
-    if (typeof d.funnelId !== "string" || !/^[0-9a-f-]{36}$/i.test(d.funnelId)) {
-      throw new Error("funnelId inválido");
-    }
-    if (typeof d.sessionId !== "string" || d.sessionId.length < 1 || d.sessionId.length > 200) {
-      throw new Error("sessionId inválido");
-    }
-    if (typeof d.stepIndex !== "number" || !Number.isFinite(d.stepIndex) || d.stepIndex < 0 || d.stepIndex > 1000) {
-      throw new Error("stepIndex inválido");
-    }
-    return {
-      funnelId: d.funnelId,
-      sessionId: d.sessionId,
-      stepIndex: Math.floor(d.stepIndex),
-      completed: !!d.completed,
-    };
-  })
+  .inputValidator(
+    (d: { funnelId: string; sessionId: string; stepIndex: number; completed?: boolean }) => {
+      if (!d || typeof d !== "object") throw new Error("payload inválido");
+      if (typeof d.funnelId !== "string" || !/^[0-9a-f-]{36}$/i.test(d.funnelId)) {
+        throw new Error("funnelId inválido");
+      }
+      if (typeof d.sessionId !== "string" || d.sessionId.length < 1 || d.sessionId.length > 200) {
+        throw new Error("sessionId inválido");
+      }
+      if (
+        typeof d.stepIndex !== "number" ||
+        !Number.isFinite(d.stepIndex) ||
+        d.stepIndex < 0 ||
+        d.stepIndex > 1000
+      ) {
+        throw new Error("stepIndex inválido");
+      }
+      return {
+        funnelId: d.funnelId,
+        sessionId: d.sessionId,
+        stepIndex: Math.floor(d.stepIndex),
+        completed: !!d.completed,
+      };
+    },
+  )
   .handler(async ({ data }) => {
     await checkAndLogRate("trackStep", {
       sessionId: data.sessionId,
@@ -664,7 +726,8 @@ export const createFunnelChecked = createServerFn({ method: "POST" })
     const { count } = await supabaseAdmin
       .from("funnels")
       .select("id", { count: "exact", head: true })
-      .eq("owner_id", userId);
+      .eq("owner_id", userId)
+      .neq("slug", crmImportFunnelSlug(userId));
     const used = count ?? 0;
     if (used >= limits.maxFunnels) {
       throw new Error(
@@ -702,7 +765,8 @@ export const getPlanUsage = createServerFn({ method: "GET" })
     const { count } = await supabaseAdmin
       .from("funnels")
       .select("id", { count: "exact", head: true })
-      .eq("owner_id", userId);
+      .eq("owner_id", userId)
+      .neq("slug", crmImportFunnelSlug(userId));
     const leadsUsedThisMonth = await countLeadsThisMonthForOwner(userId);
     return {
       tier: limits.tier,

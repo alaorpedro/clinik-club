@@ -2,6 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+// Slug determinístico do funil técnico usado como âncora de FK para contatos
+// importados pelo CRM (leads.funnel_id é NOT NULL). Nunca fica em status
+// "published", então getPublicFunnel nunca o retorna — ver f.$slug.tsx.
+// funnels.functions.ts importa isto para excluí-lo da contagem de cota do
+// plano (getPlanUsage/createFunnelChecked) — sem isso, o funil técnico
+// consumiria a vaga de funil real do cliente.
+export function crmImportFunnelSlug(userId: string): string {
+  return `crm-import-${userId}`;
+}
+
 async function isAdminUser(userId: string): Promise<boolean> {
   const { data } = await supabaseAdmin
     .from("user_roles")
@@ -695,4 +705,114 @@ export const removeMember = createServerFn({ method: "POST" })
       .eq("owner_id", userId);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+async function ensureImportFunnel(userId: string): Promise<string> {
+  const slug = crmImportFunnelSlug(userId);
+  const { data: existing } = await supabaseAdmin
+    .from("funnels")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (existing) return existing.id as string;
+
+  const { data: created, error } = await supabaseAdmin
+    .from("funnels")
+    .insert({
+      owner_id: userId,
+      name: "Contatos importados (CRM)",
+      slug,
+      status: "draft",
+    })
+    .select("id")
+    .single();
+  if (error || !created) {
+    // Corrida: outro import concorrente já criou. Busca de novo em vez de falhar.
+    const { data: again } = await supabaseAdmin
+      .from("funnels")
+      .select("id")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (again) return again.id as string;
+    throw new Error(error?.message ?? "Falha ao preparar importação");
+  }
+  return created.id as string;
+}
+
+const MAX_IMPORT_ROWS = 500;
+
+export const importContacts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: {
+      pipelineId: string;
+      stageId: string;
+      rows: { name?: string; email?: string; phone?: string }[];
+    }) => {
+      if (!d?.pipelineId || !d?.stageId) throw new Error("Escolha o pipeline e a etapa de destino");
+      if (!Array.isArray(d.rows) || !d.rows.length) throw new Error("Nenhuma linha para importar");
+      if (d.rows.length > MAX_IMPORT_ROWS) {
+        throw new Error(`Máximo de ${MAX_IMPORT_ROWS} contatos por importação.`);
+      }
+      const rows = d.rows
+        .map((r) => ({
+          name: r.name?.trim() || null,
+          email: r.email?.trim() || null,
+          phone: r.phone?.trim() || null,
+        }))
+        .filter((r) => r.name || r.email || r.phone);
+      if (!rows.length) throw new Error("Nenhuma linha tem nome, email ou telefone preenchido");
+      return { pipelineId: d.pipelineId, stageId: d.stageId, rows };
+    },
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+
+    const { data: stage } = await supabase
+      .from("crm_stages")
+      .select("id, pipeline_id, crm_pipelines!inner(owner_id)")
+      .eq("id", data.stageId)
+      .eq("pipeline_id", data.pipelineId)
+      .maybeSingle();
+    if (!stage || (stage as any).crm_pipelines.owner_id !== userId) {
+      throw new Error("Pipeline ou etapa inválidos");
+    }
+
+    const funnelId = await ensureImportFunnel(userId);
+
+    const { data: newLeads, error: leadsError } = await supabaseAdmin
+      .from("leads")
+      .insert(
+        data.rows.map((r) => ({
+          funnel_id: funnelId,
+          name: r.name,
+          email: r.email,
+          phone: r.phone,
+          status: "completed",
+        })),
+      )
+      .select("id");
+    if (leadsError || !newLeads)
+      throw new Error(leadsError?.message ?? "Falha ao importar contatos");
+
+    const { count: existingCount } = await supabase
+      .from("crm_lead_cards")
+      .select("id", { count: "exact", head: true })
+      .eq("stage_id", data.stageId);
+    let position = existingCount ?? 0;
+
+    const { error: cardsError } = await supabaseAdmin.from("crm_lead_cards").insert(
+      newLeads.map((lead: any) => ({
+        owner_id: userId,
+        lead_id: lead.id,
+        pipeline_id: data.pipelineId,
+        stage_id: data.stageId,
+        position: position++,
+        status: "active",
+      })),
+    );
+    if (cardsError) throw new Error(cardsError.message);
+
+    return { imported: newLeads.length };
   });
