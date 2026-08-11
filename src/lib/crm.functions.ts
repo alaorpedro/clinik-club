@@ -620,6 +620,51 @@ export const listAppointments = createServerFn({ method: "GET" })
     };
   });
 
+export const listClosedDates = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    const { data } = await (supabase as any)
+      .from("crm_closed_dates")
+      .select("date, reason")
+      .eq("owner_id", userId)
+      .order("date", { ascending: true });
+    return { closedDates: (data ?? []).map((d: any) => ({ date: d.date, reason: d.reason })) };
+  });
+
+// Abrir/fechar um dia é sempre do dono da conta (mesma trava de assertCrmAccess
+// das outras configurações de pipeline) — não é uma ação por card, então não
+// passa por assertCardOwnership.
+export const setDateClosed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { date: string; closed: boolean; reason?: string | null }) => {
+    if (!d?.date || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) throw new Error("Data inválida");
+    if (typeof d.closed !== "boolean") throw new Error("Dados inválidos");
+    return { date: d.date, closed: d.closed, reason: d.reason?.trim() || null };
+  })
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertCrmAccess(supabase, userId);
+    if (data.closed) {
+      const { error } = await (supabase as any)
+        .from("crm_closed_dates")
+        .upsert(
+          { owner_id: userId, date: data.date, reason: data.reason },
+          { onConflict: "owner_id,date" },
+        );
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await (supabase as any)
+        .from("crm_closed_dates")
+        .delete()
+        .eq("owner_id", userId)
+        .eq("date", data.date);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
 export const listLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

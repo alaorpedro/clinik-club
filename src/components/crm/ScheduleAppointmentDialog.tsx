@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
-import { getCardDetail, upsertAppointment, listMembers } from "@/lib/crm.functions";
+import { getCardDetail, upsertAppointment, listMembers, listClosedDates } from "@/lib/crm.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ export function ScheduleAppointmentDialog({
   const qc = useQueryClient();
   const fetchDetail = useServerFn(getCardDetail);
   const fetchMembers = useServerFn(listMembers);
+  const fetchClosedDates = useServerFn(listClosedDates);
   const saveFn = useServerFn(upsertAppointment);
 
   const [date, setDate] = useState("");
@@ -63,6 +64,13 @@ export function ScheduleAppointmentDialog({
     enabled: !!cardId,
   });
   const members = membersData?.members ?? [];
+
+  const { data: closedData } = useQuery({
+    queryKey: ["crm", "closedDates"],
+    queryFn: () => fetchClosedDates(),
+    enabled: !!cardId,
+  });
+  const isClosedDay = !!closedData?.closedDates?.some((c: { date: string }) => c.date === date);
 
   // Pré-preenche com o agendamento existente (reagendar) — em branco quando é a
   // primeira vez que esse card recebe data/horário.
@@ -132,6 +140,12 @@ export function ScheduleAppointmentDialog({
                 />
               </div>
             </div>
+            {isClosedDay && (
+              <p className="flex items-center gap-1.5 text-xs text-[var(--ck-warning)]">
+                <TriangleAlert className="h-3.5 w-3.5 shrink-0" /> Esse dia está marcado como
+                fechado na Agenda — ainda dá pra agendar, mas confira antes.
+              </p>
+            )}
             <div>
               <p className="ck-eyebrow mb-1.5">Avaliador</p>
               <Select value={evaluatorId} onValueChange={setEvaluatorId}>
