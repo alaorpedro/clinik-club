@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,6 +11,7 @@ import {
   ArrowRightLeft,
   Tag as TagIcon,
   UserRound,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -150,6 +152,13 @@ export function CardDetailDialog({
                   <Phone className="h-3.5 w-3.5" /> {card.leads.phone}
                 </span>
               )}
+              <Link
+                to="/app/crm/atendimento"
+                search={{ q: card.leads.name ?? card.leads.phone ?? "" }}
+                className="ml-auto inline-flex items-center gap-1.5 text-primary hover:underline"
+              >
+                <MessageSquare className="h-3.5 w-3.5" /> Ver conversa
+              </Link>
             </div>
 
             {/* Atendente */}

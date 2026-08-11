@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { MessageSquare } from "lucide-react";
-import { ConversationList, type InboxTab } from "@/components/crm/inbox/ConversationList";
+import { ConversationList, tabOf, type InboxTab } from "@/components/crm/inbox/ConversationList";
 import { ConversationHeader } from "@/components/crm/inbox/ConversationHeader";
 import { MessageBubble } from "@/components/crm/inbox/MessageBubble";
 import { Composer } from "@/components/crm/inbox/Composer";
@@ -9,6 +9,9 @@ import { SidePanel } from "@/components/crm/inbox/SidePanel";
 import { CONVERSATIONS, type Conversation, type Message } from "@/lib/crm-inbox-mock";
 
 export const Route = createFileRoute("/_authenticated/app/crm/atendimento")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    q: typeof s.q === "string" ? s.q : undefined,
+  }),
   component: AtendimentoPage,
 });
 
@@ -26,10 +29,21 @@ function nowLabel() {
 }
 
 function AtendimentoPage() {
+  const { q } = Route.useSearch();
   const [conversations, setConversations] = useState<Conversation[]>(cloneConversations);
-  const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id ?? null);
-  const [activeTab, setActiveTab] = useState<InboxTab>("novos");
-  const [search, setSearch] = useState("");
+
+  // Chegando com ?q= (ex.: botão "Ver conversa" no card do pipeline), acha a
+  // conversa correspondente por nome/telefone e já abre na aba certa — se não
+  // achar (lead real, sem conversa no mock ainda), só deixa o termo na busca.
+  const initialMatch = q
+    ? conversations.find((c) => `${c.contactName} ${c.phone}`.toLowerCase().includes(q.toLowerCase()))
+    : undefined;
+
+  const [selectedId, setSelectedId] = useState<string | null>(
+    initialMatch?.id ?? conversations[0]?.id ?? null,
+  );
+  const [activeTab, setActiveTab] = useState<InboxTab>(initialMatch ? tabOf(initialMatch) : "novos");
+  const [search, setSearch] = useState(q ?? "");
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => () => timers.current.forEach(clearTimeout), []);

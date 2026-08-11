@@ -41,8 +41,10 @@ export function ConversationList({
   conversations.forEach((c) => counts[tabOf(c)]++);
 
   const q = search.trim().toLowerCase();
+  // Com busca ativa, ignora a aba — senão uma conversa em "Outros" nunca
+  // aparece pra quem tá pesquisando parado em "Meus".
   const filtered = conversations
-    .filter((c) => tabOf(c) === activeTab)
+    .filter((c) => (q ? true : tabOf(c) === activeTab))
     .filter((c) => {
       if (!q) return true;
       return `${c.contactName} ${c.phone}`.toLowerCase().includes(q);
