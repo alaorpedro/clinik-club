@@ -77,6 +77,32 @@ export const QUICK_REPLIES: { shortcut: string; text: string }[] = [
   },
 ];
 
+// Casa um lead real (nome/telefone do card no pipeline) com uma das 8 personas
+// fixas do fixture — só esses leads "têm conversa" no protótipo. Usado tanto
+// pelo card do pipeline quanto pela tela de Atendimento, pra garantir que os
+// dois concordam sobre qual conversa pertence a qual lead.
+export function matchMockConversation(
+  name: string | null | undefined,
+  phone: string | null | undefined,
+): Conversation | undefined {
+  const needle = `${name ?? ""} ${phone ?? ""}`.trim().toLowerCase();
+  if (!needle) return undefined;
+  return CONVERSATIONS.find(
+    (c) =>
+      `${c.contactName} ${c.phone}`.toLowerCase().includes(needle) ||
+      needle.includes(c.contactName.toLowerCase()),
+  );
+}
+
+export function cloneConversations(): Conversation[] {
+  return CONVERSATIONS.map((c) => ({
+    ...c,
+    tags: [...c.tags],
+    messages: c.messages.map((m) => ({ ...m })),
+    notes: c.notes.map((n) => ({ ...n })),
+  }));
+}
+
 export const CONVERSATIONS: Conversation[] = [
   {
     id: "c1",

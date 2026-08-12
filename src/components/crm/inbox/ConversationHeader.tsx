@@ -15,15 +15,19 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MEMBERS, STAGES, type Conversation } from "@/lib/crm-inbox-mock";
+import type { Conversation } from "@/lib/crm-inbox-mock";
 
 export function ConversationHeader({
   conversation,
+  stages,
+  members,
   onStageChange,
   onAssign,
   onToggleAi,
 }: {
   conversation: Conversation;
+  stages: { id: string; name: string }[];
+  members: { userId: string; email: string }[];
   onStageChange: (stageId: string) => void;
   onAssign: (assigneeId: string) => void;
   onToggleAi: (active: boolean) => void;
@@ -60,7 +64,7 @@ export function ConversationHeader({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {MEMBERS.map((m) => (
+              {members.map((m) => (
                 <DropdownMenuItem key={m.userId} onClick={() => onAssign(m.userId)}>
                   {m.email}
                 </DropdownMenuItem>
@@ -85,7 +89,7 @@ export function ConversationHeader({
             <SelectValue placeholder="Etapa do pipeline" />
           </SelectTrigger>
           <SelectContent>
-            {STAGES.map((s) => (
+            {stages.map((s) => (
               <SelectItem key={s.id} value={s.id}>
                 {s.name}
               </SelectItem>

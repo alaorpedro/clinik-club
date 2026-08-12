@@ -1,12 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MessageSquare } from "lucide-react";
-import { ConversationList, tabOf, type InboxTab } from "@/components/crm/inbox/ConversationList";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { ConversationList, type InboxTab } from "@/components/crm/inbox/ConversationList";
 import { ConversationHeader } from "@/components/crm/inbox/ConversationHeader";
 import { MessageBubble } from "@/components/crm/inbox/MessageBubble";
 import { Composer } from "@/components/crm/inbox/Composer";
 import { SidePanel } from "@/components/crm/inbox/SidePanel";
-import { CONVERSATIONS, type Conversation, type Message } from "@/lib/crm-inbox-mock";
+import { matchMockConversation, type Conversation } from "@/lib/crm-inbox-mock";
+import { useMockConversations, useMockConversationActions } from "@/hooks/use-mock-inbox";
+import {
+  getBoard,
+  listMembers,
+  getCardDetail,
+  moveCard,
+  assignCard,
+  updateCardTags,
+  addNote,
+} from "@/lib/crm.functions";
 
 export const Route = createFileRoute("/_authenticated/app/crm/atendimento")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -15,90 +29,159 @@ export const Route = createFileRoute("/_authenticated/app/crm/atendimento")({
   component: AtendimentoPage,
 });
 
-function cloneConversations(): Conversation[] {
-  return CONVERSATIONS.map((c) => ({
-    ...c,
-    tags: [...c.tags],
-    messages: c.messages.map((m) => ({ ...m })),
-    notes: c.notes.map((n) => ({ ...n })),
-  }));
-}
-
-function nowLabel() {
-  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
-
+// Uma "entrada" do inbox = um card real do pipeline cujo lead casa com uma das
+// personas do fixture mockado (ver matchMockConversation). Etapa, atendente e
+// etiquetas vêm do card de verdade; só mensagens/IA/não-lidas seguem mockadas
+// (Fase 3a) — compartilhadas com o modal do card via use-mock-inbox, pra dar
+// pra atender tanto por aqui quanto pelo Pipeline.
 function AtendimentoPage() {
   const { q } = Route.useSearch();
-  const [conversations, setConversations] = useState<Conversation[]>(cloneConversations);
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const fetchBoard = useServerFn(getBoard);
+  const fetchMembers = useServerFn(listMembers);
+  const fetchDetail = useServerFn(getCardDetail);
+  const moveCardFn = useServerFn(moveCard);
+  const assignFn = useServerFn(assignCard);
+  const updateTagsFn = useServerFn(updateCardTags);
+  const addNoteFn = useServerFn(addNote);
 
-  // Chegando com ?q= (ex.: botão "Ver conversa" no card do pipeline), acha a
-  // conversa correspondente por nome/telefone e já abre na aba certa — se não
-  // achar (lead real, sem conversa no mock ainda), só deixa o termo na busca.
-  const initialMatch = q
-    ? conversations.find((c) => `${c.contactName} ${c.phone}`.toLowerCase().includes(q.toLowerCase()))
-    : undefined;
+  const { data: board, isLoading } = useQuery({
+    queryKey: ["crm", "board", undefined],
+    queryFn: () => fetchBoard({ data: {} }),
+  });
+  const { data: membersData } = useQuery({
+    queryKey: ["crm", "members"],
+    queryFn: () => fetchMembers(),
+  });
+  const members = membersData?.members ?? [];
 
-  const [selectedId, setSelectedId] = useState<string | null>(
-    initialMatch?.id ?? conversations[0]?.id ?? null,
-  );
-  const [activeTab, setActiveTab] = useState<InboxTab>(initialMatch ? tabOf(initialMatch) : "novos");
+  const { data: mockConvos } = useMockConversations();
+  const { sendMessage, toggleAi, markRead } = useMockConversationActions();
+
+  const entries = useMemo(() => {
+    return (board?.cards ?? [])
+      .map((card: any) => {
+        const matched = matchMockConversation(card.lead.name, card.lead.phone);
+        if (!matched) return null;
+        const live = mockConvos?.find((c) => c.id === matched.id);
+        return {
+          cardId: card.id as string,
+          stageId: card.stageId as string,
+          assigneeId: card.assigneeId as string | null,
+          tags: card.tags as string[],
+          lead: card.lead as { name: string | null; phone: string | null },
+          mockId: matched.id,
+          phone: card.lead.phone ?? matched.phone,
+          channel: matched.channel,
+          messages: live?.messages ?? matched.messages,
+          aiActive: live?.aiActive ?? matched.aiActive,
+          unread: live?.unread ?? matched.unread,
+        };
+      })
+      .filter((e): e is NonNullable<typeof e> => !!e);
+  }, [board, mockConvos]);
+
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<InboxTab>("novos");
   const [search, setSearch] = useState(q ?? "");
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
-
-  const selected = conversations.find((c) => c.id === selectedId) ?? null;
-
-  function updateSelected(patch: Partial<Conversation> | ((c: Conversation) => Partial<Conversation>)) {
-    if (!selectedId) return;
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === selectedId ? { ...c, ...(typeof patch === "function" ? patch(c) : patch) } : c,
-      ),
+  // Seleção inicial só quando os dados chegam — vindo de ?q= (ex.: link "Ver
+  // conversa" de outra tela), acha o lead correspondente e já abre na aba certa.
+  useEffect(() => {
+    if (selectedCardId !== null || entries.length === 0) return;
+    const needle = q?.toLowerCase();
+    const initialMatch = needle
+      ? entries.find((e) => `${e.lead.name ?? ""} ${e.phone}`.toLowerCase().includes(needle))
+      : undefined;
+    const target = initialMatch ?? entries[0];
+    setSelectedCardId(target.cardId);
+    setActiveTab(
+      target.assigneeId === null ? "novos" : target.assigneeId === user?.id ? "meus" : "outros",
     );
+  }, [entries, q, selectedCardId, user?.id]);
+
+  const selectedEntry = entries.find((e) => e.cardId === selectedCardId) ?? null;
+
+  const { data: selectedDetail } = useQuery({
+    queryKey: ["crm", "cardDetail", selectedCardId],
+    queryFn: () => fetchDetail({ data: { cardId: selectedCardId! } }),
+    enabled: !!selectedCardId,
+  });
+
+  function invalidateAll() {
+    qc.invalidateQueries({ queryKey: ["crm"] });
   }
 
-  function selectConversation(id: string) {
-    setSelectedId(id);
-    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, unread: 0 } : c)));
-  }
+  const moveMut = useMutation({
+    mutationFn: (stageId: string) =>
+      moveCardFn({ data: { cardId: selectedCardId!, stageId, position: 0 } }),
+    onSuccess: invalidateAll,
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível mudar a etapa."),
+  });
+  const assignMut = useMutation({
+    mutationFn: (assigneeId: string | null) =>
+      assignFn({ data: { cardId: selectedCardId!, assigneeId } }),
+    onSuccess: invalidateAll,
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível atribuir o atendimento."),
+  });
+  const tagsMut = useMutation({
+    mutationFn: (tags: string[]) => updateTagsFn({ data: { cardId: selectedCardId!, tags } }),
+    onSuccess: invalidateAll,
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível atualizar as etiquetas."),
+  });
+  const noteMut = useMutation({
+    mutationFn: (body: string) => addNoteFn({ data: { cardId: selectedCardId!, body } }),
+    onSuccess: invalidateAll,
+    onError: (e: any) => toast.error(e?.message ?? "Não foi possível salvar a nota."),
+  });
 
-  // Estado otimista: a mensagem aparece na hora com relógio, vira "enviada" e
-  // depois "entregue" sozinha — sem esperar nenhuma infra real (docs/brand/
-  // design-system.md §4 marcava isso como pendência do CRM; decidido aqui).
-  function sendMessage(text: string) {
-    if (!selectedId) return;
-    const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const message: Message = {
-      id,
-      direction: "out",
-      type: "text",
-      body: text,
-      time: nowLabel(),
-      status: "pending",
-    };
-    setConversations((prev) =>
-      prev.map((c) => (c.id === selectedId ? { ...c, messages: [...c.messages, message] } : c)),
-    );
-
-    const setStatus = (status: Message["status"]) =>
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id !== selectedId
-            ? c
-            : { ...c, messages: c.messages.map((m) => (m.id === id ? { ...m, status } : m)) },
-        ),
-      );
-
-    timers.current.push(setTimeout(() => setStatus("sent"), 500));
-    timers.current.push(setTimeout(() => setStatus("delivered"), 1400));
+  function selectConversation(cardId: string) {
+    setSelectedCardId(cardId);
+    const entry = entries.find((e) => e.cardId === cardId);
+    if (entry) markRead(entry.mockId);
   }
 
   const threadRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
-  }, [selected?.messages.length, selectedId]);
+  }, [selectedEntry?.messages.length, selectedCardId]);
+
+  const conversationsForList: Conversation[] = entries.map((e) => ({
+    id: e.cardId,
+    contactName: e.lead.name ?? "Sem nome",
+    phone: e.phone,
+    channel: e.channel,
+    stageId: e.stageId,
+    assigneeId: e.assigneeId,
+    tags: e.tags,
+    unread: e.unread,
+    aiActive: e.aiActive,
+    messages: e.messages,
+    notes: [],
+  }));
+
+  const selectedConversation: Conversation | null = selectedEntry
+    ? {
+        id: selectedEntry.cardId,
+        contactName: selectedEntry.lead.name ?? "Sem nome",
+        phone: selectedEntry.phone,
+        channel: selectedEntry.channel,
+        stageId: selectedEntry.stageId,
+        assigneeId: selectedEntry.assigneeId,
+        tags: selectedEntry.tags,
+        unread: selectedEntry.unread,
+        aiActive: selectedEntry.aiActive,
+        messages: selectedEntry.messages,
+        notes: (selectedDetail?.notes ?? []).map((n: any) => ({
+          id: n.id,
+          body: n.body,
+          time: new Date(n.created_at).toLocaleString("pt-BR"),
+        })),
+      }
+    : null;
+
+  const stagesForHeader = (board?.stages ?? []).map((s: any) => ({ id: s.id, name: s.name }));
 
   return (
     <div className="flex h-[calc(100vh-14rem)] min-h-[520px] flex-col">
@@ -107,52 +190,58 @@ function AtendimentoPage() {
           Atendimento
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Protótipo mockado — dados de exemplo, sem conexão real de WhatsApp ainda.
+          Leads do pipeline com conversa de WhatsApp. Etapa, atendente, etiquetas e notas já são
+          reais — as mensagens ainda são um protótipo mockado (Fase 3a).
         </p>
       </div>
 
       <div className="ck-r-sig flex flex-1 overflow-x-auto overflow-y-hidden border border-border">
         <div className="flex min-w-[960px] flex-1">
           <ConversationList
-            conversations={conversations}
-            selectedId={selectedId}
+            conversations={conversationsForList}
+            selectedId={selectedCardId}
             onSelect={selectConversation}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             search={search}
             onSearchChange={setSearch}
+            currentUserId={user?.id}
           />
 
-          {selected ? (
+          {selectedConversation && selectedEntry ? (
             <>
               <div className="flex min-w-0 flex-1 flex-col">
                 <ConversationHeader
-                  conversation={selected}
-                  onStageChange={(stageId) => updateSelected({ stageId })}
-                  onAssign={(assigneeId) => updateSelected({ assigneeId })}
-                  onToggleAi={(aiActive) => updateSelected({ aiActive })}
+                  conversation={selectedConversation}
+                  stages={stagesForHeader}
+                  members={members}
+                  onStageChange={(stageId) => moveMut.mutate(stageId)}
+                  onAssign={(assigneeId) => assignMut.mutate(assigneeId)}
+                  onToggleAi={(active) => toggleAi(selectedEntry.mockId, active)}
                 />
                 <div ref={threadRef} className="ck-mesh-flat flex-1 space-y-2 overflow-y-auto p-4">
-                  {selected.messages.map((m) => (
+                  {selectedConversation.messages.map((m) => (
                     <MessageBubble key={m.id} message={m} />
                   ))}
                 </div>
-                <Composer onSend={sendMessage} />
+                <Composer onSend={(text) => sendMessage(selectedEntry.mockId, text)} />
               </div>
               <SidePanel
-                conversation={selected}
-                onUpdateTags={(tags) => updateSelected({ tags })}
-                onAddNote={(body) =>
-                  updateSelected((c) => ({
-                    notes: [...c.notes, { id: `note-${Date.now()}`, body, time: "agora" }],
-                  }))
-                }
+                conversation={selectedConversation}
+                onUpdateTags={(tags) => tagsMut.mutate(tags)}
+                onAddNote={(body) => noteMut.mutate(body)}
               />
             </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 text-muted-foreground">
               <MessageSquare className="h-8 w-8 opacity-40" />
-              <p className="text-sm">Selecione uma conversa para começar.</p>
+              <p className="text-sm">
+                {isLoading
+                  ? "Carregando..."
+                  : entries.length === 0
+                    ? "Nenhum lead do pipeline tem conversa de WhatsApp ainda."
+                    : "Selecione uma conversa para começar."}
+              </p>
             </div>
           )}
         </div>

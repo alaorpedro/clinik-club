@@ -2,13 +2,13 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { tagColorClass } from "@/lib/crm-tag-color";
-import { CURRENT_USER_ID, type Conversation } from "@/lib/crm-inbox-mock";
+import type { Conversation } from "@/lib/crm-inbox-mock";
 
 export type InboxTab = "novos" | "meus" | "outros";
 
-function tabOf(c: Conversation): InboxTab {
+function tabOf(c: Conversation, currentUserId?: string | null): InboxTab {
   if (c.assigneeId === null) return "novos";
-  if (c.assigneeId === CURRENT_USER_ID) return "meus";
+  if (currentUserId && c.assigneeId === currentUserId) return "meus";
   return "outros";
 }
 
@@ -28,6 +28,7 @@ export function ConversationList({
   onTabChange,
   search,
   onSearchChange,
+  currentUserId,
 }: {
   conversations: Conversation[];
   selectedId: string | null;
@@ -36,15 +37,16 @@ export function ConversationList({
   onTabChange: (t: InboxTab) => void;
   search: string;
   onSearchChange: (v: string) => void;
+  currentUserId?: string | null;
 }) {
   const counts = { novos: 0, meus: 0, outros: 0 };
-  conversations.forEach((c) => counts[tabOf(c)]++);
+  conversations.forEach((c) => counts[tabOf(c, currentUserId)]++);
 
   const q = search.trim().toLowerCase();
   // Com busca ativa, ignora a aba — senão uma conversa em "Outros" nunca
   // aparece pra quem tá pesquisando parado em "Meus".
   const filtered = conversations
-    .filter((c) => (q ? true : tabOf(c) === activeTab))
+    .filter((c) => (q ? true : tabOf(c, currentUserId) === activeTab))
     .filter((c) => {
       if (!q) return true;
       return `${c.contactName} ${c.phone}`.toLowerCase().includes(q);

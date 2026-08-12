@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -27,7 +27,8 @@ import {
   listMembers,
 } from "@/lib/crm.functions";
 import { tagColorClass } from "@/lib/crm-tag-color";
-import { CONVERSATIONS, type Conversation, type Message } from "@/lib/crm-inbox-mock";
+import { matchMockConversation } from "@/lib/crm-inbox-mock";
+import { useMockConversations, useMockConversationActions } from "@/hooks/use-mock-inbox";
 import { MessageBubble } from "@/components/crm/inbox/MessageBubble";
 import { Composer } from "@/components/crm/inbox/Composer";
 import { ScheduleAppointmentDialog } from "@/components/crm/ScheduleAppointmentDialog";
@@ -44,21 +45,6 @@ import {
 } from "@/components/ui/select";
 
 type Stage = { id: string; name: string; color: string; triggersScheduling?: boolean };
-
-function findMockConversation(name: string | null, phone: string | null): Conversation | null {
-  const needle = `${name ?? ""} ${phone ?? ""}`.trim().toLowerCase();
-  if (!needle) return null;
-  const hit = CONVERSATIONS.find((c) =>
-    `${c.contactName} ${c.phone}`.toLowerCase().includes(needle) ||
-    needle.includes(c.contactName.toLowerCase()),
-  );
-  if (!hit) return null;
-  return { ...hit, tags: [...hit.tags], messages: hit.messages.map((m) => ({ ...m })), notes: [...hit.notes] };
-}
-
-function nowLabel() {
-  return new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-}
 
 export function CardDetailDialog({
   cardId,
@@ -80,9 +66,8 @@ export function CardDetailDialog({
   const [noteBody, setNoteBody] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [convo, setConvo] = useState<Conversation | null>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const { data: mockConvos } = useMockConversations();
+  const { sendMessage: sendMockMessage } = useMockConversationActions();
 
   const { data, isLoading } = useQuery({
     queryKey: ["crm", "cardDetail", cardId],
@@ -151,12 +136,13 @@ export function CardDetailDialog({
 
   // Liga com a conversa mockada da Fase 3a por nome/telefone — leads reais de
   // teste não têm par nenhum ainda, é o esperado até a integração de verdade
-  // (Fase 3b). Cada card abre com sua própria cópia local, sem sincronizar
-  // com a página de Atendimento.
-  useEffect(() => {
-    if (!card) return;
-    setConvo(findMockConversation(card.leads?.name ?? null, card.leads?.phone ?? null));
-  }, [cardId, card?.leads?.name, card?.leads?.phone]);
+  // (Fase 3b). Lê do store compartilhado (use-mock-inbox), então mandar
+  // mensagem aqui aparece também na página de Atendimento, e vice-versa.
+  const matchedConvoId = useMemo(
+    () => matchMockConversation(card?.leads?.name ?? null, card?.leads?.phone ?? null)?.id,
+    [card?.leads?.name, card?.leads?.phone],
+  );
+  const convo = matchedConvoId ? mockConvos?.find((c) => c.id === matchedConvoId) : undefined;
 
   const threadRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -164,16 +150,8 @@ export function CardDetailDialog({
   }, [convo?.messages.length]);
 
   function sendConvoMessage(text: string) {
-    if (!convo) return;
-    const id = `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const message: Message = { id, direction: "out", type: "text", body: text, time: nowLabel(), status: "pending" };
-    setConvo((c) => (c ? { ...c, messages: [...c.messages, message] } : c));
-    const setStatus = (status: Message["status"]) =>
-      setConvo((c) =>
-        c ? { ...c, messages: c.messages.map((m) => (m.id === id ? { ...m, status } : m)) } : c,
-      );
-    timers.current.push(setTimeout(() => setStatus("sent"), 500));
-    timers.current.push(setTimeout(() => setStatus("delivered"), 1400));
+    if (!matchedConvoId) return;
+    sendMockMessage(matchedConvoId, text);
   }
 
   function addTag() {
