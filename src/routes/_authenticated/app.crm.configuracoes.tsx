@@ -10,7 +10,8 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2, Loader2, UserPlus, CalendarClock } from "lucide-react";
+import { GripVertical, Plus, Trash2, UserPlus, CalendarClock } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner";
 import {
   ensureDefaultPipeline,
@@ -269,7 +270,7 @@ function SettingsPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <BrandLoader className="h-8 w-8 text-primary" />
           </div>
         ) : (
           <div className="ck-r-sig border border-border bg-card p-4">

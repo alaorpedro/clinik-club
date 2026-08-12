@@ -13,7 +13,6 @@ import {
   LayoutGrid,
   User,
   LogOut,
-  Loader2,
   Users,
   ShieldCheck,
   Tag,
@@ -22,6 +21,7 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { useEffect, useState } from "react";
 import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
@@ -91,7 +91,7 @@ function AppLayout() {
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin" />
+        <BrandLoader className="h-10 w-10 text-primary" />
       </div>
     );
   if (!user) return null;

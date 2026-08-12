@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tag, Loader2, Plus, ShieldCheck } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/cupons")({
@@ -79,7 +80,7 @@ function CouponsPage() {
   });
 
   if (adminQuery.isLoading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    return <div className="flex items-center justify-center py-20"><BrandLoader className="h-8 w-8 text-primary" /></div>;
   }
   if (!isAdmin) {
     return (
@@ -112,7 +113,7 @@ function CouponsPage() {
       </div>
 
       {couponsQuery.isLoading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <div className="flex items-center justify-center py-20"><BrandLoader className="h-8 w-8 text-primary" /></div>
       ) : couponsQuery.error ? (
         <div className="text-sm text-destructive">Erro: {(couponsQuery.error as Error).message}</div>
       ) : (

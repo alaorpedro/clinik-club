@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Loader2,
   Mail,
   Phone,
   X,
@@ -33,6 +32,7 @@ import { MessageBubble } from "@/components/crm/inbox/MessageBubble";
 import { Composer } from "@/components/crm/inbox/Composer";
 import { ScheduleAppointmentDialog } from "@/components/crm/ScheduleAppointmentDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -220,7 +220,7 @@ export function CardDetailDialog({
 
         {isLoading || !card ? (
           <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <BrandLoader className="h-8 w-8 text-primary" />
           </div>
         ) : (
           <div className="grid min-h-0 flex-1 md:grid-cols-2">

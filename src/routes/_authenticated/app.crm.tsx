@@ -9,7 +9,6 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Loader2,
   LayoutGrid,
   MessageSquare,
   ListChecks,
@@ -18,6 +17,7 @@ import {
   CalendarClock,
 } from "lucide-react";
 import { hasCrmAccess } from "@/lib/crm.functions";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export const Route = createFileRoute("/_authenticated/app/crm")({
   component: CrmLayout,
@@ -37,7 +37,7 @@ function CrmLayout() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <BrandLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }

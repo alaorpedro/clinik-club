@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCheckoutSessionInfo } from "@/utils/payments.functions";
@@ -41,7 +42,7 @@ function CheckoutReturn() {
       <div className="ck-card max-w-md w-full border border-border bg-card p-10 text-center shadow-card">
         <div className="flex justify-center">
           <div className="h-16 w-16 rounded-full bg-highlight flex items-center justify-center">
-            {checking ? <Loader2 className="h-8 w-8 text-foreground animate-spin" /> : <CheckCircle2 className="h-8 w-8 text-foreground" />}
+            {checking ? <BrandLoader className="h-8 w-8 text-foreground" /> : <CheckCircle2 className="h-8 w-8 text-foreground" />}
           </div>
         </div>
         <h1 className="mt-6 ck-display text-4xl tracking-tight">

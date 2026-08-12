@@ -15,7 +15,6 @@ import {
   useDroppable,
 } from "@dnd-kit/core";
 import {
-  Loader2,
   Mail,
   Phone,
   User as UserIcon,
@@ -28,6 +27,7 @@ import {
   Clock,
   AlertTriangle,
 } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { differenceInDays, differenceInHours } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -309,7 +309,7 @@ function PipelinesPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <BrandLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }

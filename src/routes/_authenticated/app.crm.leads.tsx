@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { useState, useMemo } from "react";
 import { listLeads } from "@/lib/crm.functions";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ function LeadsPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-24">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <BrandLoader className="h-8 w-8 text-primary" />
         </div>
       ) : leads.length === 0 ? (
         <div className="ck-r-sig border-2 border-dashed border-border p-12 text-center text-sm text-muted-foreground">

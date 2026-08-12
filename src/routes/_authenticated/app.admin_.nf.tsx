@@ -25,6 +25,7 @@ import {
   ArrowLeft, Search, ReceiptText, Undo2, FileCheck2, FileClock,
   Pencil, AlertTriangle, Copy,
 } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/admin_/nf")({
@@ -144,7 +145,7 @@ function AdminNfPage() {
   }
 
   if (adminQuery.isLoading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    return <div className="flex items-center justify-center py-20"><BrandLoader className="h-8 w-8 text-primary" /></div>;
   }
   if (!isAdmin) {
     return (
@@ -216,7 +217,7 @@ function AdminNfPage() {
       </Card>
 
       {paymentsQuery.isLoading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <div className="flex items-center justify-center py-20"><BrandLoader className="h-8 w-8 text-primary" /></div>
       ) : paymentsQuery.error ? (
         <div className="text-sm text-destructive">Erro: {(paymentsQuery.error as Error).message}</div>
       ) : (

@@ -16,7 +16,6 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  Loader2,
   Phone,
   UserRound,
   ChevronLeft,
@@ -38,6 +37,7 @@ import { CardDetailDialog } from "@/components/crm/CardDetailDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export const Route = createFileRoute("/_authenticated/app/crm/agenda")({
   component: AgendaPage,
@@ -300,7 +300,7 @@ function AgendaPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <BrandLoader className="h-8 w-8 text-primary" />
       </div>
     );
   }

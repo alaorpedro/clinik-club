@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Activity, AlertCircle, BarChart3, CheckCircle2, ChevronDown, CreditCard, FileSpreadsheet, Loader2, ReceiptText, Search, ShieldCheck, Trash2, Users, XCircle } from "lucide-react";
+import { BrandLoader } from "@/components/ui/brand-loader";
 
 export const Route = createFileRoute("/_authenticated/app/admin")({
   component: AdminPage,
@@ -214,7 +215,7 @@ function AdminPage() {
   }
 
   if (adminQuery.isLoading) {
-    return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+    return <div className="flex items-center justify-center py-20"><BrandLoader className="h-8 w-8 text-primary" /></div>;
   }
 
   if (!isAdmin) {
@@ -299,7 +300,7 @@ function AdminPage() {
       </Card>
 
       {customersQuery.isLoading ? (
-        <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        <div className="flex items-center justify-center py-20"><BrandLoader className="h-8 w-8 text-primary" /></div>
       ) : customersQuery.error ? (
         <div className="text-sm text-destructive">Erro ao carregar: {(customersQuery.error as Error).message}</div>
       ) : filtered.length === 0 ? (
