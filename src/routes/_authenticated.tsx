@@ -22,6 +22,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { BrandLoader } from "@/components/ui/brand-loader";
+import { RegularizeSubscriptionGate } from "@/components/RegularizeSubscriptionGate";
 import { useEffect, useState } from "react";
 import logo from "@/assets/clinik-club-logo.png";
 import icon from "@/assets/clinik-icon.png";
@@ -291,6 +292,8 @@ function AppLayout() {
       )}
 
       <div className="flex-1 flex flex-col relative z-0 w-full overflow-x-hidden">
+        {/* Faixa + popup de pagamento pendente (só aparece pra quem tem plano caído) */}
+        <RegularizeSubscriptionGate />
         {/* Main Content */}
         <main className="flex-1 p-4 sm:p-6 md:p-10 z-0">
           <Outlet />
