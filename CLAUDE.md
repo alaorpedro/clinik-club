@@ -48,6 +48,8 @@ Fluxo do lead: `upsertPartialLead` salva parcial por `session_id` a cada avanço
 
 `plan-limits.ts`: free 0 funis/0 leads · starter 1/400 · pro 10/2.000 · agency ∞/20.000. Conta Stripe live `acct_1TGrhpDd8MyDPCmQ`; plano vendido na prática: Pro R$159/mês. Catálogo tem produtos duplicados (dois trios criados via Lovable). Webhook com tabela `processed_webhook_events` (idempotência). Add-ons: CRM e Alertas WhatsApp (R$29,90).
 
+**Regularização de pagamento (13/10/2026):** `getRegularizationStatus` (billing-regularize.functions.ts) + `RegularizeSubscriptionGate` montado em `_authenticated.tsx` — conta não-admin com plano `canceled|past_due|unpaid|incomplete_expired` e sem outro `active|trialing` vê faixa + popup com boleto (`BoletoSubscriptionForm`, compartilhado com o checkout) ou cartão. Sem cobrança do período em atraso. Ambiente vem de `getPaymentsEnv` (host de produção força live); o **preview roda com `pk_test_` = sandbox**, então pra testar precisa de linha `environment='sandbox'` temporária na `subscriptions`.
+
 Contas internas de teste (cupom, R$0,99/mês): alaorpedro@gmail.com, matheus@onmid.com.br, lynconoliveira994@gmail.com. O funil "ClinicaB" (alaor@onmid.com.br) é de teste.
 
 ## Admin e NF
