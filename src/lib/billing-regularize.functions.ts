@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { getPaymentsEnv, type PaymentsEnv } from "@/lib/funnels.functions";
+import type { PaymentsEnv } from "@/lib/payments-env";
+import { getPaymentsEnv } from "@/lib/payments-env.server";
 
 // Regra geral de "regularize sua assinatura" (decidida em 13/10/2026):
 // toda conta cujo plano (starter/pro/agency) está cancelado, com cobrança

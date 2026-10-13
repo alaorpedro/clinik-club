@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { normalizePaymentsEnv, type PaymentsEnv } from "@/lib/payments-env";
+import { getPaymentsEnv } from "@/lib/payments-env.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -7,42 +9,7 @@ import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
 import { postToWhatsAppAlert } from "@/lib/whatsapp-alerts.functions";
 import { crmImportFunnelSlug } from "@/lib/crm.functions";
 
-export type PaymentsEnv = "sandbox" | "live";
-
-function normalizePaymentsEnv(value: unknown): PaymentsEnv | null {
-  return value === "live" || value === "sandbox" ? value : null;
-}
-
-function getRequestHost(): string | null {
-  try {
-    return getRequest()?.headers?.get("host")?.split(":")[0]?.toLowerCase() ?? null;
-  } catch {
-    return null;
-  }
-}
-
-export function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
-  const host = getRequestHost();
-  if (
-    host === "clinik.club" ||
-    host === "www.clinik.club" ||
-    host === "kindred-ignite-forge.lovable.app"
-  ) {
-    return "live";
-  }
-
-  const requested = normalizePaymentsEnv(preferred);
-  if (requested) return requested;
-
-  const explicit = normalizePaymentsEnv(process.env.PAYMENTS_ENV);
-  if (explicit) return explicit;
-
-  const token = process.env.VITE_PAYMENTS_CLIENT_TOKEN;
-  if (token?.startsWith("pk_test_")) return "sandbox";
-  if (token?.startsWith("pk_live_")) return "live";
-
-  return "sandbox";
-}
+export type { PaymentsEnv };
 
 const MAX_JSON_BYTES = 50_000;
 function assertJsonSize(obj: unknown, field: string) {
