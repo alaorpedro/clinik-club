@@ -10,7 +10,8 @@ Não existe banco de staging. Qualquer INSERT/UPDATE/DELETE feito "em dev" ating
 
 1. Editar código localmente (nunca via prompt do Lovable — gasta créditos).
 2. `git push` → Lovable sincroniza o **preview** em ~1 min (conferir `latest_commit_sha` via MCP `get_project`).
-3. **Push NÃO atualiza produção.** Publicar via MCP `deploy_project` ou Publish→Update na UI do Lovable.
+3. **Push NÃO atualiza produção.** Publicar pelo botão Publish → "Publish changes" na UI do Lovable (em 13/10 o `deploy_project` do MCP ficou em "pending" e nunca publicou; a produção estava parada em 11/08 sem ninguém notar). Conferir depois procurando um texto novo nos `/assets/*.js` de clinik.club.
+4. `bun run build` local antes de publicar (`bun install --frozen-lockfile`). Função que usa `getRequest()` NÃO pode ser exportada de `*.functions.ts` (import-protection quebra o build) — fica em `*.server.ts`.
 
 Dev local: `npm run dev` (Vite, porta 8080; launch config global `kindred-ignite-forge`). Limite: não há `SUPABASE_SERVICE_ROLE_KEY` local, então toda página que depende de server function quebra — o teste de verdade é no preview do Lovable ou em produção com dados temporários.
 
