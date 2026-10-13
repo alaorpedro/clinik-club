@@ -2,14 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getPaymentsEnv, type PaymentsEnv } from "@/lib/funnels.functions";
 
 // Regra geral de "regularize sua assinatura" (decidida em 13/10/2026):
 // toda conta cujo plano (starter/pro/agency) está cancelado, com cobrança
 // falhada ou expirado, e que NÃO tem nenhuma outra assinatura de plano
 // saudável, vê o popup pedindo pra gerar o boleto. Sem cobrar atraso — a
 // nova assinatura começa a contar do pagamento.
-
-type PaymentsEnv = "sandbox" | "live";
 
 const PLAN_PRICE_RE = /^(starter|pro|agency)_(monthly|yearly)$/;
 const HEALTHY_STATUSES = new Set(["active", "trialing"]);
@@ -53,6 +52,9 @@ export const getRegularizationStatus = createServerFn({ method: "GET" })
   }))
   .handler(async ({ data, context }): Promise<RegularizationStatus> => {
     const userId = context.userId;
+    // Mesma regra do resto do app: host de produção força "live"; fora dele vale o
+    // ambiente pedido pelo cliente (chave pk_test_ no preview = sandbox).
+    const env = getPaymentsEnv(data.environment);
 
     const { data: adminRow } = await supabaseAdmin
       .from("user_roles")
@@ -90,7 +92,7 @@ export const getRegularizationStatus = createServerFn({ method: "GET" })
         const key = row.stripe_subscription_id ?? `${row.price_id}-${row.created_at}`;
         if (seen.has(key)) return false;
         seen.add(key);
-        return row.environment === data.environment && PLAN_PRICE_RE.test(row.price_id ?? "");
+        return row.environment === env && PLAN_PRICE_RE.test(row.price_id ?? "");
       })
       .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
 

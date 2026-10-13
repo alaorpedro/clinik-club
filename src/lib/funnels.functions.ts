@@ -7,7 +7,7 @@ import { getPlanLimits, FREE_LIMITS } from "@/lib/plan-limits";
 import { postToWhatsAppAlert } from "@/lib/whatsapp-alerts.functions";
 import { crmImportFunnelSlug } from "@/lib/crm.functions";
 
-type PaymentsEnv = "sandbox" | "live";
+export type PaymentsEnv = "sandbox" | "live";
 
 function normalizePaymentsEnv(value: unknown): PaymentsEnv | null {
   return value === "live" || value === "sandbox" ? value : null;
@@ -21,7 +21,7 @@ function getRequestHost(): string | null {
   }
 }
 
-function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
+export function getPaymentsEnv(preferred?: unknown): PaymentsEnv {
   const host = getRequestHost();
   if (
     host === "clinik.club" ||
